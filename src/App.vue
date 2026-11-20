@@ -1,11 +1,15 @@
-<script setup></script>
+<script setup>
+import { onMounted } from 'vue'
+import { useMemberStore } from '@/stores/memberStore'
+
+// 进入系统即预加载成员列表（幂等：全局只发一次请求）
+onMounted(() => {
+    useMemberStore().initMembers().catch(() => {
+        // 静默失败：成员数据仅用于下拉/展示，不阻塞页面
+    })
+})
+</script>
 
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
+  <router-view />
 </template>
-
-<style scoped></style>
