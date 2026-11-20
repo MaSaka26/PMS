@@ -2,7 +2,8 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [master]
+    # 本地分支是 master；若 GitHub 仓库默认分支为 main 也能触发
+    branches: [master, main]
   workflow_dispatch:
 
 permissions:

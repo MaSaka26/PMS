@@ -26,7 +26,7 @@
 | 类别 | 技术 |
 |---|---|
 | 框架 | Vue 3（`<script setup>`） |
-| 路由 | Vue Router 5（History 模式） |
+| 路由 | Vue Router 5（Hash 模式，兼容 GitHub Pages） |
 | 状态管理 | Pinia 4（setup stores） |
 | UI 组件 | Element Plus 2 |
 | 图表 | Highcharts 13（向下钻取饼图） |
@@ -52,7 +52,7 @@ npm run preview  # 预览构建结果
 ## 测试与 CI
 
 - `tests/*.test.js` 覆盖权限判断、截止日期分级、登录与停用校验，使用 Node 内置 `node:test`，无需额外测试依赖。
-- `.github/workflows/ci.yml` 在 push / pull request 时执行：安装依赖 → 单元测试 → 生产构建。
+- `.github/workflows/ci.yml` 在 pull request 与非 `master` 分支的 push 时执行：安装依赖 → 单元测试 → 生产构建；`master` 的推送由部署工作流负责。
 - 页面与 Mock 流程仍以手工冒烟验证为主。
 
 ## 测试账号
@@ -569,7 +569,7 @@ location.reload()
 
 - 路由使用 `createWebHashHistory()`，刷新页面不会 404
 - [vite.config.js](vite.config.js) 在 GitHub Actions 中自动使用 `/<仓库名>/` 作为 base，本地开发仍为 `/`
-- [deploy-pages.yml](.github/workflows/deploy-pages.yml) 在 push 到 `master` 时执行测试、构建并发布
+- [deploy-pages.yml](.github/workflows/deploy-pages.yml) 在 push 到 `master` / `main` 时执行测试、构建并发布
 
 ### 操作步骤
 
@@ -594,6 +594,7 @@ https://masaka26.github.io/PMS/
 
 - 如果仓库名不是 `PMS`，base 会自动跟随仓库名，不需要改代码
 - 如果仓库是 `用户名.github.io` 形式，会自动部署在根路径
+- 本地验证 Pages 版：先设置 `GITHUB_ACTIONS=true`、`GITHUB_REPOSITORY=MaSaka26/PMS` 执行 `npm run build`，再用同样的环境变量执行 `npm run preview`，访问 `http://localhost:4173/PMS/`（preview 与构建的 base 必须一致，否则资源 404、页面空白）
 - Mock 数据保存在每个访问者自己的 localStorage 中，不同人之间的数据不共享
 
 ## 已下线功能：排期视图与关键路径
