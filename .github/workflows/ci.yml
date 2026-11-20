@@ -1,7 +1,9 @@
 name: CI
 
 on:
+  # master 的推送由 deploy-pages.yml 负责（同样会跑测试），这里只覆盖其他分支与 PR
   push:
+    branches-ignore: [master]
   pull_request:
 
 jobs:

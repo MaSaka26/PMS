@@ -1,8 +1,9 @@
-import { createRouter, createWebHistory } from "vue-router"
+import { createRouter, createWebHashHistory } from "vue-router"
 import { getInfo } from "@/api/userAPI";
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  // GitHub Pages 不支持服务端回退，使用 Hash 路由避免刷新 404
+  history: createWebHashHistory(),
   routes: [
     // 登录页 —— 独立路由，不走 layout 包裹
     {

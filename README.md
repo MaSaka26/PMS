@@ -16,6 +16,7 @@
 - [数据模型（概要）](#数据模型概要)
 - [目录结构](#目录结构)
 - [数据存储与重置](#数据存储与重置)
+- [部署到 GitHub Pages](#部署到-github-pages)
 - [已下线功能：排期视图与关键路径](#已下线功能排期视图与关键路径)
 - [已知限制](#已知限制)
 - [后续规划](#后续规划)
@@ -88,6 +89,8 @@ npm run preview  # 预览构建结果
 | `/field` | 字段配置 |
 | `/template` | 项目模板 |
 | `/member` | 成员管理 |
+
+项目使用 Hash 路由，部署到 GitHub Pages 后地址形如 `https://用户名.github.io/PMS/#/login`。
 
 ## 页面详解与代码地图
 
@@ -559,6 +562,39 @@ PMS/
 localStorage.removeItem('pm_mock_db')
 location.reload()
 ```
+
+## 部署到 GitHub Pages
+
+项目已内置 GitHub Pages 部署配置：
+
+- 路由使用 `createWebHashHistory()`，刷新页面不会 404
+- [vite.config.js](vite.config.js) 在 GitHub Actions 中自动使用 `/<仓库名>/` 作为 base，本地开发仍为 `/`
+- [deploy-pages.yml](.github/workflows/deploy-pages.yml) 在 push 到 `master` 时执行测试、构建并发布
+
+### 操作步骤
+
+1. 推送代码到 GitHub：
+
+```bash
+git remote add origin https://github.com/MaSaka26/PMS.git
+git push -u origin master
+```
+
+2. 打开仓库 **Settings → Pages**，把 **Source** 设为 **GitHub Actions**。
+
+3. 推送到 `master` 后，Actions 会自动运行 `Deploy to GitHub Pages`；也可以在 Actions 页面手动触发 `workflow_dispatch`。
+
+4. 部署完成后访问：
+
+```
+https://masaka26.github.io/PMS/
+```
+
+### 说明
+
+- 如果仓库名不是 `PMS`，base 会自动跟随仓库名，不需要改代码
+- 如果仓库是 `用户名.github.io` 形式，会自动部署在根路径
+- Mock 数据保存在每个访问者自己的 localStorage 中，不同人之间的数据不共享
 
 ## 已下线功能：排期视图与关键路径
 
