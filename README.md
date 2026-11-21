@@ -65,7 +65,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 | member | member | 成员 | 李员工 |
 | agent | agent | 成员 | Agent |
 
-项目看板里的「PMS 开发记录」由 `npm run seed:git` 读取 `git log` 生成（写入 `src/mock/gitSeed.js`）：一条提交对应一个任务，时间与提交人来自仓库记录，状态统一收口为已验收，验收人记为项目经理。有新提交后重新执行该命令并提交生成文件即可，CI 不依赖 git 历史。另外手工补充了 2 条真实待办（拆分主包、升级 Actions）和 2 条已取消任务（排期视图、CPM 关键路径），因为这些工作没有落地，不会出现在提交历史里。
+项目看板里的「PMS 开发记录」由 `npm run seed:git` 读取 `git log` 生成（写入 `src/mock/db/seed/gitSeed.js`）：一条提交对应一个任务，时间与提交人来自仓库记录，状态统一收口为已验收，验收人记为项目经理。有新提交后重新执行该命令并提交生成文件即可，CI 不依赖 git 历史。另外手工补充了 2 条真实待办（拆分主包、升级 Actions）和 2 条已取消任务（排期视图、CPM 关键路径），因为这些工作没有落地，不会出现在提交历史里。
 
 登录后会写入 `pm_token`，未登录访问业务页面会被路由守卫重定向到登录页。
 
@@ -152,8 +152,8 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 |---|---|
 | [Login/index.vue](src/views/Login/index.vue) | 登录表单、快捷填充、调用 `userStore.login` |
 | [stores/userStore.js](src/stores/userStore.js) | 保存 token、用户信息、恢复登录态、退出登录 |
-| [mock/user.js](src/mock/user.js) | `/api/login`、`/api/info` 接口 |
-| [mock/auth.js](src/mock/auth.js) | 账号密码校验、停用检查、当前用户解析 |
+| [mock/api/user.js](src/mock/api/user.js) | `/api/login`、`/api/info` 接口 |
+| [mock/services/auth.js](src/mock/services/auth.js) | 账号密码校验、停用检查、当前用户解析 |
 | [router/index.js](src/router/index.js) | 路由守卫：未登录跳登录页，token 变化时校验 `/info` |
 
 **与其他页面的关系**：登录身份决定所有页面的角色和权限；成员页修改角色或停用后，登录和接口权限同步变化。
@@ -181,8 +181,8 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 | [project/components/card.vue](src/views/project/components/card.vue) | 项目卡片与状态、优先级、操作按钮 |
 | [project/components/ProjectFormDialog.vue](src/views/project/components/ProjectFormDialog.vue) | 项目表单、图标选择、计划周期、项目自定义字段 |
 | [template/components/TemplatePickerDialog.vue](src/views/template/components/TemplatePickerDialog.vue) | 从模板创建项目的选择弹窗 |
-| [mock/project.js](src/mock/project.js) | 项目增删改查、归档过滤、权限与日期校验 |
-| [mock/projectStatus.js](src/mock/projectStatus.js) | 读取项目时按任务规范化项目阶段 |
+| [mock/api/project.js](src/mock/api/project.js) | 项目增删改查、归档过滤、权限与日期校验 |
+| [mock/rules/projectStatus.js](src/mock/rules/projectStatus.js) | 读取项目时按任务规范化项目阶段 |
 
 **与其他页面的关系**：项目来源于空白创建或模板套用；项目负责人和成员来自成员管理；任务状态会反向推动项目阶段；项目关闭后进入项目归档。
 
@@ -212,7 +212,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 | [components/DueBadge.vue](src/components/DueBadge.vue) | 截止日期倒计时徽标 |
 | [stores/taskStore.js](src/stores/taskStore.js) | 项目任务列表与任务详情缓存 |
 | [stores/fieldStore.js](src/stores/fieldStore.js) | 项目字段定义与展示 |
-| [mock/project.js](src/mock/project.js) | 详情、动态、归档与撤销归档接口 |
+| [mock/api/project.js](src/mock/api/project.js) | 详情、动态、归档与撤销归档接口 |
 
 **与其他页面的关系**：数据来自任务看板的任务、成员管理的成员、字段配置的项目字段；任务状态变化会反映在图表和动态中；关闭后进入归档；另存为模板会跳到项目模板体系。
 
@@ -235,7 +235,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 |---|---|
 | [project/archive.vue](src/views/project/archive.vue) | 归档列表、搜索分页、撤销归档 |
 | [project/detail.vue](src/views/project/detail.vue) | 归档详情只读模式、返回路径 |
-| [mock/project.js](src/mock/project.js) | `scope=archived`、`reopen` 接口与归档只读保护 |
+| [mock/api/project.js](src/mock/api/project.js) | `scope=archived`、`reopen` 接口与归档只读保护 |
 
 **与其他页面的关系**：项目看板和项目详情负责「关闭并归档」；归档页负责查看和撤销；归档详情与正常详情共用同一个组件。
 
@@ -264,7 +264,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 | [task/components/AssignTaskDialog.vue](src/views/task/components/AssignTaskDialog.vue) | 显式指派弹窗：选择项目成员并确认 |
 | [task/components/TaskDrawer.vue](src/views/task/components/TaskDrawer.vue) | 任务详情、扩展字段、事件时间线 |
 | [stores/taskStore.js](src/stores/taskStore.js) | `taskMap`、任务详情、认领/阻塞/取消/恢复 |
-| [mock/task.js](src/mock/task.js) | 状态机、权限校验、日期与依赖校验、事件日志、项目阶段同步 |
+| [mock/api/task.js](src/mock/api/task.js)、[mock/rules/taskRules.js](src/mock/rules/taskRules.js) | 任务接口；状态机、权限校验、日期与依赖校验、事件日志、项目阶段同步 |
 | [constants/status.js](src/constants/status.js) | 任务状态、项目状态、优先级常量 |
 | [utils/due.js](src/utils/due.js) | 截止日期分级计算 |
 
@@ -313,7 +313,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 |---|---|
 | [field/index.vue](src/views/field/index.vue) | 字段列表、分组切换、增删改、启停、排序 |
 | [stores/fieldStore.js](src/stores/fieldStore.js) | `taskFields`、`projectFields`、启用字段计算 |
-| [mock/field.js](src/mock/field.js) | 字段增删改查、同作用对象内重名校验、权限校验 |
+| [mock/api/field.js](src/mock/api/field.js) | 字段增删改查、同作用对象内重名校验、权限校验 |
 | [utils/permissions.js](src/utils/permissions.js) | `canManageFields` 权限判断 |
 
 **与其他页面的关系**：启用的任务字段会出现在任务新建/编辑弹窗和任务详情；启用的项目字段会出现在项目表单和项目详情；字段 id 会写入任务或项目的 `extra`；模板会勾选项目字段。
@@ -343,7 +343,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 | [template/components/ApplyTemplateDialog.vue](src/views/template/components/ApplyTemplateDialog.vue) | 套用模板、日期预览、负责人锁定 |
 | [template/components/TemplatePickerDialog.vue](src/views/template/components/TemplatePickerDialog.vue) | 项目看板内的模板选择弹窗 |
 | [stores/templateStore.js](src/stores/templateStore.js) | 模板列表与套用状态 |
-| [mock/template.js](src/mock/template.js) | 模板 CRUD、依赖校验、套用生成项目与任务 |
+| [mock/api/template.js](src/mock/api/template.js) | 模板 CRUD、依赖校验、套用生成项目与任务 |
 
 **与其他页面的关系**：模板引用字段配置的项目字段；套用后生成项目看板里的项目和任务看板里的任务；项目详情可以把已有项目结构提取成模板。
 
@@ -374,8 +374,8 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 | [member/components/MemberFormDialog.vue](src/views/member/components/MemberFormDialog.vue) | 成员表单、角色、岗位、登录账号 |
 | [member/components/MemberDetailDialog.vue](src/views/member/components/MemberDetailDialog.vue) | 成员详情、账号、状态、停用/启用 |
 | [stores/memberStore.js](src/stores/memberStore.js) | 成员列表、名称映射、增删改 |
-| [mock/member.js](src/mock/member.js) | 成员权限、停用保护、账号创建与重置 |
-| [mock/auth.js](src/mock/auth.js) | 登录身份以成员表为准，停用阻止登录 |
+| [mock/api/member.js](src/mock/api/member.js) | 成员权限、停用保护、账号创建与重置 |
+| [mock/services/auth.js](src/mock/services/auth.js) | 登录身份以成员表为准，停用阻止登录 |
 
 **与其他页面的关系**：成员是所有项目负责人、任务负责人的来源；角色决定全站权限；停用会阻止登录并从负责人下拉中移除；姓名会显示在项目卡片、任务卡片和时间线中。
 
@@ -559,7 +559,7 @@ PMS/
 ## 数据存储与重置
 
 - 数据保存在浏览器 localStorage，键为 `pm_mock_db`。
-- `src/mock/db.js` 中的 `SEED_VERSION` 控制种子版本；版本变化时整份重置。
+- `src/mock/db/seed/index.js` 中的 `SEED_VERSION` 控制种子版本；版本变化时整份重置。
 - 需要恢复初始数据时，可在浏览器控制台执行：
 
 ```js

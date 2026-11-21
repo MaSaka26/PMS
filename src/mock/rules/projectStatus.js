@@ -1,5 +1,7 @@
-import { db, uid, nowISO, save } from './db'
+import { db, save } from '../db/index.js'
 import { PROJECT_STATUS } from '@/constants/status'
+import { nowISO } from '../utils/date.js'
+import { uid } from '../utils/id.js'
 
 // 阶段只进不退：用序号比较，避免任何任务变化把项目状态拉回去
 const STAGE_ORDER = {
@@ -10,7 +12,7 @@ const STAGE_ORDER = {
   [PROJECT_STATUS.ITERATING]: 4
 }
 
-import { getCurrentUser } from './auth'
+import { getCurrentUser } from '../services/auth.js'
 
 /**
  * 根据项目下的未取消任务推导阶段：

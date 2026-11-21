@@ -1,7 +1,6 @@
 import Mock from 'mockjs'
-import { authenticate, getCurrentUser } from './auth'
-
-const ok = (data) => ({ code: 200, data, msg: 'success' })
+import { authenticate, getCurrentUser } from '../services/auth.js'
+import { ok } from '../utils/response.js'
 
 // 登录：账号密码来自 users，身份与状态来自 members
 Mock.mock('/api/login', 'post', (options) => {

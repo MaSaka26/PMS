@@ -1,4 +1,4 @@
-import { db } from './db.js'
+import { db } from '../db/index.js'
 
 const parseTokenUserId = () => {
   const token = localStorage.getItem('pm_token') || ''

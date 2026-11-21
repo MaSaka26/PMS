@@ -1,6 +1,6 @@
 // 本文件由 scripts/generate-git-seed.mjs 生成，请勿手动修改
 // 数据来源：git log --no-merges --reverse
-export const generatedAt = "2026-11-21T01:04:06.219Z"
+export const generatedAt = "2026-11-21T02:35:29.745Z"
 export const authors = [
   {
     "id": "u5",
@@ -79,6 +79,78 @@ export const commits = [
     "email": "740275230@qq.com",
     "date": "2026-11-21T08:55:59+08:00",
     "subject": "feat: 新增 Agent 成员与 PMS 自举演示项目种子数据",
+    "authorId": "u5"
+  },
+  {
+    "hash": "ede9e2e20d8126aa4777f55c90203ab5905209e9",
+    "shortHash": "ede9e2e",
+    "author": "MaSaka0426",
+    "email": "740275230@qq.com",
+    "date": "2026-11-21T09:07:04+08:00",
+    "subject": "feat: 开发记录改为由 git log 生成",
+    "authorId": "u5"
+  },
+  {
+    "hash": "67c017f2cac83a4455515afabf3bbc95c17ae224",
+    "shortHash": "67c017f",
+    "author": "MaSaka0426",
+    "email": "740275230@qq.com",
+    "date": "2026-11-21T09:20:00+08:00",
+    "subject": "feat: 开发记录补充真实待办与已取消任务",
+    "authorId": "u5"
+  },
+  {
+    "hash": "2e663ae549ed8a9cdfce543b5253fd000bde9f7c",
+    "shortHash": "2e663ae",
+    "author": "MaSaka0426",
+    "email": "740275230@qq.com",
+    "date": "2026-11-21T09:30:20+08:00",
+    "subject": "fix: 任务看板列内滚动，避免已验收任务撑长页面",
+    "authorId": "u5"
+  },
+  {
+    "hash": "cdb8a85b99a45dd8b64d0df61f853616e577f031",
+    "shortHash": "cdb8a85",
+    "author": "MaSaka0426",
+    "email": "740275230@qq.com",
+    "date": "2026-11-21T09:49:24+08:00",
+    "subject": "feat: 项目详情页支持编辑项目",
+    "authorId": "u5"
+  },
+  {
+    "hash": "a326b28c266326dda985d485fe046e9f8d784692",
+    "shortHash": "a326b28",
+    "author": "MaSaka0426",
+    "email": "740275230@qq.com",
+    "date": "2026-11-21T09:59:54+08:00",
+    "subject": "refactor: 项目详情页拆分为 Detail* 组件",
+    "authorId": "u5"
+  },
+  {
+    "hash": "0d443c37a5827fef5ea7ece4673277ae4f20294e",
+    "shortHash": "0d443c3",
+    "author": "MaSaka0426",
+    "email": "740275230@qq.com",
+    "date": "2026-11-21T10:07:07+08:00",
+    "subject": "refactor: 任务流程页拆分区块组件并抽离文案常量",
+    "authorId": "u5"
+  },
+  {
+    "hash": "68030605cc59be147e62fa13b15b4ff484afa41c",
+    "shortHash": "6803060",
+    "author": "MaSaka0426",
+    "email": "740275230@qq.com",
+    "date": "2026-11-21T10:22:29+08:00",
+    "subject": "refactor: 任务看板拆分组件并抽离操作逻辑",
+    "authorId": "u5"
+  },
+  {
+    "hash": "3746b21fbcdaaa057d9645da9add6a624a50479f",
+    "shortHash": "3746b21",
+    "author": "MaSaka0426",
+    "email": "740275230@qq.com",
+    "date": "2026-11-21T10:25:12+08:00",
+    "subject": "refactor: buildTemplateDraft 移至 composables",
     "authorId": "u5"
   }
 ]

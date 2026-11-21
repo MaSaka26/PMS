@@ -1,12 +1,12 @@
 import Mock from 'mockjs'
 
 // 各业务模块的 mock 在这里注册，main.js 只需要 import './mock'
-import './member'
-import './field'
-import './project'
-import './task'
-import './template'
-import './user'
+import './api/member'
+import './api/field'
+import './api/project'
+import './api/task'
+import './api/template'
+import './api/user'
 
 // 一个最小接口，验证 Mock 生效
 Mock.mock('/api/ping', 'get', {

@@ -1,12 +1,13 @@
 import Mock from 'mockjs'
-import { db, save, uid, paginate, nowISO } from './db'
-import { normalizeProjectStatuses, syncProjectStatus } from './projectStatus'
+import { db, save } from '../db/index.js'
+import { normalizeProjectStatuses, syncProjectStatus } from '../rules/projectStatus.js'
 import { PROJECT_STATUS } from '@/constants/status'
+import { nowISO } from '../utils/date.js'
+import { uid } from '../utils/id.js'
+import { paginate } from '../utils/pagination.js'
+import { fail, ok } from '../utils/response.js'
 
-const ok = (data) => ({ code: 200, data, msg: 'success' })
-const fail = (code, msg) => ({ code, data: null, msg })
-
-import { getCurrentUser } from './auth'
+import { getCurrentUser } from '../services/auth.js'
 
 const isAdmin = (user) => user?.role === 'admin'
 const isPM = (user, project) => !!user && project?.PM === user.id

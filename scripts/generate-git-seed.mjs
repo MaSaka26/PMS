@@ -1,5 +1,5 @@
 // 从 git log 生成种子数据：每个提交对应一个任务，时间与提交人取自仓库记录
-// 用法：npm run seed:git（生成结果 src/mock/gitSeed.js 需要一起提交）
+// 用法：npm run seed:git（生成结果 src/mock/db/seed/gitSeed.js 需要一起提交）
 import { execFileSync } from 'node:child_process'
 import { writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
@@ -43,5 +43,5 @@ export const commits = ${JSON.stringify(
 )}
 `
 
-writeFileSync(resolve(root, 'src/mock/gitSeed.js'), output, 'utf8')
-console.log(`已生成 ${commits.length} 条提交、${authors.length} 位作者 → src/mock/gitSeed.js`)
+writeFileSync(resolve(root, 'src/mock/db/seed/gitSeed.js'), output, 'utf8')
+console.log(`已生成 ${commits.length} 条提交、${authors.length} 位作者 → src/mock/db/seed/gitSeed.js`)

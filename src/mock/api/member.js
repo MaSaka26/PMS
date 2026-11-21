@@ -1,12 +1,11 @@
 import Mock from 'mockjs'
-import { db, save, uid } from './db'
-
-const ok = (data) => ({ code: 200, data, msg: 'success' })
-const fail = (code, msg) => ({ code, data: null, msg })
+import { db, save } from '../db/index.js'
+import { uid } from '../utils/id.js'
+import { fail, ok } from '../utils/response.js'
 
 const ROLES = ['admin', 'pm', 'member']
 
-import { getCurrentUser } from './auth'
+import { getCurrentUser } from '../services/auth.js'
 
 // 成员返回时附带登录账号（只给用户名，不返回密码）
 const withAccount = (member) => {

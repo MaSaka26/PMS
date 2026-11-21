@@ -1,13 +1,12 @@
 import Mock from 'mockjs'
-import { db, save, uid } from './db'
+import { db, save } from '../db/index.js'
+import { uid } from '../utils/id.js'
+import { fail, ok } from '../utils/response.js'
 
 // 第一版只服务任务字段；类型保持最小可用集合
 const TYPES = ['text', 'textarea', 'number', 'date', 'select']
 
-const ok = (data) => ({ code: 200, data, msg: 'success' })
-const fail = (msg) => ({ code: 400, data: null, msg })
-
-import { getCurrentUser } from './auth'
+import { getCurrentUser } from '../services/auth.js'
 
 const requireAdmin = () => {
   const user = getCurrentUser()
@@ -76,7 +75,7 @@ Mock.mock('/api/fields', 'post', (options) => {
   const body = JSON.parse(options.body)
   const type = body.type || 'text'
   const error = validate({ ...body, type })
-  if (error) return fail(error)
+  if (error) return fail(400, error)
 
   const targetType = body.targetType === 'project' ? 'project' : 'task'
   // 排序只在同一作用对象内累加
@@ -105,7 +104,7 @@ Mock.mock(/\/api\/fields\/[\w-]+$/, 'put', (options) => {
   if (denied) return denied
   const id = options.url.split('/').pop()
   const idx = fieldsOf().findIndex((f) => f.id === id)
-  if (idx === -1) return fail('字段不存在')
+  if (idx === -1) return fail(400, '字段不存在')
 
   const body = JSON.parse(options.body)
   const old = fieldsOf()[idx]
@@ -119,7 +118,7 @@ Mock.mock(/\/api\/fields\/[\w-]+$/, 'put', (options) => {
   next.targetType = old.targetType
 
   const error = validate(next, id)
-  if (error) return fail(error)
+  if (error) return fail(400, error)
 
   fieldsOf()[idx] = next
   save()
@@ -132,7 +131,7 @@ Mock.mock(/\/api\/fields\/[\w-]+$/, 'delete', (options) => {
   if (denied) return denied
   const id = options.url.split('/').pop()
   const exists = fieldsOf().some((f) => f.id === id)
-  if (!exists) return fail('字段不存在')
+  if (!exists) return fail(400, '字段不存在')
   db.fields = fieldsOf().filter((f) => f.id !== id)
   // 删除后重排，避免出现空洞
   sortedFields().forEach((f, index) => {

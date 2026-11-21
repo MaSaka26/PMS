@@ -1,10 +1,10 @@
 import Mock from 'mockjs'
-import { db, save, uid, nowISO } from './db'
-import { syncProjectStatus } from './projectStatus'
+import { db, save } from '../db/index.js'
+import { syncProjectStatus } from '../rules/projectStatus.js'
 import { PROJECT_STATUS } from '@/constants/status'
-
-const ok = (data) => ({ code: 200, data, msg: 'success' })
-const fail = (msg) => ({ code: 400, data: null, msg })
+import { nowISO } from '../utils/date.js'
+import { uid } from '../utils/id.js'
+import { fail, ok } from '../utils/response.js'
 
 const templatesOf = () => (Array.isArray(db.templates) ? db.templates : (db.templates = []))
 
@@ -20,7 +20,7 @@ const addDays = (dateStr, days) => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
-import { getCurrentUser } from './auth'
+import { getCurrentUser } from '../services/auth.js'
 
 const requireManager = () => {
   const user = getCurrentUser()
@@ -115,7 +115,7 @@ Mock.mock('/api/templates', 'post', (options) => {
   if (denied) return denied
   const body = JSON.parse(options.body)
   const error = validateTemplate(body)
-  if (error) return fail(error)
+  if (error) return fail(400, error)
 
   const template = {
     id: uid('template'),
@@ -140,13 +140,13 @@ Mock.mock(/\/api\/templates\/[\w-]+$/, 'put', (options) => {
   if (denied) return denied
   const id = options.url.split('?')[0].split('/').pop()
   const index = templatesOf().findIndex((t) => t.id === id)
-  if (index === -1) return fail('模板不存在')
+  if (index === -1) return fail(400, '模板不存在')
 
   const body = JSON.parse(options.body)
   const old = templatesOf()[index]
   const next = { ...old, ...body }
   const error = validateTemplate(next, id)
-  if (error) return fail(error)
+  if (error) return fail(400, error)
 
   templatesOf()[index] = {
     ...old,
@@ -169,7 +169,7 @@ Mock.mock(/\/api\/templates\/[\w-]+$/, 'delete', (options) => {
   if (denied) return denied
   const id = options.url.split('?')[0].split('/').pop()
   const exists = templatesOf().some((t) => t.id === id)
-  if (!exists) return fail('模板不存在')
+  if (!exists) return fail(400, '模板不存在')
   db.templates = templatesOf().filter((t) => t.id !== id)
   save()
   return ok(null)
@@ -181,19 +181,19 @@ Mock.mock(/\/api\/templates\/[\w-]+\/apply$/, 'post', (options) => {
   if (denied) return denied
   const id = options.url.split('?')[0].split('/').filter(Boolean).slice(-2)[0]
   const template = templatesOf().find((t) => t.id === id)
-  if (!template) return fail('模板不存在')
-  if (!template.enabled) return fail('模板已停用，无法使用')
+  if (!template) return fail(400, '模板不存在')
+  if (!template.enabled) return fail(400, '模板已停用，无法使用')
 
   const body = JSON.parse(options.body)
   const title = String(body.name || '').trim() || template.name
   const startDate = body.startDate
-  if (!startDate) return fail('请选择项目开始日期')
+  if (!startDate) return fail(400, '请选择项目开始日期')
 
   const user = getCurrentUser()
   const PM = body.PM || user?.id || ''
-  if (!PM) return fail('请选择项目负责人')
+  if (!PM) return fail(400, '请选择项目负责人')
   if (user.role === 'pm' && PM !== user.id) {
-    return fail('项目经理使用模板创建项目时，负责人必须是本人')
+    return fail(400, '项目经理使用模板创建项目时，负责人必须是本人')
   }
   const members = [...new Set([PM, ...(body.members || [])])].filter(Boolean)
 

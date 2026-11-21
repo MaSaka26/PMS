@@ -10,8 +10,8 @@ globalThis.localStorage = {
     clear: () => storage.clear()
 }
 
-const { db } = await import('../src/mock/db.js')
-const { authenticate, getCurrentUser } = await import('../src/mock/auth.js')
+const { db } = await import('../src/mock/db/index.js')
+const { authenticate, getCurrentUser } = await import('../src/mock/services/auth.js')
 
 test('停用成员无法登录，也无法通过 token 读取当前用户', () => {
     const member = db.members.find((m) => m.id === 'u3')

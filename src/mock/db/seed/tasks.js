@@ -1,0 +1,372 @@
+import { commits as gitCommits } from './gitSeed.js'
+import { GIT_PM_ID, GIT_PROJECT_ID } from './projects.js'
+
+let EVENT_SEQ = 0
+// 种子事件生成器：保证 id 唯一，字段结构和运行时事件一致
+const mkEvent = (taskId, projectId, type, by, at, extra = {}) => ({
+    id: `ev_seed_${++EVENT_SEQ}`,
+    taskId,
+    projectId,
+    type,
+    by,
+    at,
+    ...extra,
+})
+
+const plusMinutes = (iso, minutes) => new Date(Date.parse(iso) + minutes * 60000).toISOString()
+const dayOf = (iso) => iso.slice(0, 10)
+
+const gitTasks = gitCommits.map((c) => {
+    const id = `task_git_${c.shortHash}`
+    const day = dayOf(c.date)
+    return {
+        id,
+        projectId: GIT_PROJECT_ID,
+        title: c.subject,
+        desc: `提交 ${c.shortHash} · ${c.author} · ${c.date.slice(0, 16).replace('T', ' ')}`,
+        assignee: c.authorId,
+        priority: /^(feat|fix)/.test(c.subject) ? '高' : '中',
+        status: 'accepted',
+        dueDate: day,
+        createdAt: day,
+        createdBy: c.authorId,
+        plannedStart: day,
+        dependsOn: [],
+        blocked: false,
+        blockedReason: '',
+        blockedAt: null,
+        blockedBy: null,
+        deletedAt: null,
+        extra: {},
+        events: [
+            mkEvent(id, GIT_PROJECT_ID, 'created', c.authorId, plusMinutes(c.date, 0), { to: 'todo' }),
+            mkEvent(id, GIT_PROJECT_ID, 'assigned', c.authorId, plusMinutes(c.date, 1), {
+                from: 'todo',
+                to: 'doing',
+                changes: [{ field: 'assignee', from: '', to: c.authorId }],
+            }),
+            mkEvent(id, GIT_PROJECT_ID, 'submitted', c.authorId, plusMinutes(c.date, 2), {
+                from: 'doing',
+                to: 'done',
+            }),
+            mkEvent(id, GIT_PROJECT_ID, 'accepted', GIT_PM_ID, plusMinutes(c.date, 3), {
+                from: 'done',
+                to: 'accepted',
+            }),
+        ],
+    }
+})
+
+// 手工补充的真实事项：未落地的工作不会出现在 git 里，只能按对话记录补
+const backlogTasks = [
+    {
+        id: 'task_manual_1',
+        projectId: GIT_PROJECT_ID,
+        title: '拆分主包，降低首屏体积',
+        desc: '构建告警：index 已超过 1.2MB，按路由拆分 Element Plus / Highcharts 等大依赖',
+        assignee: '',
+        priority: '中',
+        status: 'todo',
+        dueDate: '2026-12-10',
+        createdAt: '2026-11-21',
+        createdBy: 'u2',
+        plannedStart: '2026-11-24',
+        dependsOn: [],
+        blocked: false,
+        blockedReason: '',
+        blockedAt: null,
+        blockedBy: null,
+        deletedAt: null,
+        extra: {},
+        events: [
+            mkEvent('task_manual_1', GIT_PROJECT_ID, 'created', 'u2', '2026-11-21T05:00:00.000Z', {
+                to: 'todo',
+            }),
+        ],
+    },
+    {
+        id: 'task_manual_2',
+        projectId: GIT_PROJECT_ID,
+        title: '升级 GitHub Actions 到 Node 24 版本',
+        desc: 'checkout@v4 / setup-node@v4 仍以 Node 20 为目标，升级后消除弃用告警',
+        assignee: '',
+        priority: '低',
+        status: 'todo',
+        dueDate: '2026-12-05',
+        createdAt: '2026-11-21',
+        createdBy: 'u2',
+        plannedStart: '2026-11-25',
+        dependsOn: [],
+        blocked: false,
+        blockedReason: '',
+        blockedAt: null,
+        blockedBy: null,
+        deletedAt: null,
+        extra: {},
+        events: [
+            mkEvent('task_manual_2', GIT_PROJECT_ID, 'created', 'u2', '2026-11-21T05:10:00.000Z', {
+                to: 'todo',
+            }),
+        ],
+    },
+    {
+        id: 'task_manual_3',
+        projectId: GIT_PROJECT_ID,
+        title: '任务排期视图（甘特 / 依赖连线）',
+        desc: '已下线：使用频率低、维护成本高，产品决定收敛复杂度',
+        assignee: '',
+        priority: '低',
+        status: 'canceled',
+        dueDate: '2026-11-30',
+        createdAt: '2026-11-19',
+        createdBy: 'u2',
+        plannedStart: '2026-11-19',
+        dependsOn: [],
+        blocked: false,
+        blockedReason: '',
+        blockedAt: null,
+        blockedBy: null,
+        deletedAt: null,
+        canceledReason: '使用频率低、维护成本高，聚焦任务看板与项目模板',
+        canceledAt: '2026-11-19T03:00:00.000Z',
+        canceledBy: 'u1',
+        extra: {},
+        events: [
+            mkEvent('task_manual_3', GIT_PROJECT_ID, 'created', 'u2', '2026-11-19T01:00:00.000Z', {
+                to: 'todo',
+            }),
+            mkEvent('task_manual_3', GIT_PROJECT_ID, 'canceled', 'u1', '2026-11-19T03:00:00.000Z', {
+                from: 'todo',
+                to: 'canceled',
+                reason: '使用频率低、维护成本高，聚焦任务看板与项目模板',
+            }),
+        ],
+    },
+    {
+        id: 'task_manual_4',
+        projectId: GIT_PROJECT_ID,
+        title: '项目排期分析（CPM 关键路径）',
+        desc: '已下线：ES/EF/LS/LF 与浮动时间计算维护成本高，底层依赖能力保留',
+        assignee: '',
+        priority: '低',
+        status: 'canceled',
+        dueDate: '2026-11-30',
+        createdAt: '2026-11-19',
+        createdBy: 'u2',
+        plannedStart: '2026-11-19',
+        dependsOn: [],
+        blocked: false,
+        blockedReason: '',
+        blockedAt: null,
+        blockedBy: null,
+        deletedAt: null,
+        canceledReason: '偏专业项目管理场景，日常使用频率低',
+        canceledAt: '2026-11-19T03:05:00.000Z',
+        canceledBy: 'u1',
+        extra: {},
+        events: [
+            mkEvent('task_manual_4', GIT_PROJECT_ID, 'created', 'u2', '2026-11-19T01:05:00.000Z', {
+                to: 'todo',
+            }),
+            mkEvent('task_manual_4', GIT_PROJECT_ID, 'canceled', 'u1', '2026-11-19T03:05:00.000Z', {
+                from: 'todo',
+                to: 'canceled',
+                reason: '偏专业项目管理场景，日常使用频率低',
+            }),
+        ],
+    },
+]
+
+export const seedTasks = [
+    // 双十一大促：Push + Pull 混合示例（task_seed_1 额外演示"阻塞"）
+    {
+        id: 'task_seed_1',
+        projectId: 'project_seed_1',
+        title: '大促主视觉设计',
+        desc: '海报、banner、商品详情页主图',
+        assignee: 'u3',
+        priority: '高',
+        status: 'doing',
+        dueDate: '2026-11-20',
+        createdAt: '2026-11-18',
+        createdBy: 'u2',
+        plannedStart: '2026-11-18',
+        dependsOn: [],
+        blocked: true,
+        blockedReason: '等待后端商品主图接口联调',
+        blockedAt: '2026-11-18T06:00:00.000Z',
+        blockedBy: 'u3',
+        deletedAt: null,
+        extra: {},
+        events: [
+            mkEvent('task_seed_1', 'project_seed_1', 'created', 'u2', '2026-11-18T01:00:00.000Z', {
+                to: 'todo',
+            }),
+            mkEvent('task_seed_1', 'project_seed_1', 'claimed', 'u3', '2026-11-18T02:00:00.000Z', {
+                from: 'todo',
+                to: 'doing',
+            }),
+            mkEvent('task_seed_1', 'project_seed_1', 'blocked', 'u3', '2026-11-18T06:00:00.000Z', {
+                reason: '等待后端商品主图接口联调',
+            }),
+        ],
+    },
+    {
+        id: 'task_seed_2',
+        projectId: 'project_seed_1',
+        title: '商品详情页 UI 微调',
+        desc: '根据新视觉规范微调样式',
+        assignee: '',
+        priority: '中',
+        status: 'todo',
+        dueDate: '2026-11-22',
+        createdAt: '2026-11-18',
+        createdBy: 'u2',
+        plannedStart: '2026-11-20',
+        dependsOn: ['task_seed_1'],
+        blocked: false,
+        blockedReason: '',
+        blockedAt: null,
+        blockedBy: null,
+        deletedAt: null,
+        extra: {},
+        events: [
+            mkEvent('task_seed_2', 'project_seed_1', 'created', 'u2', '2026-11-18T01:05:00.000Z', {
+                to: 'todo',
+            }),
+        ],
+    },
+    {
+        id: 'task_seed_3',
+        projectId: 'project_seed_1',
+        title: '支付流程埋点',
+        desc: '转化漏斗数据采集',
+        assignee: '',
+        priority: '低',
+        status: 'todo',
+        dueDate: '2026-11-25',
+        createdAt: '2026-11-18',
+        createdBy: 'u2',
+        plannedStart: '2026-11-22',
+        dependsOn: ['task_seed_2'],
+        blocked: false,
+        blockedReason: '',
+        blockedAt: null,
+        blockedBy: null,
+        deletedAt: null,
+        extra: {},
+        events: [
+            mkEvent('task_seed_3', 'project_seed_1', 'created', 'u2', '2026-11-18T01:10:00.000Z', {
+                to: 'todo',
+            }),
+        ],
+    },
+    // 官网改版：演示"编辑字段"事件
+    {
+        id: 'task_seed_4',
+        projectId: 'project_seed_2',
+        title: '首页重构',
+        desc: '信息架构 + 视觉升级',
+        assignee: 'u3',
+        priority: '高',
+        status: 'doing',
+        dueDate: '2026-12-05',
+        createdAt: '2026-11-12',
+        createdBy: 'u2',
+        plannedStart: '2026-11-14',
+        dependsOn: [],
+        blocked: false,
+        blockedReason: '',
+        blockedAt: null,
+        blockedBy: null,
+        deletedAt: null,
+        extra: {},
+        events: [
+            mkEvent('task_seed_4', 'project_seed_2', 'created', 'u2', '2026-11-12T02:00:00.000Z', {
+                to: 'todo',
+            }),
+            mkEvent('task_seed_4', 'project_seed_2', 'assigned', 'u2', '2026-11-12T02:05:00.000Z', {
+                from: 'todo',
+                to: 'doing',
+                changes: [{ field: 'assignee', from: '', to: 'u3' }],
+            }),
+            mkEvent('task_seed_4', 'project_seed_2', 'edited', 'u2', '2026-11-14T03:00:00.000Z', {
+                changes: [{ field: 'priority', from: '中', to: '高' }],
+            }),
+        ],
+    },
+    // 会员体系升级：待验收
+    {
+        id: 'task_seed_5',
+        projectId: 'project_seed_3',
+        title: '会员等级规则梳理',
+        desc: '与产品经理对齐等级与权益',
+        assignee: 'u1',
+        priority: '高',
+        status: 'done',
+        dueDate: '2026-11-15',
+        createdAt: '2026-11-13',
+        createdBy: 'u1',
+        plannedStart: '2026-11-13',
+        dependsOn: [],
+        blocked: false,
+        blockedReason: '',
+        blockedAt: null,
+        blockedBy: null,
+        deletedAt: null,
+        extra: {},
+        events: [
+            mkEvent('task_seed_5', 'project_seed_3', 'created', 'u1', '2026-11-13T01:00:00.000Z', {
+                to: 'todo',
+            }),
+            mkEvent('task_seed_5', 'project_seed_3', 'claimed', 'u1', '2026-11-13T01:30:00.000Z', {
+                from: 'todo',
+                to: 'doing',
+            }),
+            mkEvent('task_seed_5', 'project_seed_3', 'submitted', 'u1', '2026-11-15T09:00:00.000Z', {
+                from: 'doing',
+                to: 'done',
+            }),
+        ],
+    },
+    // 已关闭项目下的任务：归档页只读查看用
+    {
+        id: 'task_seed_6',
+        projectId: 'project_seed_4',
+        title: '618 复盘报告输出',
+        desc: '输出活动数据复盘与改进建议',
+        assignee: 'u3',
+        priority: '中',
+        status: 'accepted',
+        dueDate: '2026-09-28',
+        createdAt: '2026-09-15',
+        createdBy: 'u2',
+        plannedStart: '2026-09-15',
+        dependsOn: [],
+        blocked: false,
+        blockedReason: '',
+        blockedAt: null,
+        blockedBy: null,
+        deletedAt: null,
+        extra: {},
+        events: [
+            mkEvent('task_seed_6', 'project_seed_4', 'created', 'u2', '2026-09-15T01:00:00.000Z', {
+                to: 'todo',
+            }),
+            mkEvent('task_seed_6', 'project_seed_4', 'claimed', 'u3', '2026-09-15T02:00:00.000Z', {
+                from: 'todo',
+                to: 'doing',
+            }),
+            mkEvent('task_seed_6', 'project_seed_4', 'submitted', 'u3', '2026-09-27T08:00:00.000Z', {
+                from: 'doing',
+                to: 'done',
+            }),
+            mkEvent('task_seed_6', 'project_seed_4', 'accepted', 'u2', '2026-09-28T02:00:00.000Z', {
+                from: 'done',
+                to: 'accepted',
+            }),
+        ],
+    },
+    ...gitTasks,
+    ...backlogTasks,
+]
