@@ -1,6 +1,8 @@
+import { authors as gitAuthors, commits as gitCommits } from './gitSeed.js'
+
 const STORAGE_KEY = 'pm_mock_db'
-// 版本 7：新增「Agent」成员与「PMS 自举」演示项目（自举场景，老缓存整份重置）
-const SEED_VERSION = 7
+// 版本 8：「PMS 开发记录」改为由 git log 生成（真实提交时间与提交人，老缓存整份重置）
+const SEED_VERSION = 8
 
 let EVENT_SEQ = 0
 // 种子事件生成器：保证 id 唯一，字段结构和运行时事件一致
@@ -12,6 +14,82 @@ const mkEvent = (taskId, projectId, type, by, at, extra = {}) => ({
   by,
   at,
   ...extra,
+})
+
+// Github 记录生成的项目与任务：一条提交 = 一个任务
+const GIT_PROJECT_ID = 'project_seed_5'
+// 由项目经理统一验收，避免「提交人验收自己」
+const GIT_PM_ID = 'u2'
+const gitMembers = gitAuthors.map((a) => ({
+  id: a.id,
+  name: a.name,
+  role: 'member',
+  position: '开发者',
+  active: true,
+}))
+
+const plusMinutes = (iso, minutes) => new Date(Date.parse(iso) + minutes * 60000).toISOString()
+const dayOf = (iso) => iso.slice(0, 10)
+
+const gitProject = gitCommits.length
+  ? {
+      id: GIT_PROJECT_ID,
+      title: 'PMS 开发记录',
+      type: '内部系统',
+      icon: 'Monitor',
+      desc: '由 git log 生成：一条提交对应一个任务，时间与提交人来自仓库记录，验收统一记为项目经理',
+      priority: '高',
+      PM: GIT_PM_ID,
+      members: [...gitAuthors.map((a) => a.id), GIT_PM_ID],
+      createdAt: dayOf(gitCommits[0].date),
+      startDate: dayOf(gitCommits[0].date),
+      endDate: dayOf(gitCommits[gitCommits.length - 1].date),
+      status: 'iterating',
+      closedAt: null,
+      closedBy: null,
+      events: [],
+    }
+  : null
+
+const gitTasks = gitCommits.map((c) => {
+  const id = `task_git_${c.shortHash}`
+  const day = dayOf(c.date)
+  return {
+    id,
+    projectId: GIT_PROJECT_ID,
+    title: c.subject,
+    desc: `提交 ${c.shortHash} · ${c.author} · ${c.date.slice(0, 16).replace('T', ' ')}`,
+    assignee: c.authorId,
+    priority: /^(feat|fix)/.test(c.subject) ? '高' : '中',
+    status: 'accepted',
+    dueDate: day,
+    createdAt: day,
+    createdBy: c.authorId,
+    plannedStart: day,
+    dependsOn: [],
+    blocked: false,
+    blockedReason: '',
+    blockedAt: null,
+    blockedBy: null,
+    deletedAt: null,
+    extra: {},
+    events: [
+      mkEvent(id, GIT_PROJECT_ID, 'created', c.authorId, plusMinutes(c.date, 0), { to: 'todo' }),
+      mkEvent(id, GIT_PROJECT_ID, 'assigned', c.authorId, plusMinutes(c.date, 1), {
+        from: 'todo',
+        to: 'doing',
+        changes: [{ field: 'assignee', from: '', to: c.authorId }],
+      }),
+      mkEvent(id, GIT_PROJECT_ID, 'submitted', c.authorId, plusMinutes(c.date, 2), {
+        from: 'doing',
+        to: 'done',
+      }),
+      mkEvent(id, GIT_PROJECT_ID, 'accepted', GIT_PM_ID, plusMinutes(c.date, 3), {
+        from: 'done',
+        to: 'accepted',
+      }),
+    ],
+  }
 })
 
 // 首次运行时写入的示例项目，避免页面一片空白
@@ -94,24 +172,8 @@ const seedProjects = [
       },
     ],
   },
-  // 自举项目：用 PMS 管理 PMS 自身的开发，任务派给 Agent
-  {
-    id: 'project_seed_5',
-    title: 'PMS 自举：用 PMS 管 PMS',
-    type: '内部系统',
-    icon: 'Monitor',
-    desc: '把系统自身的功能拆成任务，派给 Agent 执行，用看板跟踪迭代进度',
-    priority: '高',
-    PM: 'u2',
-    members: ['u1', 'u2', 'u3', 'u4'],
-    createdAt: '2026-11-14',
-    startDate: '2026-11-14',
-    endDate: '2026-12-31',
-    status: 'active',
-    closedAt: null,
-    closedBy: null,
-    events: [],
-  },
+  // 由 git log 生成：一条提交 = 一个任务
+  ...(gitProject ? [gitProject] : []),
 ]
 
 const defaultData = {
@@ -307,309 +369,7 @@ const defaultData = {
         }),
       ],
     },
-    // PMS 自举项目：大部分任务派给 Agent（u4），覆盖看板的四种状态
-    {
-      id: 'task_seed_7',
-      projectId: 'project_seed_5',
-      title: '权限矩阵统一（项目 / 任务 / 字段 / 模板）',
-      desc: '角色判断收敛到 utils/permissions.js，前端隐藏按钮 + mock 二次校验',
-      assignee: 'u4',
-      priority: '高',
-      status: 'accepted',
-      dueDate: '2026-11-17',
-      createdAt: '2026-11-14',
-      createdBy: 'u2',
-      plannedStart: '2026-11-14',
-      dependsOn: [],
-      blocked: false,
-      blockedReason: '',
-      blockedAt: null,
-      blockedBy: null,
-      deletedAt: null,
-      extra: {},
-      events: [
-        mkEvent('task_seed_7', 'project_seed_5', 'created', 'u2', '2026-11-14T01:00:00.000Z', {
-          to: 'todo',
-        }),
-        mkEvent('task_seed_7', 'project_seed_5', 'assigned', 'u2', '2026-11-14T01:10:00.000Z', {
-          from: 'todo',
-          to: 'doing',
-          changes: [{ field: 'assignee', from: '', to: 'u4' }],
-        }),
-        mkEvent('task_seed_7', 'project_seed_5', 'submitted', 'u4', '2026-11-16T08:00:00.000Z', {
-          from: 'doing',
-          to: 'done',
-        }),
-        mkEvent('task_seed_7', 'project_seed_5', 'accepted', 'u2', '2026-11-17T02:00:00.000Z', {
-          from: 'done',
-          to: 'accepted',
-        }),
-      ],
-    },
-    {
-      id: 'task_seed_8',
-      projectId: 'project_seed_5',
-      title: '成员停用与登录账号联动',
-      desc: '停用成员后 token 立即失效；保护项目负责人、未完成任务与最后一个管理员',
-      assignee: 'u4',
-      priority: '高',
-      status: 'accepted',
-      dueDate: '2026-11-18',
-      createdAt: '2026-11-15',
-      createdBy: 'u1',
-      plannedStart: '2026-11-15',
-      dependsOn: [],
-      blocked: false,
-      blockedReason: '',
-      blockedAt: null,
-      blockedBy: null,
-      deletedAt: null,
-      extra: {},
-      events: [
-        mkEvent('task_seed_8', 'project_seed_5', 'created', 'u1', '2026-11-15T01:00:00.000Z', {
-          to: 'todo',
-        }),
-        mkEvent('task_seed_8', 'project_seed_5', 'assigned', 'u1', '2026-11-15T01:20:00.000Z', {
-          from: 'todo',
-          to: 'doing',
-          changes: [{ field: 'assignee', from: '', to: 'u4' }],
-        }),
-        mkEvent('task_seed_8', 'project_seed_5', 'submitted', 'u4', '2026-11-17T07:30:00.000Z', {
-          from: 'doing',
-          to: 'done',
-        }),
-        mkEvent('task_seed_8', 'project_seed_5', 'accepted', 'u1', '2026-11-18T03:00:00.000Z', {
-          from: 'done',
-          to: 'accepted',
-        }),
-      ],
-    },
-    {
-      id: 'task_seed_9',
-      projectId: 'project_seed_5',
-      title: '单元测试与 CI',
-      desc: '覆盖权限、截止日期分级、登录与停用校验；push / PR 自动跑测试和构建',
-      assignee: 'u4',
-      priority: '中',
-      status: 'accepted',
-      dueDate: '2026-11-19',
-      createdAt: '2026-11-16',
-      createdBy: 'u2',
-      plannedStart: '2026-11-16',
-      dependsOn: [],
-      blocked: false,
-      blockedReason: '',
-      blockedAt: null,
-      blockedBy: null,
-      deletedAt: null,
-      extra: {},
-      events: [
-        mkEvent('task_seed_9', 'project_seed_5', 'created', 'u2', '2026-11-16T01:00:00.000Z', {
-          to: 'todo',
-        }),
-        mkEvent('task_seed_9', 'project_seed_5', 'assigned', 'u2', '2026-11-16T01:05:00.000Z', {
-          from: 'todo',
-          to: 'doing',
-          changes: [{ field: 'assignee', from: '', to: 'u4' }],
-        }),
-        mkEvent('task_seed_9', 'project_seed_5', 'submitted', 'u4', '2026-11-18T09:00:00.000Z', {
-          from: 'doing',
-          to: 'done',
-        }),
-        mkEvent('task_seed_9', 'project_seed_5', 'accepted', 'u2', '2026-11-19T02:00:00.000Z', {
-          from: 'done',
-          to: 'accepted',
-        }),
-      ],
-    },
-    {
-      id: 'task_seed_10',
-      projectId: 'project_seed_5',
-      title: 'README 页面详解与代码地图',
-      desc: '补齐页面职责、核心代码位置与页面之间的关联，降低上手成本',
-      assignee: 'u3',
-      priority: '低',
-      status: 'accepted',
-      dueDate: '2026-11-19',
-      createdAt: '2026-11-17',
-      createdBy: 'u1',
-      plannedStart: '2026-11-17',
-      dependsOn: [],
-      blocked: false,
-      blockedReason: '',
-      blockedAt: null,
-      blockedBy: null,
-      deletedAt: null,
-      extra: {},
-      events: [
-        mkEvent('task_seed_10', 'project_seed_5', 'created', 'u1', '2026-11-17T01:00:00.000Z', {
-          to: 'todo',
-        }),
-        mkEvent('task_seed_10', 'project_seed_5', 'claimed', 'u3', '2026-11-17T02:00:00.000Z', {
-          from: 'todo',
-          to: 'doing',
-        }),
-        mkEvent('task_seed_10', 'project_seed_5', 'submitted', 'u3', '2026-11-18T10:00:00.000Z', {
-          from: 'doing',
-          to: 'done',
-        }),
-        mkEvent('task_seed_10', 'project_seed_5', 'accepted', 'u1', '2026-11-19T03:00:00.000Z', {
-          from: 'done',
-          to: 'accepted',
-        }),
-      ],
-    },
-    {
-      id: 'task_seed_11',
-      projectId: 'project_seed_5',
-      title: 'GitHub Pages 部署（动态 base + Hash 路由）',
-      desc: 'Actions 自动构建发布，刷新不 404',
-      assignee: 'u4',
-      priority: '高',
-      status: 'done',
-      dueDate: '2026-11-21',
-      createdAt: '2026-11-20',
-      createdBy: 'u2',
-      plannedStart: '2026-11-20',
-      dependsOn: [],
-      blocked: false,
-      blockedReason: '',
-      blockedAt: null,
-      blockedBy: null,
-      deletedAt: null,
-      extra: {},
-      events: [
-        mkEvent('task_seed_11', 'project_seed_5', 'created', 'u2', '2026-11-20T01:00:00.000Z', {
-          to: 'todo',
-        }),
-        mkEvent('task_seed_11', 'project_seed_5', 'assigned', 'u2', '2026-11-20T01:10:00.000Z', {
-          from: 'todo',
-          to: 'doing',
-          changes: [{ field: 'assignee', from: '', to: 'u4' }],
-        }),
-        mkEvent('task_seed_11', 'project_seed_5', 'submitted', 'u4', '2026-11-21T02:00:00.000Z', {
-          from: 'doing',
-          to: 'done',
-        }),
-      ],
-    },
-    {
-      id: 'task_seed_12',
-      projectId: 'project_seed_5',
-      title: '项目模板与套用生成任务',
-      desc: '模板保存默认字段与任务清单，套用后生成项目和待办任务',
-      assignee: 'u3',
-      priority: '中',
-      status: 'done',
-      dueDate: '2026-11-22',
-      createdAt: '2026-11-18',
-      createdBy: 'u2',
-      plannedStart: '2026-11-18',
-      dependsOn: [],
-      blocked: false,
-      blockedReason: '',
-      blockedAt: null,
-      blockedBy: null,
-      deletedAt: null,
-      extra: {},
-      events: [
-        mkEvent('task_seed_12', 'project_seed_5', 'created', 'u2', '2026-11-18T01:00:00.000Z', {
-          to: 'todo',
-        }),
-        mkEvent('task_seed_12', 'project_seed_5', 'claimed', 'u3', '2026-11-18T02:00:00.000Z', {
-          from: 'todo',
-          to: 'doing',
-        }),
-        mkEvent('task_seed_12', 'project_seed_5', 'submitted', 'u3', '2026-11-21T06:00:00.000Z', {
-          from: 'doing',
-          to: 'done',
-        }),
-      ],
-    },
-    {
-      id: 'task_seed_13',
-      projectId: 'project_seed_5',
-      title: '任务状态机与验收规则',
-      desc: '认领即开工、提交 ≠ 验收、终态可回退但必须留原因',
-      assignee: 'u4',
-      priority: '高',
-      status: 'doing',
-      dueDate: '2026-11-26',
-      createdAt: '2026-11-19',
-      createdBy: 'u2',
-      plannedStart: '2026-11-19',
-      dependsOn: [],
-      blocked: false,
-      blockedReason: '',
-      blockedAt: null,
-      blockedBy: null,
-      deletedAt: null,
-      extra: {},
-      events: [
-        mkEvent('task_seed_13', 'project_seed_5', 'created', 'u2', '2026-11-19T01:00:00.000Z', {
-          to: 'todo',
-        }),
-        mkEvent('task_seed_13', 'project_seed_5', 'assigned', 'u2', '2026-11-19T01:10:00.000Z', {
-          from: 'todo',
-          to: 'doing',
-          changes: [{ field: 'assignee', from: '', to: 'u4' }],
-        }),
-      ],
-    },
-    {
-      id: 'task_seed_14',
-      projectId: 'project_seed_5',
-      title: '任务看板筛选（标题 / 负责人 / 阻塞）',
-      desc: '按关键词、负责人和阻塞状态过滤任务卡片',
-      assignee: 'u3',
-      priority: '中',
-      status: 'doing',
-      dueDate: '2026-11-24',
-      createdAt: '2026-11-20',
-      createdBy: 'u2',
-      plannedStart: '2026-11-20',
-      dependsOn: [],
-      blocked: false,
-      blockedReason: '',
-      blockedAt: null,
-      blockedBy: null,
-      deletedAt: null,
-      extra: {},
-      events: [
-        mkEvent('task_seed_14', 'project_seed_5', 'created', 'u2', '2026-11-20T02:00:00.000Z', {
-          to: 'todo',
-        }),
-        mkEvent('task_seed_14', 'project_seed_5', 'claimed', 'u3', '2026-11-20T03:00:00.000Z', {
-          from: 'todo',
-          to: 'doing',
-        }),
-      ],
-    },
-    {
-      id: 'task_seed_15',
-      projectId: 'project_seed_5',
-      title: '字段配置驱动项目 / 任务表单',
-      desc: '字段启用状态与顺序决定表单渲染范围，模板可限定字段子集',
-      assignee: '',
-      priority: '中',
-      status: 'todo',
-      dueDate: '2026-11-28',
-      createdAt: '2026-11-21',
-      createdBy: 'u2',
-      plannedStart: '2026-11-23',
-      dependsOn: ['task_seed_13'],
-      blocked: false,
-      blockedReason: '',
-      blockedAt: null,
-      blockedBy: null,
-      deletedAt: null,
-      extra: {},
-      events: [
-        mkEvent('task_seed_15', 'project_seed_5', 'created', 'u2', '2026-11-21T01:00:00.000Z', {
-          to: 'todo',
-        }),
-      ],
-    },
+    ...gitTasks,
   ],
   fields: [],
   templates: [],
@@ -617,8 +377,10 @@ const defaultData = {
     { id: 'u1', name: '老板', role: 'admin', position: '总经理', active: true },
     { id: 'u2', name: '张经理', role: 'pm', position: '项目经理', active: true },
     { id: 'u3', name: '李员工', role: 'member', position: '前端工程师', active: true },
-    // Agent：自举项目的执行者，用来演示「把任务派给自动化角色」
+    // Agent：演示用成员，当前没有分配任务，可手工派发
     { id: 'u4', name: 'Agent', role: 'member', position: 'AI 执行者', active: true },
+    // 由 git log 的提交作者生成
+    ...gitMembers,
   ],
   // 登录账号（密码明文，仅测试用）
   users: [

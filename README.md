@@ -45,6 +45,7 @@ npm run dev      # 本地开发
 npm run test     # 单元测试（Node 内置 test runner）
 npm run build    # 生产构建
 npm run preview  # 预览构建结果
+npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 ```
 
 启动后访问终端提示的地址，默认进入登录页。
@@ -64,7 +65,7 @@ npm run preview  # 预览构建结果
 | member | member | 成员 | 李员工 |
 | agent | agent | 成员 | Agent |
 
-种子数据里还有一个自举项目「PMS 自举：用 PMS 管 PMS」，把系统自身的功能拆成任务，大部分派给了 `Agent`，可直接用它演示看板、筛选和验收流程。
+项目看板里的「PMS 开发记录」由 `npm run seed:git` 读取 `git log` 生成（写入 `src/mock/gitSeed.js`）：一条提交对应一个任务，时间与提交人来自仓库记录，状态统一收口为已验收，验收人记为项目经理。有新提交后重新执行该命令并提交生成文件即可，CI 不依赖 git 历史。
 
 登录后会写入 `pm_token`，未登录访问业务页面会被路由守卫重定向到登录页。
 
