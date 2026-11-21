@@ -1,8 +1,8 @@
 import { authors as gitAuthors, commits as gitCommits } from './gitSeed.js'
 
 const STORAGE_KEY = 'pm_mock_db'
-// 版本 8：「PMS 开发记录」改为由 git log 生成（真实提交时间与提交人，老缓存整份重置）
-const SEED_VERSION = 8
+// 版本 9：「PMS 开发记录」补充真实待办与已取消任务（老缓存整份重置）
+const SEED_VERSION = 9
 
 let EVENT_SEQ = 0
 // 种子事件生成器：保证 id 唯一，字段结构和运行时事件一致
@@ -37,7 +37,7 @@ const gitProject = gitCommits.length
       title: 'PMS 开发记录',
       type: '内部系统',
       icon: 'Monitor',
-      desc: '由 git log 生成：一条提交对应一个任务，时间与提交人来自仓库记录，验收统一记为项目经理',
+      desc: '提交对应的任务由 git log 生成；待办与已取消为手工补充的真实事项',
       priority: '高',
       PM: GIT_PM_ID,
       members: [...gitAuthors.map((a) => a.id), GIT_PM_ID],
@@ -91,6 +91,126 @@ const gitTasks = gitCommits.map((c) => {
     ],
   }
 })
+
+// 手工补充的真实事项：未落地的工作不会出现在 git 里，只能按对话记录补
+const backlogTasks = [
+  {
+    id: 'task_manual_1',
+    projectId: GIT_PROJECT_ID,
+    title: '拆分主包，降低首屏体积',
+    desc: '构建告警：index 已超过 1.2MB，按路由拆分 Element Plus / Highcharts 等大依赖',
+    assignee: '',
+    priority: '中',
+    status: 'todo',
+    dueDate: '2026-12-10',
+    createdAt: '2026-11-21',
+    createdBy: 'u2',
+    plannedStart: '2026-11-24',
+    dependsOn: [],
+    blocked: false,
+    blockedReason: '',
+    blockedAt: null,
+    blockedBy: null,
+    deletedAt: null,
+    extra: {},
+    events: [
+      mkEvent('task_manual_1', GIT_PROJECT_ID, 'created', 'u2', '2026-11-21T05:00:00.000Z', {
+        to: 'todo',
+      }),
+    ],
+  },
+  {
+    id: 'task_manual_2',
+    projectId: GIT_PROJECT_ID,
+    title: '升级 GitHub Actions 到 Node 24 版本',
+    desc: 'checkout@v4 / setup-node@v4 仍以 Node 20 为目标，升级后消除弃用告警',
+    assignee: '',
+    priority: '低',
+    status: 'todo',
+    dueDate: '2026-12-05',
+    createdAt: '2026-11-21',
+    createdBy: 'u2',
+    plannedStart: '2026-11-25',
+    dependsOn: [],
+    blocked: false,
+    blockedReason: '',
+    blockedAt: null,
+    blockedBy: null,
+    deletedAt: null,
+    extra: {},
+    events: [
+      mkEvent('task_manual_2', GIT_PROJECT_ID, 'created', 'u2', '2026-11-21T05:10:00.000Z', {
+        to: 'todo',
+      }),
+    ],
+  },
+  {
+    id: 'task_manual_3',
+    projectId: GIT_PROJECT_ID,
+    title: '任务排期视图（甘特 / 依赖连线）',
+    desc: '已下线：使用频率低、维护成本高，产品决定收敛复杂度',
+    assignee: '',
+    priority: '低',
+    status: 'canceled',
+    dueDate: '2026-11-30',
+    createdAt: '2026-11-19',
+    createdBy: 'u2',
+    plannedStart: '2026-11-19',
+    dependsOn: [],
+    blocked: false,
+    blockedReason: '',
+    blockedAt: null,
+    blockedBy: null,
+    deletedAt: null,
+    canceledReason: '使用频率低、维护成本高，聚焦任务看板与项目模板',
+    canceledAt: '2026-11-19T03:00:00.000Z',
+    canceledBy: 'u1',
+    extra: {},
+    events: [
+      mkEvent('task_manual_3', GIT_PROJECT_ID, 'created', 'u2', '2026-11-19T01:00:00.000Z', {
+        to: 'todo',
+      }),
+      mkEvent('task_manual_3', GIT_PROJECT_ID, 'canceled', 'u1', '2026-11-19T03:00:00.000Z', {
+        from: 'todo',
+        to: 'canceled',
+        reason: '使用频率低、维护成本高，聚焦任务看板与项目模板',
+      }),
+    ],
+  },
+  {
+    id: 'task_manual_4',
+    projectId: GIT_PROJECT_ID,
+    title: '项目排期分析（CPM 关键路径）',
+    desc: '已下线：ES/EF/LS/LF 与浮动时间计算维护成本高，底层依赖能力保留',
+    assignee: '',
+    priority: '低',
+    status: 'canceled',
+    dueDate: '2026-11-30',
+    createdAt: '2026-11-19',
+    createdBy: 'u2',
+    plannedStart: '2026-11-19',
+    dependsOn: [],
+    blocked: false,
+    blockedReason: '',
+    blockedAt: null,
+    blockedBy: null,
+    deletedAt: null,
+    canceledReason: '偏专业项目管理场景，日常使用频率低',
+    canceledAt: '2026-11-19T03:05:00.000Z',
+    canceledBy: 'u1',
+    extra: {},
+    events: [
+      mkEvent('task_manual_4', GIT_PROJECT_ID, 'created', 'u2', '2026-11-19T01:05:00.000Z', {
+        to: 'todo',
+      }),
+      mkEvent('task_manual_4', GIT_PROJECT_ID, 'canceled', 'u1', '2026-11-19T03:05:00.000Z', {
+        from: 'todo',
+        to: 'canceled',
+        reason: '偏专业项目管理场景，日常使用频率低',
+      }),
+    ],
+  },
+]
 
 // 首次运行时写入的示例项目，避免页面一片空白
 const seedProjects = [
@@ -370,6 +490,7 @@ const defaultData = {
       ],
     },
     ...gitTasks,
+    ...backlogTasks,
   ],
   fields: [],
   templates: [],
