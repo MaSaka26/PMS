@@ -154,7 +154,9 @@ const fetchProjects = async () => {
         return
     }
     if (projectStore.projectList.length && !currentProjectId.value) {
-        currentProjectId.value = projectStore.projectList[0].id
+        // 默认加载置顶泳道的第一条；没有置顶则退回第一个项目
+        const pinned = projectStore.projectList.find((p) => p.pinned)
+        currentProjectId.value = (pinned || projectStore.projectList[0]).id
     }
 }
 

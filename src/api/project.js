@@ -15,6 +15,16 @@ export function updateProject(id, data) {
   return request.put(`/projects/${id}`, data)
 }
 
+// 置顶 / 取消置顶
+export function pinProject(id, pinned) {
+  return request.put(`/projects/${id}/pin`, { pinned })
+}
+
+// 调整泳道内顺序：direction = up | down
+export function moveProject(id, direction) {
+  return request.put(`/projects/${id}/move`, { direction })
+}
+
 // 删除项目（软删除）
 export function deleteProject(id) {
   return request.delete(`/projects/${id}`)

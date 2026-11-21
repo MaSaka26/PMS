@@ -1,7 +1,7 @@
 <script setup>
 //   <Card title="项目1" type="类型1" createdAt="2026-11-11" owner="张经理" desc="项目1的描述" priority="高" status="active" />
 import { computed } from 'vue'
-import { Calendar, Delete, Edit, SwitchButton } from '@element-plus/icons-vue'
+import { ArrowDown, ArrowUp, Calendar, Delete, Edit, Star, StarFilled, SwitchButton } from '@element-plus/icons-vue'
 import { PROJECT_STATUS_LABEL } from '@/constants/status'
 
 const props = defineProps({
@@ -16,10 +16,15 @@ const props = defineProps({
     // 是否有权关闭项目（PM / admin）
     canClose: { type: Boolean, default: false },
     canEdit: { type: Boolean, default: true },
-    canDelete: { type: Boolean, default: true }
+    canDelete: { type: Boolean, default: true },
+    // 置顶与泳道内排序（PM / admin）
+    pinned: { type: Boolean, default: false },
+    canPin: { type: Boolean, default: false },
+    canMoveUp: { type: Boolean, default: false },
+    canMoveDown: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['edit', 'delete', 'close', 'open'])
+const emit = defineEmits(['edit', 'delete', 'close', 'open', 'pin', 'move-up', 'move-down'])
 
 const statusText = computed(() => PROJECT_STATUS_LABEL[props.status] || props.status)
 
@@ -32,10 +37,29 @@ const ownerInitial = computed(() => (props.owner || '').trim().charAt(0) || '?')
 </script>
 
 <template>
-    <div class="card" :class="[priorityClass, statusClass]" @click="emit('open')">
+    <div class="card" :class="[priorityClass, statusClass, { 'is-pinned': pinned }]" @click="emit('open')">
         <span class="accent" aria-hidden="true"></span>
 
         <div class="card-actions">
+            <button v-if="canPin" type="button" class="action action-pin" :class="{ 'is-on': pinned }"
+                :title="pinned ? '取消置顶' : '置顶'" @click.stop="emit('pin')">
+                <el-icon>
+                    <StarFilled v-if="pinned" />
+                    <Star v-else />
+                </el-icon>
+            </button>
+            <button v-if="canPin" type="button" class="action" title="上移" :disabled="!canMoveUp"
+                @click.stop="emit('move-up')">
+                <el-icon>
+                    <ArrowUp />
+                </el-icon>
+            </button>
+            <button v-if="canPin" type="button" class="action" title="下移" :disabled="!canMoveDown"
+                @click.stop="emit('move-down')">
+                <el-icon>
+                    <ArrowDown />
+                </el-icon>
+            </button>
             <button v-if="canEdit" type="button" class="action" title="编辑" @click.stop="emit('edit')">
                 <el-icon>
                     <Edit />
@@ -133,7 +157,7 @@ const ownerInitial = computed(() => (props.owner || '').trim().charAt(0) || '?')
         top: 12px;
         right: 12px;
         display: flex;
-        gap: 6px;
+        gap: 4px;
         opacity: 0;
         transform: translateY(-4px);
         transition: opacity 0.2s ease, transform 0.2s ease;
@@ -142,14 +166,14 @@ const ownerInitial = computed(() => (props.owner || '').trim().charAt(0) || '?')
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 26px;
-            height: 26px;
+            width: 24px;
+            height: 24px;
             padding: 0;
-            font-size: 14px;
+            font-size: 13px;
             color: #606266;
             background: #fff;
             border: 1px solid #e8eaef;
-            border-radius: 8px;
+            border-radius: 7px;
             box-shadow: 0 2px 6px rgba(16, 24, 40, 0.08);
             cursor: pointer;
             transition: color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
@@ -158,6 +182,12 @@ const ownerInitial = computed(() => (props.owner || '').trim().charAt(0) || '?')
                 color: var(--accent);
                 border-color: var(--accent);
                 transform: translateY(-1px);
+            }
+
+            &:disabled {
+                opacity: 0.35;
+                cursor: not-allowed;
+                transform: none;
             }
 
             &.action-danger:hover {
@@ -169,7 +199,18 @@ const ownerInitial = computed(() => (props.owner || '').trim().charAt(0) || '?')
                 color: #e6a23c;
                 border-color: #e6a23c;
             }
+
+            &.action-pin.is-on {
+                color: #f59e0b;
+                border-color: #f6c26b;
+                background: #fffbeb;
+            }
         }
+    }
+
+    &.is-pinned {
+        border-color: #f6c26b;
+        background: linear-gradient(180deg, #fffdf6, #fff);
     }
 
     &:hover,

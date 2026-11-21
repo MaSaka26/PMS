@@ -5,7 +5,8 @@ import TemplatePickerDialog from '@/views/template/components/TemplatePickerDial
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { createProject, deleteProject, getProjectList, updateProject, closeProject } from '@/api/project'
+import { createProject, deleteProject, getProjectList, updateProject, closeProject, pinProject, moveProject } from '@/api/project'
+import { StarFilled } from '@element-plus/icons-vue'
 import { useMemberStore } from '@/stores/memberStore'
 import { useUserStore } from '@/stores/userStore'
 import { canCreateProject, canManageProject } from '@/utils/permissions'
@@ -36,6 +37,8 @@ const dialogVisible = ref(false)
 
 // 列表与查询
 const projectList = ref([])
+// 置顶泳道单独加载，不参与普通泳道分页
+const pinnedProjects = ref([])
 const loading = ref(false)
 const keyword = ref('')
 const page = ref(1)
@@ -51,18 +54,63 @@ const memberName = memberStore.memberName
 const loadProjects = async () => {
     loading.value = true
     try {
-        const res = await getProjectList({
-            keyword: keyword.value,
-            page: page.value,
-            size: pageSize.value,
-            scope: 'active'
-        })
+        const [res, pinnedRes] = await Promise.all([
+            getProjectList({
+                keyword: keyword.value,
+                page: page.value,
+                size: pageSize.value,
+                scope: 'active',
+                pinned: 'exclude'
+            }),
+            getProjectList({
+                keyword: keyword.value,
+                page: 1,
+                size: 100,
+                scope: 'active',
+                pinned: 'only'
+            })
+        ])
         projectList.value = res.list
         total.value = res.total
+        pinnedProjects.value = pinnedRes.list || []
+        // 置顶 / 删除后当前页可能变空，回到上一页
+        if (!projectList.value.length && page.value > 1) {
+            page.value -= 1
+            await loadProjects()
+        }
     } catch (error) {
         ElMessage.error(error.message || '项目列表加载失败')
     } finally {
         loading.value = false
+    }
+}
+
+// ——— 置顶与泳道排序 ———
+const pinHandler = async (project) => {
+    if (!canManage(project)) {
+        ElMessage.warning('只有项目负责人或管理员可以置顶项目')
+        return
+    }
+    try {
+        await pinProject(project.id, !project.pinned)
+        ElMessage.success(project.pinned ? '已取消置顶' : '已置顶')
+        page.value = 1
+        await loadProjects()
+    } catch (error) {
+        ElMessage.error(error.message || '操作失败')
+    }
+}
+
+const moveHandler = async (project, direction) => {
+    if (!canManage(project)) {
+        ElMessage.warning('只有项目负责人或管理员可以调整项目顺序')
+        return
+    }
+    try {
+        await moveProject(project.id, direction)
+        await loadProjects()
+    } catch (error) {
+        ElMessage.error(error.message || '调整顺序失败')
     }
 }
 
@@ -206,13 +254,39 @@ onMounted(() => {
             </el-dropdown>
         </div>
         <el-divider />
+        <!-- 置顶泳道：横向排列，不参与普通项目分页 -->
+        <section v-if="pinnedProjects.length" class="pinned-lane">
+            <div class="lane-head">
+                <span class="lane-title">
+                    <el-icon><StarFilled /></el-icon>置顶项目
+                    <span class="lane-count">{{ pinnedProjects.length }}</span>
+                </span>
+                <span class="lane-hint">横向滑动查看，可与普通泳道分开排序</span>
+            </div>
+            <div class="pinned-scroll">
+                <Card v-for="(item, index) in pinnedProjects" :key="item.id" class="pinned-card"
+                    :title="item.title" :type="item.type" :icon="item.icon" :created-at="item.createdAt"
+                    :owner="memberName(item.PM)" :desc="item.desc" :priority="item.priority" :status="item.status"
+                    :pinned="true" :can-close="canManage(item)" :can-edit="canManage(item)"
+                    :can-delete="canManage(item)" :can-pin="canManage(item)" :can-move-up="index > 0"
+                    :can-move-down="index < pinnedProjects.length - 1" @open="openDetail(item)"
+                    @edit="openEdit(item)" @delete="removeProject(item)" @close="closeProjectHandler(item)"
+                    @pin="pinHandler(item)" @move-up="moveHandler(item, 'up')"
+                    @move-down="moveHandler(item, 'down')" />
+            </div>
+        </section>
+
         <div v-loading="loading" class="card-container">
-            <Card v-for="item in projectList" :key="item.id" :title="item.title" :type="item.type" :icon="item.icon"
-                :created-at="item.createdAt" :owner="memberName(item.PM)" :desc="item.desc" :priority="item.priority"
-                :status="item.status" :can-close="canManage(item)" :can-edit="canManage(item)"
-                :can-delete="canManage(item)" @open="openDetail(item)" @edit="openEdit(item)"
-                @delete="removeProject(item)" @close="closeProjectHandler(item)" />
-            <el-empty v-if="!loading && !projectList.length" description="暂无项目" class="empty" />
+            <Card v-for="(item, index) in projectList" :key="item.id" :title="item.title" :type="item.type"
+                :icon="item.icon" :created-at="item.createdAt" :owner="memberName(item.PM)" :desc="item.desc"
+                :priority="item.priority" :status="item.status" :pinned="false" :can-close="canManage(item)"
+                :can-edit="canManage(item)" :can-delete="canManage(item)" :can-pin="canManage(item)"
+                :can-move-up="index > 0" :can-move-down="index < projectList.length - 1"
+                @open="openDetail(item)" @edit="openEdit(item)" @delete="removeProject(item)"
+                @close="closeProjectHandler(item)" @pin="pinHandler(item)"
+                @move-up="moveHandler(item, 'up')" @move-down="moveHandler(item, 'down')" />
+            <el-empty v-if="!loading && !projectList.length && !pinnedProjects.length" description="暂无项目"
+                class="empty" />
         </div>
         <div v-if="total > pageSize" class="pagination">
             <el-pagination background layout="prev, pager, next" :total="total" :page-size="pageSize"
@@ -235,6 +309,60 @@ onMounted(() => {
         align-items: center;
         gap: 8px;
     }
+}
+
+.pinned-lane {
+    padding: 0 20px 4px;
+}
+
+.lane-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.lane-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #92400e;
+
+    .el-icon {
+        color: #f59e0b;
+    }
+}
+
+.lane-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    font-size: 11px;
+    color: #92400e;
+    background: #fef3c7;
+    border-radius: 999px;
+}
+
+.lane-hint {
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+.pinned-scroll {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+}
+
+.pinned-card {
+    flex: 0 0 280px;
 }
 
 .card-container {

@@ -3,7 +3,7 @@ import { db, save } from '../db/index.js'
 import { normalizeProjectStatuses, syncProjectStatus } from '../rules/projectStatus.js'
 import { PROJECT_STATUS } from '@/constants/status'
 import { nowISO } from '../utils/date.js'
-import { uid } from '../utils/id.js'
+import { idBeforeTail, uid } from '../utils/id.js'
 import { paginate } from '../utils/pagination.js'
 import { fail, ok } from '../utils/response.js'
 
@@ -38,10 +38,15 @@ Mock.mock(/\/api\/projects(\?.*)?$/, 'get', (options) => {
   const page = Number(url.searchParams.get('page')) || 1
   const size = Number(url.searchParams.get('size')) || 10
   const scope = url.searchParams.get('scope') || 'active'
+  // all：全部；exclude：只看普通项目；only：只看置顶项目
+  const pinned = url.searchParams.get('pinned') || 'all'
 
   let list = db.projects
   if (scope === 'active') list = list.filter((p) => p.status !== PROJECT_STATUS.ARCHIVED)
   else if (scope === 'archived') list = list.filter((p) => p.status === PROJECT_STATUS.ARCHIVED)
+
+  if (pinned === 'only') list = list.filter((p) => !!p.pinned)
+  else if (pinned === 'exclude') list = list.filter((p) => !p.pinned)
 
   // 非项目成员看不到项目（admin 全局可见）
   const user = getCurrentUser()
@@ -80,11 +85,49 @@ Mock.mock('/api/projects', 'post', (options) => {
     closedAt: null,
     closedBy: null,
     events: [],
+    // 置顶：置顶项目进入独立泳道，不再出现在普通项目泳道
+    pinned: false,
     members: [...new Set([body.PM, ...(body.members || [])])].filter(Boolean),
     // 项目自定义字段值：{ [fieldId]: value }
     extra: body.extra && typeof body.extra === 'object' ? { ...body.extra } : {},
   }
   db.projects.unshift(project)
+  save()
+  return ok(project)
+})
+
+// 置顶 / 取消置顶：项目负责人或管理员
+Mock.mock(/\/api\/projects\/[\w-]+\/pin$/, 'put', (options) => {
+  const id = idBeforeTail(options.url)
+  const body = JSON.parse(options.body)
+  const project = db.projects.find((p) => p.id === id)
+  if (!project) return fail(404, '项目不存在')
+  const user = getCurrentUser()
+  if (!(isAdmin(user) || isPM(user, project))) {
+    return fail(403, '只有项目负责人或管理员可以置顶项目')
+  }
+  project.pinned = !!body.pinned
+  save()
+  return ok(project)
+})
+
+// 调整同一泳道内的顺序：与相邻项目交换数组位置
+Mock.mock(/\/api\/projects\/[\w-]+\/move$/, 'put', (options) => {
+  const id = idBeforeTail(options.url)
+  const body = JSON.parse(options.body)
+  const project = db.projects.find((p) => p.id === id)
+  if (!project) return fail(404, '项目不存在')
+  const user = getCurrentUser()
+  if (!(isAdmin(user) || isPM(user, project))) {
+    return fail(403, '只有项目负责人或管理员可以调整项目顺序')
+  }
+  const lane = db.projects.filter((p) => !!p.pinned === !!project.pinned)
+  const pos = lane.findIndex((p) => p.id === id)
+  const target = body.direction === 'up' ? pos - 1 : pos + 1
+  if (target < 0 || target >= lane.length) return ok(project)
+  const a = db.projects.indexOf(lane[pos])
+  const b = db.projects.indexOf(lane[target])
+  ;[db.projects[a], db.projects[b]] = [db.projects[b], db.projects[a]]
   save()
   return ok(project)
 })
