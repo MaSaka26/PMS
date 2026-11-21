@@ -62,6 +62,9 @@ npm run preview  # 预览构建结果
 | admin | admin | 管理员 | 老板 |
 | pm | pm | 项目经理 | 张经理 |
 | member | member | 成员 | 李员工 |
+| agent | agent | 成员 | Agent |
+
+种子数据里还有一个自举项目「PMS 自举：用 PMS 管 PMS」，把系统自身的功能拆成任务，大部分派给了 `Agent`，可直接用它演示看板、筛选和验收流程。
 
 登录后会写入 `pm_token`，未登录访问业务页面会被路由守卫重定向到登录页。
 
