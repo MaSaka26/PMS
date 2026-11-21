@@ -907,7 +907,7 @@ onMounted(async () => {
 
 <style scoped lang="scss">
 .task-page {
-    padding: 24px;
+    padding: 24px 16px 16px 16px;
     min-height: 100%;
 }
 
@@ -1065,7 +1065,7 @@ onMounted(async () => {
     border-radius: 14px;
     padding: 14px 12px;
     // 列高锁定在视口内，任务变多时列内滚动，不再撑长整页
-    height: calc(100vh - 220px);
+    height: calc(100vh - 280px);
     min-height: 380px;
     box-sizing: border-box;
     position: relative;

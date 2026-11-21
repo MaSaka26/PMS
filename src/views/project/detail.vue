@@ -2,12 +2,13 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, RefreshLeft, SwitchButton, WarningFilled } from '@element-plus/icons-vue'
+import { ArrowLeft, Collection, Pointer, Edit, RefreshLeft, SwitchButton, WarningFilled } from '@element-plus/icons-vue'
 import {
     getProjectDetail,
     getProjectActivities,
     closeProject,
-    reopenProject
+    reopenProject,
+    updateProject
 } from '@/api/project'
 import { useFieldStore } from '@/stores/fieldStore'
 import { useTaskStore } from '@/stores/taskStore'
@@ -18,6 +19,7 @@ import { PROJECT_STATUS_LABEL, TASK_STATUS_LABEL } from '@/constants/status'
 import { getEventMeta } from '@/constants/event'
 import TaskDrawer from '@/views/task/components/TaskDrawer.vue'
 import TemplateFormDialog from '@/views/template/components/TemplateFormDialog.vue'
+import ProjectFormDialog from './components/ProjectFormDialog.vue'
 import DrilldownPieChart from './components/DrilldownPieChart.vue'
 import DueBadge from '@/components/DueBadge.vue'
 
@@ -264,6 +266,32 @@ const goBack = () => router.push(parentPath.value)
 
 const openBoard = () => router.push({ path: '/task/board', query: { projectId: projectId.value } })
 
+// ——— 编辑项目 ———
+// 项目经理只能把负责人锁定为自己，避免改完失去管理权
+const pmLockedTo = computed(() =>
+    userStore.userInfo?.role === 'pm' ? userStore.userInfo.id : ''
+)
+const editVisible = ref(false)
+
+const openEditProject = () => {
+    if (!canManage.value) {
+        ElMessage.warning('只有项目负责人或管理员可以编辑项目')
+        return
+    }
+    editVisible.value = true
+}
+
+const submitProjectEdit = async (payload) => {
+    try {
+        await updateProject(projectId.value, payload)
+        ElMessage.success('项目已更新')
+        editVisible.value = false
+        await reloadAll()
+    } catch (error) {
+        ElMessage.error(error.message || '保存失败')
+    }
+}
+
 // ——— 另存为模板：把项目结构提取成模板草稿 ———
 const templateFormVisible = ref(false)
 const templateDraft = ref(null)
@@ -440,8 +468,13 @@ const reopenHandler = async () => {
                         </div>
                     </div>
                     <div class="hero-actions">
-                        <el-button v-if="!isArchived" @click="openBoard">打开任务看板</el-button>
-                        <el-button v-if="canManage" @click="openSaveAsTemplate">另存为模板</el-button>
+                        <el-button v-if="!isArchived && canManage" :icon="Edit" @click="openEditProject">
+                            编辑项目
+                        </el-button>
+                        <el-button v-if="!isArchived" :icon="Pointer" @click="openBoard">打开任务看板</el-button>
+                        <el-button v-if="canManage" :icon="Collection" @click="openSaveAsTemplate">
+                            另存为模板
+                        </el-button>
                         <el-button v-if="!isArchived && canManage" type="warning" plain :icon="SwitchButton"
                             @click="closeHandler">
                             关闭并归档
@@ -660,6 +693,8 @@ const reopenHandler = async () => {
             <TaskDrawer v-model="drawerVisible" :task-id="drawerTaskId" />
             <TemplateFormDialog v-model="templateFormVisible" :template="templateDraft"
                 @submit="submitTemplateDraft" />
+            <ProjectFormDialog v-model="editVisible" :project="project" :pm-locked-to="pmLockedTo"
+                @submit="submitProjectEdit" />
         </template>
     </div>
 </template>
