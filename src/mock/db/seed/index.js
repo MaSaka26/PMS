@@ -2,8 +2,8 @@ import { seedProjects } from './projects.js'
 import { seedTasks } from './tasks.js'
 import { members, users } from './members.js'
 
-// 版本 12：按最新 git 提交重新生成开发记录，移除手工占位的 P0 任务
-export const SEED_VERSION = 12
+// 版本 13：修正 PMS 开发记录项目结束日，使其覆盖手工待办的截止日期
+export const SEED_VERSION = 13
 
 export const defaultData = {
     seedVersion: SEED_VERSION,

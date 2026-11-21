@@ -7,24 +7,31 @@ export const GIT_PM_ID = 'u2'
 
 const dayOf = (iso) => iso.slice(0, 10)
 
+// 手工补充的待办/取消任务最晚截止到 12-31，项目结束日至少要覆盖到这一天，
+// 否则这些任务会违反「截止日期不能晚于项目结束日期」的校验
+const PLAN_HORIZON = '2026-12-31'
+
 const gitProject = gitCommits.length
-    ? {
-          id: GIT_PROJECT_ID,
-          title: 'PMS 开发记录',
-          type: '内部系统',
-          icon: 'Monitor',
-          desc: '提交对应的任务由 git log 生成；待办与已取消为手工补充的真实事项',
-          priority: '高',
-          PM: GIT_PM_ID,
-          members: [...gitAuthors.map((a) => a.id), GIT_PM_ID],
-          createdAt: dayOf(gitCommits[0].date),
-          startDate: dayOf(gitCommits[0].date),
-          endDate: dayOf(gitCommits[gitCommits.length - 1].date),
-          status: 'iterating',
-          closedAt: null,
-          closedBy: null,
-          events: [],
-      }
+    ? (() => {
+          const lastCommitDay = dayOf(gitCommits[gitCommits.length - 1].date)
+          return {
+              id: GIT_PROJECT_ID,
+              title: 'PMS 开发记录',
+              type: '内部系统',
+              icon: 'Monitor',
+              desc: '提交对应的任务由 git log 生成；待办与已取消为手工补充的真实事项',
+              priority: '高',
+              PM: GIT_PM_ID,
+              members: [...gitAuthors.map((a) => a.id), GIT_PM_ID],
+              createdAt: dayOf(gitCommits[0].date),
+              startDate: dayOf(gitCommits[0].date),
+              endDate: lastCommitDay > PLAN_HORIZON ? lastCommitDay : PLAN_HORIZON,
+              status: 'iterating',
+              closedAt: null,
+              closedBy: null,
+              events: [],
+          }
+      })()
     : null
 
 // 首次运行时写入的示例项目，避免页面一片空白
