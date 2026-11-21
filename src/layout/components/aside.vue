@@ -2,7 +2,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { Folder, List, Setting, Document, User } from '@element-plus/icons-vue'
+import { Folder, Tickets, Setting, Document, User, CaretRight } from '@element-plus/icons-vue'
 
 import { useSystemStore } from '@/stores/system'
 
@@ -26,17 +26,17 @@ const menus = [
         title: '项目管理',
         icon: Folder,
         children: [
-            { path: '/project/board', title: '项目看板' },
-            { path: '/project/archive', title: '项目归档' },
+            { path: '/project/board', title: '项目看板', icon: CaretRight },
+            { path: '/project/archive', title: '项目归档', icon: CaretRight },
         ],
     },
     {
         path: '/task',
         title: '任务规划',
-        icon: List,
+        icon: Tickets,
         children: [
-            { path: '/task/board', title: '任务看板' },
-            { path: '/task/flow', title: '任务流程' },
+            { path: '/task/board', title: '任务看板', icon: CaretRight },
+            { path: '/task/flow', title: '任务流程', icon: CaretRight },
         ],
     },
     { path: '/field', title: '字段配置', icon: Setting },
@@ -57,7 +57,10 @@ const menus = [
                     <span>{{ item.title }}</span>
                 </template>
                 <el-menu-item v-for="child in item.children" :key="child.path" :index="child.path">
-                    {{ child.title }}
+                    <el-icon>
+                        <component :is="child.icon" />
+                    </el-icon>
+                    <span>{{ child.title }}</span>
                 </el-menu-item>
             </el-sub-menu>
             <el-menu-item v-else :index="item.path">
@@ -74,5 +77,11 @@ const menus = [
 .aside-menu {
     height: 100%;
     border-right: none;
+}
+
+.llline {
+    height: 8px;
+    background: #ffffff;
+    font-size: 10px;
 }
 </style>

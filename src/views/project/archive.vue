@@ -110,7 +110,9 @@ onMounted(() => {
                 <el-input v-model="keyword" placeholder="搜索项目名称 / 类型" clearable style="width: 240px"
                     @keyup.enter="handleSearch">
                     <template #prefix>
-                        <el-icon><Search /></el-icon>
+                        <el-icon>
+                            <Search />
+                        </el-icon>
                     </template>
                 </el-input>
                 <el-button type="primary" @click="handleSearch">查询</el-button>
@@ -118,9 +120,9 @@ onMounted(() => {
         </header>
 
         <div v-loading="loading" class="table-wrap">
-            <el-table :data="list" stripe style="width: 100%" empty-text="暂无归档项目"
-                row-class-name="archive-row" @row-click="openDetail">
-                <el-table-column prop="title" label="项目" min-width="200">
+            <el-table :data="list" stripe style="width: 100%" empty-text="暂无归档项目" row-class-name="archive-row"
+                @row-click="openDetail">
+                <el-table-column prop="title" label="项目" min-width="150">
                     <template #default="{ row }">
                         <div class="project-cell">
                             <span class="dot" aria-hidden="true"></span>
@@ -131,19 +133,19 @@ onMounted(() => {
                         </div>
                     </template>
                 </el-table-column>
-                <el-table-column label="负责人" width="120">
+                <el-table-column label="负责人" width="100" align="center">
                     <template #default="{ row }">{{ memberName(row.PM) }}</template>
                 </el-table-column>
                 <el-table-column label="成员数" width="90" align="center">
                     <template #default="{ row }">{{ (row.members || []).length }}</template>
                 </el-table-column>
-                <el-table-column label="创建时间" width="120">
+                <el-table-column label="创建时间" width="120" align="center">
                     <template #default="{ row }">{{ row.createdAt || '—' }}</template>
                 </el-table-column>
-                <el-table-column label="关闭时间" width="170">
+                <el-table-column label="关闭时间" width="170" align="center">
                     <template #default="{ row }">{{ formatTime(row.closedAt) }}</template>
                 </el-table-column>
-                <el-table-column label="操作" width="130" align="right">
+                <el-table-column label="操作" width="130" align="center">
                     <template #default="{ row }">
                         <el-button v-if="canManage(row)" link type="primary" :icon="RefreshLeft"
                             @click.stop="reopenHandler(row)">
