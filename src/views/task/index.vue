@@ -1058,11 +1058,15 @@ onMounted(async () => {
 }
 
 .column {
+    display: flex;
+    flex-direction: column;
     background: #f1f1f1;
     border: 1px solid #cfcfcf;
     border-radius: 14px;
     padding: 14px 12px;
-    min-height: 494px;
+    // 列高锁定在视口内，任务变多时列内滚动，不再撑长整页
+    height: calc(100vh - 220px);
+    min-height: 380px;
     box-sizing: border-box;
     position: relative;
 
@@ -1103,6 +1107,30 @@ onMounted(async () => {
         display: flex;
         flex-direction: column;
         gap: 10px;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        padding-right: 4px;
+        scrollbar-width: thin;
+        scrollbar-color: #d1d5db transparent;
+
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 3px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        // flex 子项默认会被压缩，卡片必须固定自身高度，溢出才能触发滚动
+        > * {
+            flex: 0 0 auto;
+        }
     }
 }
 
@@ -1125,6 +1153,17 @@ onMounted(async () => {
 @media (max-width: 720px) {
     .board {
         grid-template-columns: 1fr;
+    }
+
+    // 窄屏单列堆叠，列内滚动会很难用，恢复自然高度
+    .column {
+        height: auto;
+        min-height: 0;
+    }
+
+    .column .col-body {
+        overflow-y: visible;
+        padding-right: 0;
     }
 
     .page-actions {
