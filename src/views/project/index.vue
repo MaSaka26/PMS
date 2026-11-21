@@ -276,18 +276,28 @@ onMounted(() => {
             </div>
         </section>
 
-        <div v-loading="loading" class="card-container">
-            <Card v-for="(item, index) in projectList" :key="item.id" :title="item.title" :type="item.type"
-                :icon="item.icon" :created-at="item.createdAt" :owner="memberName(item.PM)" :desc="item.desc"
-                :priority="item.priority" :status="item.status" :pinned="false" :can-close="canManage(item)"
-                :can-edit="canManage(item)" :can-delete="canManage(item)" :can-pin="canManage(item)"
-                :can-move-up="index > 0" :can-move-down="index < projectList.length - 1"
-                @open="openDetail(item)" @edit="openEdit(item)" @delete="removeProject(item)"
-                @close="closeProjectHandler(item)" @pin="pinHandler(item)"
-                @move-up="moveHandler(item, 'up')" @move-down="moveHandler(item, 'down')" />
-            <el-empty v-if="!loading && !projectList.length && !pinnedProjects.length" description="暂无项目"
-                class="empty" />
-        </div>
+        <!-- 普通泳道：未置顶项目 -->
+        <section class="normal-lane">
+            <div class="lane-head">
+                <span class="lane-title lane-title-normal">
+                    全部项目
+                    <span class="lane-count lane-count-normal">{{ total }}</span>
+                </span>
+                <span class="lane-hint">未置顶的项目</span>
+            </div>
+            <div v-loading="loading" class="card-container">
+                <Card v-for="(item, index) in projectList" :key="item.id" :title="item.title" :type="item.type"
+                    :icon="item.icon" :created-at="item.createdAt" :owner="memberName(item.PM)" :desc="item.desc"
+                    :priority="item.priority" :status="item.status" :pinned="false" :can-close="canManage(item)"
+                    :can-edit="canManage(item)" :can-delete="canManage(item)" :can-pin="canManage(item)"
+                    :can-move-up="index > 0" :can-move-down="index < projectList.length - 1"
+                    @open="openDetail(item)" @edit="openEdit(item)" @delete="removeProject(item)"
+                    @close="closeProjectHandler(item)" @pin="pinHandler(item)"
+                    @move-up="moveHandler(item, 'up')" @move-down="moveHandler(item, 'down')" />
+                <el-empty v-if="!loading && !projectList.length && !pinnedProjects.length" description="暂无项目"
+                    class="empty" />
+            </div>
+        </section>
         <div v-if="total > pageSize" class="pagination">
             <el-pagination background layout="prev, pager, next" :total="total" :page-size="pageSize"
                 :current-page="page" @current-change="handlePageChange" />
@@ -311,8 +321,9 @@ onMounted(() => {
     }
 }
 
-.pinned-lane {
-    padding: 0 20px 4px;
+.pinned-lane,
+.normal-lane {
+    padding: 0 20px;
 }
 
 .lane-head {
@@ -354,23 +365,55 @@ onMounted(() => {
     color: #9ca3af;
 }
 
+// 普通泳道标题：与置顶泳道区分，但不抢视觉
+.lane-title-normal {
+    color: #1f2430;
+
+    .el-icon {
+        color: #9ca3af;
+    }
+}
+
+.lane-count-normal {
+    color: #6b7280;
+    background: #f1f5f9;
+}
+
 .pinned-scroll {
     display: flex;
+    align-items: stretch;
     gap: 16px;
     overflow-x: auto;
-    padding-bottom: 8px;
+    // 上下留白：卡片 hover 会上移，避免被滚动容器裁切
+    padding: 14px 2px 18px;
+    scrollbar-width: thin;
 }
 
 .pinned-card {
+    // Card 自带 16px padding，用 border-box 才能和普通泳道的 280px 对齐
     flex: 0 0 280px;
+    box-sizing: border-box;
 }
 
 .card-container {
-    padding: 20px;
+    // 顶部留白与置顶泳道一致，hover 上移也不会被裁切
+    padding: 14px 0 20px;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
+    // 与置顶泳道卡片同宽，两条泳道视觉尺寸一致
+    grid-template-columns: repeat(auto-fill, 280px);
+    gap: 16px;
+    align-items: stretch;
     min-height: 200px;
+}
+
+@media (max-width: 720px) {
+    .card-container {
+        grid-template-columns: 1fr;
+    }
+
+    .pinned-card {
+        flex-basis: 260px;
+    }
 }
 
 .empty {
