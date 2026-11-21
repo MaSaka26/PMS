@@ -6,9 +6,11 @@ import {
     updateMember as updateMemberApi,
     deleteMember as deleteMemberApi
 } from '@/api/member'
+import { useUserStore } from '@/stores/userStore'
 
 export const useMemberStore = defineStore('member', () => {
     const memberList = ref([])
+    const userStore = useUserStore()
 
     // 幂等初始化锁：确保全局只发一次拉取请求
     let initPromise = null
@@ -39,8 +41,10 @@ export const useMemberStore = defineStore('member', () => {
     }
 
     // id -> 姓名（项目卡片、下拉都用）
-    const memberName = (id) =>
-        memberList.value.find((m) => m.id === id)?.name || id
+    const memberName = (id) => {
+        if (!id) return '未指定'
+        return memberList.value.find((m) => m.id === id)?.name || '已删除成员'
+    }
 
     // 新增：乐观更新
     const addMember = async (data) => {
@@ -54,6 +58,10 @@ export const useMemberStore = defineStore('member', () => {
         const updated = await updateMemberApi(id, data)
         const idx = memberList.value.findIndex((m) => m.id === id)
         if (idx !== -1) memberList.value[idx] = updated
+        // 改的是自己：立即刷新当前用户，角色 / 停用状态马上生效
+        if (userStore.userInfo?.id === id) {
+            await userStore.restoreUserInfo()
+        }
         return updated
     }
 
@@ -61,6 +69,9 @@ export const useMemberStore = defineStore('member', () => {
     const removeMember = async (id) => {
         await deleteMemberApi(id)
         memberList.value = memberList.value.filter((m) => m.id !== id)
+        if (userStore.userInfo?.id === id) {
+            await userStore.restoreUserInfo()
+        }
     }
 
     return {

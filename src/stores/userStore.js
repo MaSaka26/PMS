@@ -21,8 +21,7 @@ export const useUserStore = defineStore("user", () => {
   const restoreUserInfo = () => {
     if (restorePromise) return restorePromise;
     if (!token.value) {
-      restorePromise = Promise.resolve(null);
-      return restorePromise;
+      return Promise.resolve(null);
     }
     restorePromise = getInfo()
       .then((user) => {
@@ -30,10 +29,22 @@ export const useUserStore = defineStore("user", () => {
         return user;
       })
       .catch(() => {
-        // token 失效，清掉
+        // token 失效 / 账号被停用：清掉登录态并退回登录页
         token.value = "";
+        userInfo.value = null;
         localStorage.removeItem(TOKEN_KEY);
+        const current = router.currentRoute.value;
+        if (current.meta?.public !== true && current.path !== "/login") {
+          router.push({
+            path: "/login",
+            query: { redirect: current.fullPath || "/project" },
+          });
+        }
         return null;
+      })
+      .finally(() => {
+        // 允许后续再次校验，角色 / 停用状态变化后才能刷新
+        restorePromise = null;
       });
     return restorePromise;
   };

@@ -1,4 +1,4 @@
-import { commits as gitCommits } from './gitSeed.js'
+import { authors as gitAuthors, commits as gitCommits } from './gitSeed.js'
 import { GIT_PM_ID, GIT_PROJECT_ID } from './projects.js'
 
 let EVENT_SEQ = 0
@@ -172,6 +172,119 @@ const backlogTasks = [
                 from: 'todo',
                 to: 'canceled',
                 reason: '偏专业项目管理场景，日常使用频率低',
+            }),
+        ],
+    },
+]
+
+// P0 缺陷修复记录：每项都走完整的 创建 → 指派 → 提交 → 验收 时间线
+const DEV_ID = gitAuthors[0]?.id || 'u2'
+const fixTasks = [
+    {
+        id: 'task_fix_p0_1',
+        projectId: GIT_PROJECT_ID,
+        title: '修复：删除成员留下孤儿引用',
+        desc: '删除成员前校验项目负责人与未完成任务；限制最后一个管理员被降级；人员缺失时显示「已删除成员」而不是裸 id',
+        assignee: DEV_ID,
+        priority: '高',
+        status: 'accepted',
+        dueDate: '2026-11-21',
+        createdAt: '2026-11-21',
+        createdBy: 'u2',
+        plannedStart: '2026-11-21',
+        dependsOn: [],
+        blocked: false,
+        blockedReason: '',
+        blockedAt: null,
+        blockedBy: null,
+        deletedAt: null,
+        extra: {},
+        events: [
+            mkEvent('task_fix_p0_1', GIT_PROJECT_ID, 'created', 'u2', '2026-11-21T05:30:00.000Z', { to: 'todo' }),
+            mkEvent('task_fix_p0_1', GIT_PROJECT_ID, 'assigned', 'u2', '2026-11-21T05:32:00.000Z', {
+                from: 'todo',
+                to: 'doing',
+                changes: [{ field: 'assignee', from: '', to: DEV_ID }],
+            }),
+            mkEvent('task_fix_p0_1', GIT_PROJECT_ID, 'submitted', DEV_ID, '2026-11-21T07:40:00.000Z', {
+                from: 'doing',
+                to: 'done',
+            }),
+            mkEvent('task_fix_p0_1', GIT_PROJECT_ID, 'accepted', 'u2', '2026-11-21T07:45:00.000Z', {
+                from: 'done',
+                to: 'accepted',
+            }),
+        ],
+    },
+    {
+        id: 'task_fix_p0_2',
+        projectId: GIT_PROJECT_ID,
+        title: '修复：多标签页数据互相覆盖',
+        desc: '保存时广播 storage 事件；其他标签页收到后在前台立即重载、后台回到前台再重载，避免旧快照覆盖新数据',
+        assignee: DEV_ID,
+        priority: '高',
+        status: 'accepted',
+        dueDate: '2026-11-21',
+        createdAt: '2026-11-21',
+        createdBy: 'u2',
+        plannedStart: '2026-11-21',
+        dependsOn: [],
+        blocked: false,
+        blockedReason: '',
+        blockedAt: null,
+        blockedBy: null,
+        deletedAt: null,
+        extra: {},
+        events: [
+            mkEvent('task_fix_p0_2', GIT_PROJECT_ID, 'created', 'u2', '2026-11-21T05:35:00.000Z', { to: 'todo' }),
+            mkEvent('task_fix_p0_2', GIT_PROJECT_ID, 'assigned', 'u2', '2026-11-21T05:36:00.000Z', {
+                from: 'todo',
+                to: 'doing',
+                changes: [{ field: 'assignee', from: '', to: DEV_ID }],
+            }),
+            mkEvent('task_fix_p0_2', GIT_PROJECT_ID, 'submitted', DEV_ID, '2026-11-21T07:42:00.000Z', {
+                from: 'doing',
+                to: 'done',
+            }),
+            mkEvent('task_fix_p0_2', GIT_PROJECT_ID, 'accepted', 'u2', '2026-11-21T07:46:00.000Z', {
+                from: 'done',
+                to: 'accepted',
+            }),
+        ],
+    },
+    {
+        id: 'task_fix_p0_3',
+        projectId: GIT_PROJECT_ID,
+        title: '修复：角色或停用变更后会话不刷新',
+        desc: '恢复用户信息的 Promise 不再永久缓存；改到自己时立即重新拉取；账号被停用或失效时自动退回登录页',
+        assignee: DEV_ID,
+        priority: '高',
+        status: 'accepted',
+        dueDate: '2026-11-21',
+        createdAt: '2026-11-21',
+        createdBy: 'u2',
+        plannedStart: '2026-11-21',
+        dependsOn: [],
+        blocked: false,
+        blockedReason: '',
+        blockedAt: null,
+        blockedBy: null,
+        deletedAt: null,
+        extra: {},
+        events: [
+            mkEvent('task_fix_p0_3', GIT_PROJECT_ID, 'created', 'u2', '2026-11-21T05:40:00.000Z', { to: 'todo' }),
+            mkEvent('task_fix_p0_3', GIT_PROJECT_ID, 'assigned', 'u2', '2026-11-21T05:41:00.000Z', {
+                from: 'todo',
+                to: 'doing',
+                changes: [{ field: 'assignee', from: '', to: DEV_ID }],
+            }),
+            mkEvent('task_fix_p0_3', GIT_PROJECT_ID, 'submitted', DEV_ID, '2026-11-21T07:44:00.000Z', {
+                from: 'doing',
+                to: 'done',
+            }),
+            mkEvent('task_fix_p0_3', GIT_PROJECT_ID, 'accepted', 'u2', '2026-11-21T07:47:00.000Z', {
+                from: 'done',
+                to: 'accepted',
             }),
         ],
     },
@@ -369,4 +482,5 @@ export const seedTasks = [
     },
     ...gitTasks,
     ...backlogTasks,
+    ...fixTasks,
 ]

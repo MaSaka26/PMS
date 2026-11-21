@@ -55,3 +55,33 @@ export const db = load()
 export function save() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(db))
 }
+
+// 跨标签页同步：其他标签页写入后，本页内存里的整份快照已经过期。
+// 直接重载而不是继续写，避免用旧快照把对方刚保存的修改整份覆盖。
+if (typeof window !== 'undefined') {
+    let reloading = false
+    let stale = false
+
+    const reload = () => {
+        if (reloading) return
+        reloading = true
+        window.location.reload()
+    }
+
+    window.addEventListener('storage', (event) => {
+        if (event.key !== STORAGE_KEY) return
+        // 后台标签页先记下，回到前台再刷新，避免打扰正在看的页面
+        if (document.visibilityState === 'hidden') {
+            stale = true
+            return
+        }
+        reload()
+    })
+
+    document.addEventListener('visibilitychange', () => {
+        if (stale && document.visibilityState === 'visible') {
+            stale = false
+            reload()
+        }
+    })
+}

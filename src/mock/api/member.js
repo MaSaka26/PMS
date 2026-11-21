@@ -105,6 +105,15 @@ Mock.mock(/\/api\/members\/\w+/, 'put', (options) => {
   if (roleChanged && !ROLES.includes(body.role)) {
     return fail(400, '角色不合法')
   }
+  // 不能把最后一个启用管理员降级，否则系统没人能管成员、字段和模板
+  if (
+    roleChanged &&
+    target.role === 'admin' &&
+    body.role !== 'admin' &&
+    db.members.filter((m) => m.role === 'admin' && m.active !== false).length <= 1
+  ) {
+    return fail(400, '至少需要保留一个启用状态的管理员')
+  }
 
   const name = String(body.name !== undefined ? body.name : target.name).trim()
   if (!name) return fail(400, '成员姓名不能为空')
@@ -217,11 +226,28 @@ Mock.mock(/\/api\/members\/\w+/, 'delete', (options) => {
     return fail(400, '至少需要保留一个管理员')
   }
 
+  // 与停用规则保持一致：仍负责进行中项目、或还有未完成任务时不允许删除，
+  // 否则项目负责人会被置空、任务负责人会变成孤儿 id
+  const pmProjects = db.projects.filter(
+    (p) => p.PM === target.id && p.status !== 'archived'
+  )
+  if (pmProjects.length) {
+    return fail(400, '该成员仍是进行中项目的负责人，请先移交负责人')
+  }
+  const pendingTasks = db.tasks.filter(
+    (t) =>
+      !t.deletedAt &&
+      t.assignee === target.id &&
+      !['accepted', 'canceled'].includes(t.status)
+  )
+  if (pendingTasks.length) {
+    return fail(400, '该成员还有未完成任务，请先转派')
+  }
+
   db.members = db.members.filter((m) => m.id !== id)
   db.users = (db.users || []).filter((u) => u.id !== id)
-  // 从所有项目里把这个人也摘掉，避免残留引用
+  // 只从项目成员里摘掉；已归档项目的 PM 保留历史引用（界面显示「已删除成员」）
   db.projects.forEach((p) => {
-    if (p.PM === id) p.PM = ''
     p.members = (p.members || []).filter((mid) => mid !== id)
   })
   save()
