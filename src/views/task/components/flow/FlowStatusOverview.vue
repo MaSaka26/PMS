@@ -1,7 +1,7 @@
 <script setup>
 import { ArrowRight } from '@element-plus/icons-vue'
 import { CANCELED_STATUS, STATUSES } from '@/constants/taskFlow'
-import FlowNote from './FlowNote.vue'
+import FlowNote from '@/components/FlowNote.vue'
 </script>
 
 <template>

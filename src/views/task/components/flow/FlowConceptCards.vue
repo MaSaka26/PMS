@@ -1,5 +1,5 @@
 <script setup>
-import FlowNote from './FlowNote.vue'
+import FlowNote from '@/components/FlowNote.vue'
 </script>
 
 <template>

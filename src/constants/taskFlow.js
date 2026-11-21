@@ -46,15 +46,6 @@ export const CANCELED_STATUS = {
     who: 'PM / admin / 任务创建人'
 }
 
-// 项目阶段：由任务状态自动汇总，只进不退
-export const PROJECT_STAGES = [
-    { key: 'draft', label: '项目立项', rule: '还没有未取消任务' },
-    { key: 'planning', label: '项目规划', rule: '有任务，但都还在待办' },
-    { key: 'active', label: '任务执行', rule: '至少一个任务进行中' },
-    { key: 'accepting', label: '任务验收', rule: '没有待办 / 进行中，且至少一个待验收' },
-    { key: 'iterating', label: '项目收尾', rule: '全部未取消任务已验收' }
-]
-
 // 每一次状态流转
 export const TRANSITIONS = [
     {

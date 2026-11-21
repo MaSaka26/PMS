@@ -1,34 +1,22 @@
 <script setup>
-import FlowNote from './FlowNote.vue'
+import { ARCHIVE_STEPS } from '@/constants/projectFlow'
+import FlowNote from '@/components/FlowNote.vue'
 </script>
 
 <template>
     <div>
         <div class="archive-card">
-            <div class="archive-step">
-                <span class="step-no">1</span>
+            <div v-for="(s, i) in ARCHIVE_STEPS" :key="s.title" class="archive-step">
+                <span class="step-no">{{ i + 1 }}</span>
                 <div>
-                    <h4>关闭项目</h4>
-                    <p>PM 或 admin 在项目看板执行「关闭并归档」，项目从看板移除。</p>
-                </div>
-            </div>
-            <div class="archive-step">
-                <span class="step-no">2</span>
-                <div>
-                    <h4>归档只读</h4>
-                    <p>项目进入「项目归档」页，所有任务、事件与时间线完整保留，但不可再编辑。</p>
-                </div>
-            </div>
-            <div class="archive-step">
-                <span class="step-no">3</span>
-                <div>
-                    <h4>撤销归档</h4>
-                    <p>需要继续推进时，PM / admin 可撤销归档，项目恢复编辑，并按当前任务重新推导阶段（不再固定回执行中），操作记入项目事件。</p>
+                    <h4>{{ s.title }}</h4>
+                    <p>{{ s.desc }}</p>
                 </div>
             </div>
         </div>
         <FlowNote>
-            归档不是删除，也不是把数据搬走，只是同一份数据在<b>另一个筛选视图</b>里展示；撤销归档不会恢复已软删除的任务。
+            归档不是删除，也不是把数据搬走，只是同一份数据在<b>另一个筛选视图</b>里展示；
+            撤销归档不会恢复已软删除的任务。
         </FlowNote>
     </div>
 </template>

@@ -28,6 +28,7 @@ const menus = [
         children: [
             { path: '/project/board', title: '项目看板', icon: CaretRight },
             { path: '/project/archive', title: '项目归档', icon: CaretRight },
+            { path: '/project/flow', title: '项目流程', icon: CaretRight },
         ],
     },
     {

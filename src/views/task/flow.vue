@@ -2,11 +2,9 @@
 import { Document } from '@element-plus/icons-vue'
 import { DESIGN_NOTES } from '@/constants/taskFlow'
 import FlowStatusOverview from './components/flow/FlowStatusOverview.vue'
-import FlowStageOverview from './components/flow/FlowStageOverview.vue'
 import FlowTransitionList from './components/flow/FlowTransitionList.vue'
 import FlowPermissionMatrix from './components/flow/FlowPermissionMatrix.vue'
 import FlowConceptCards from './components/flow/FlowConceptCards.vue'
-import FlowArchiveSteps from './components/flow/FlowArchiveSteps.vue'
 
 // 页面文案与规则数据统一放在 @/constants/taskFlow.js
 </script>
@@ -21,7 +19,7 @@ import FlowArchiveSteps from './components/flow/FlowArchiveSteps.vue'
             </div>
             <div class="hero-badge">
                 <el-icon><Document /></el-icon>
-                <span>5 个任务状态 · 8 条流转 · 5 个项目阶段</span>
+                <span>5 个任务状态 · 8 条流转</span>
             </div>
         </section>
 
@@ -29,12 +27,6 @@ import FlowArchiveSteps from './components/flow/FlowArchiveSteps.vue'
         <section class="section">
             <h2 class="section-title">状态总览</h2>
             <FlowStatusOverview />
-        </section>
-
-        <!-- 项目阶段 -->
-        <section class="section">
-            <h2 class="section-title">项目阶段：由任务自动汇总</h2>
-            <FlowStageOverview />
         </section>
 
         <!-- 流转明细 -->
@@ -53,12 +45,6 @@ import FlowArchiveSteps from './components/flow/FlowArchiveSteps.vue'
         <section class="section">
             <h2 class="section-title">阻塞与取消：两个容易混淆的概念</h2>
             <FlowConceptCards />
-        </section>
-
-        <!-- 项目归档 -->
-        <section class="section">
-            <h2 class="section-title">项目关闭与归档</h2>
-            <FlowArchiveSteps />
         </section>
 
         <!-- 设计说明 -->

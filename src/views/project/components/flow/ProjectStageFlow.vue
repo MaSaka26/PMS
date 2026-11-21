@@ -1,7 +1,7 @@
 <script setup>
 import { ArrowRight } from '@element-plus/icons-vue'
-import { PROJECT_STAGES } from '@/constants/taskFlow'
-import FlowNote from './FlowNote.vue'
+import { PROJECT_STAGES } from '@/constants/projectFlow'
+import FlowNote from '@/components/FlowNote.vue'
 </script>
 
 <template>
@@ -11,7 +11,25 @@ import FlowNote from './FlowNote.vue'
                 <div class="stage-card" :class="`stage-${s.key}`">
                     <span class="stage-no">{{ i + 1 }}</span>
                     <h3>{{ s.label }}</h3>
-                    <p>{{ s.rule }}</p>
+                    <p class="stage-short">{{ s.short }}</p>
+                    <dl>
+                        <div>
+                            <dt>判定</dt>
+                            <dd>{{ s.rule }}</dd>
+                        </div>
+                        <div>
+                            <dt>进入</dt>
+                            <dd>{{ s.enter }}</dd>
+                        </div>
+                        <div>
+                            <dt>离开</dt>
+                            <dd>{{ s.exit }}</dd>
+                        </div>
+                        <div>
+                            <dt>主导人</dt>
+                            <dd>{{ s.who }}</dd>
+                        </div>
+                    </dl>
                 </div>
                 <el-icon v-if="i < PROJECT_STAGES.length - 1" class="flow-arrow">
                     <ArrowRight />
@@ -19,8 +37,8 @@ import FlowNote from './FlowNote.vue'
             </template>
         </div>
         <FlowNote>
-            阶段<b>只进不退</b>：每次按任务推导后与当前阶段比较，更高才更新。
-            新增待办、取消任务都不会让项目回退；项目归档仍由「关闭并归档」手动触发。
+            阶段由任务状态<b>自动推导</b>，不需要手动维护；推导结果与当前阶段比较后<b>只进不退</b>，
+            新增待办或取消任务都不会让项目回退。进入收尾后，仍需要手动执行「关闭并归档」。
         </FlowNote>
     </div>
 </template>
@@ -38,7 +56,7 @@ import FlowNote from './FlowNote.vue'
     --c: #909399;
 
     flex: 1;
-    min-width: 160px;
+    min-width: 200px;
     padding: 14px 16px;
     background: #fff;
     border: 1px solid #e8eaef;
@@ -66,11 +84,35 @@ import FlowNote from './FlowNote.vue'
         color: #1f2430;
     }
 
-    p {
-        margin: 0;
+    .stage-short {
+        margin: 0 0 10px;
         font-size: 12px;
         line-height: 1.5;
-        color: #6b7280;
+        color: var(--c);
+    }
+
+    dl {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        div {
+            display: flex;
+            gap: 6px;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        dt {
+            flex-shrink: 0;
+            color: #9ca3af;
+        }
+
+        dd {
+            margin: 0;
+            color: #6b7280;
+        }
     }
 }
 
@@ -87,7 +129,7 @@ import FlowNote from './FlowNote.vue'
     color: #c0c4cc;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 1200px) {
     .stage-strip {
         flex-direction: column;
     }

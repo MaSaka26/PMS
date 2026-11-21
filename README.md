@@ -88,6 +88,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 | `/project/board/:id` | 项目详情 |
 | `/project/archive` | 项目归档 |
 | `/project/archive/:id` | 归档项目详情（只读） |
+| `/project/flow` | 项目流程与阶段规则说明 |
 | `/task/board` | 任务看板 |
 | `/task/flow` | 任务流程与规则说明 |
 | `/field` | 字段配置 |
@@ -108,6 +109,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
                                       └─→ 任务看板 ──→ 项目阶段自动推进
 任务操作 ──→ 任务事件 / 项目动态 / 详情图表
 项目关闭 ──→ 项目归档 ──→ 撤销归档
+项目阶段 ──→ 项目流程（阶段规则说明）
 ```
 
 ### 代码分层约定
@@ -241,7 +243,32 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 ---
 
-### 5. 任务看板 `/task/board`
+### 5. 项目流程 `/project/flow`
+
+**页面职责**：说明项目从立项到收尾的阶段推导、关闭归档流程与项目级权限。
+
+**主要功能**
+
+- 5 个项目阶段：立项、规划、执行、验收、收尾，含判定规则、进入/离开条件与主导人
+- 关闭项目 → 归档只读 → 撤销归档 三步
+- 项目动作权限矩阵：创建、编辑、关闭归档、撤销归档、置顶、排序、另存模板
+- 四条设计原则：自动推导、只进不退、归档不是删除、负责人即管理权
+
+**核心代码**
+
+| 文件 | 作用 |
+|---|---|
+| [project/flow.vue](src/views/project/flow.vue) | 项目流程说明页，纯展示 |
+| [constants/projectFlow.js](src/constants/projectFlow.js) | 阶段、归档步骤、权限矩阵、设计原则文案 |
+| [project/components/flow/ProjectStageFlow.vue](src/views/project/components/flow/ProjectStageFlow.vue) | 阶段卡与推导规则 |
+| [project/components/flow/ProjectArchiveFlow.vue](src/views/project/components/flow/ProjectArchiveFlow.vue) | 关闭与归档三步 |
+| [project/components/flow/ProjectPermissionMatrix.vue](src/views/project/components/flow/ProjectPermissionMatrix.vue) | 项目动作权限表 |
+
+**与其他页面的关系**：项目阶段由任务状态推导，规则页与任务看板保持一致；关闭归档对应项目归档页；置顶与排序直接影响项目看板的两条泳道。
+
+---
+
+### 6. 任务看板 `/task/board`
 
 **页面职责**：按项目查看任务泳道，执行认领、指派、验收、阻塞、取消等全部任务操作。
 
@@ -272,30 +299,30 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 ---
 
-### 6. 任务流程 `/task/flow`
+### 7. 任务流程 `/task/flow`
 
-**页面职责**：用静态文档说明任务状态、流转、权限、阻塞/取消/归档规则和项目阶段。
+**页面职责**：用静态文档说明任务状态、流转、权限，以及阻塞与取消的语义。
 
 **主要功能**
 
 - 5 个任务状态与 8 条流转
 - 认领、指派、验收、驳回的权限说明
 - 阻塞、取消、恢复的语义
-- 项目阶段自动推导和只进不退规则
-- 撤销归档、恢复任务的注意事项
+- 恢复任务的注意事项
 
 **核心代码**
 
 | 文件 | 作用 |
 |---|---|
 | [task/flow.vue](src/views/task/flow.vue) | 流程说明页面，纯展示 |
-| [constants/status.js](src/constants/status.js) | 状态与文案来源 |
+| [constants/taskFlow.js](src/constants/taskFlow.js) | 状态、流转、权限与原则文案 |
+| [components/FlowNote.vue](src/components/FlowNote.vue) | 两个流程页共用的提示条 |
 
-**与其他页面的关系**：是任务看板和项目阶段规则的说明书；规则变更时应同步更新此页。
+**与其他页面的关系**：是任务看板的说明书；项目阶段与归档规则已迁移到项目流程页，规则变更时应同步更新对应页面。
 
 ---
 
-### 7. 字段配置 `/field`
+### 8. 字段配置 `/field`
 
 **页面职责**：维护任务字段和项目字段，控制表单上还能填哪些扩展信息。
 
@@ -320,7 +347,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 ---
 
-### 8. 项目模板 `/template`
+### 9. 项目模板 `/template`
 
 **页面职责**：维护项目模板，支持从模板创建项目，也支持把已有项目另存为模板。
 
@@ -349,7 +376,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 ---
 
-### 9. 成员管理 `/member`
+### 10. 成员管理 `/member`
 
 **页面职责**：按角色管理成员、岗位、登录账号和启用状态。
 
@@ -381,7 +408,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 ---
 
-### 10. 全局布局与公共能力
+### 11. 全局布局与公共能力
 
 **页面职责**：提供固定头部、侧边栏、面包屑和内容区滚动。
 
@@ -408,8 +435,9 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 | 项目看板 | 项目模板、成员 | 生成项目、进入详情、关闭归档 |
 | 项目详情 | 任务、成员、字段、项目动态 | 展示分析、另存模板、归档 |
 | 项目归档 | 已归档项目 | 只读查看、撤销归档 |
+| 项目流程 | 项目阶段常量 | 规则说明（阶段、归档、项目权限） |
 | 任务看板 | 项目、成员、字段 | 任务状态 → 项目阶段、详情图表 |
-| 任务流程 | 状态常量 | 规则说明 |
+| 任务流程 | 任务状态常量 | 规则说明（状态、流转、任务权限） |
 | 字段配置 | 无 | 任务/项目表单、模板字段 |
 | 项目模板 | 项目字段 | 生成项目和任务 |
 | 成员管理 | 无 | 全站角色权限、负责人、登录 |

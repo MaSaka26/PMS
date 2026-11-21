@@ -56,6 +56,12 @@ const router = createRouter({
               ],
             },
             {
+              path: "flow",
+              name: "ProjectFlow",
+              component: () => import("@/views/project/flow.vue"),
+              meta: { title: "项目流程" },
+            },
+            {
               // 兼容旧地址 /project/:id → /project/board/:id
               path: ":id",
               redirect: (to) => `/project/board/${to.params.id}`,

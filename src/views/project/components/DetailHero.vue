@@ -1,7 +1,8 @@
 <script setup>
+import { computed } from 'vue'
 import { ArrowLeft, Collection, Edit, Pointer, RefreshLeft, SwitchButton } from '@element-plus/icons-vue'
 
-defineProps({
+const props = defineProps({
     project: { type: Object, required: true },
     isArchived: { type: Boolean, default: false },
     canManage: { type: Boolean, default: false },
@@ -12,6 +13,20 @@ defineProps({
     backLabel: { type: String, default: '返回' }
 })
 defineEmits(['back', 'edit', 'board', 'save-template', 'close', 'reopen'])
+
+// 与项目看板卡片的状态配色保持一致（card.vue 的 is-* 变量）
+const STATUS_THEMES = {
+    draft: { color: '#909399', soft: 'rgba(144, 147, 153, 0.12)' },
+    planning: { color: '#409eff', soft: 'rgba(64, 158, 255, 0.12)' },
+    active: { color: '#10b981', soft: 'rgba(16, 185, 129, 0.14)' },
+    accepting: { color: '#e6a23c', soft: 'rgba(230, 162, 60, 0.15)' },
+    iterating: { color: '#8b5cf6', soft: 'rgba(139, 92, 246, 0.13)' },
+    archived: { color: '#94a3b8', soft: 'rgba(148, 163, 184, 0.16)' }
+}
+
+const statusTheme = computed(
+    () => STATUS_THEMES[props.isArchived ? 'archived' : props.project?.status] || STATUS_THEMES.draft
+)
 </script>
 
 <template>
@@ -29,7 +44,8 @@ defineEmits(['back', 'edit', 'board', 'save-template', 'close', 'reopen'])
                 <div class="title-row">
                     <h1>{{ project.title }}</h1>
                     <span class="type-chip">{{ project.type }}</span>
-                    <span class="status-pill" :class="{ archived: isArchived }">
+                    <span class="status-pill" :class="{ archived: isArchived }"
+                        :style="{ color: statusTheme.color, background: statusTheme.soft }">
                         <span class="dot" aria-hidden="true"></span>{{ statusText }}
                     </span>
                 </div>
@@ -179,24 +195,13 @@ defineEmits(['back', 'edit', 'board', 'save-template', 'close', 'reopen'])
         padding: 2px 9px;
         font-size: 11px;
         font-weight: 500;
-        color: #4b5563;
-        background: #f1f5f9;
         border-radius: 999px;
 
         .dot {
             width: 6px;
             height: 6px;
-            background: #67c23a;
+            background: currentColor;
             border-radius: 50%;
-        }
-
-        &.archived {
-            color: #6b7280;
-            background: #f3f4f6;
-
-            .dot {
-                background: #9ca3af;
-            }
         }
     }
 
