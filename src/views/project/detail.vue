@@ -24,7 +24,7 @@ import DetailOverview from './components/DetailOverview.vue'
 import DetailActivity from './components/DetailActivity.vue'
 import DetailTaskTable from './components/DetailTaskTable.vue'
 import DetailMemberList from './components/DetailMemberList.vue'
-import { buildTemplateDraft } from './components/buildTemplateDraft'
+import { buildTemplateDraft } from './composables/buildTemplateDraft'
 
 const route = useRoute()
 const router = useRouter()
