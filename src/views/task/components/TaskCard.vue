@@ -314,7 +314,7 @@ const onOpen = () => emit('open', props.task)
 
     .title {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         gap: 6px;
         font-size: 14px;
         font-weight: 600;

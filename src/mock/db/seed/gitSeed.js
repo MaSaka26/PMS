@@ -1,6 +1,6 @@
 // 本文件由 scripts/generate-git-seed.mjs 生成，请勿手动修改
 // 数据来源：git log --no-merges --reverse
-export const generatedAt = "2026-11-21T02:35:29.745Z"
+export const generatedAt = "2026-11-21T08:33:09.774Z"
 export const authors = [
   {
     "id": "u5",
@@ -151,6 +151,78 @@ export const commits = [
     "email": "740275230@qq.com",
     "date": "2026-11-21T10:25:12+08:00",
     "subject": "refactor: buildTemplateDraft 移至 composables",
+    "authorId": "u5"
+  },
+  {
+    "hash": "79d5beb065b252a9159bd5461e1343c7eb9fd64d",
+    "shortHash": "79d5beb",
+    "author": "MaSaka0426",
+    "email": "740275230@qq.com",
+    "date": "2026-11-21T10:38:18+08:00",
+    "subject": "refactor: mock 按 api / services / rules / db / utils 分层",
+    "authorId": "u5"
+  },
+  {
+    "hash": "0747a23b6e2dc83eb4166bcdeb0c3f4dd03e33fc",
+    "shortHash": "0747a23",
+    "author": "MaSaka0426",
+    "email": "740275230@qq.com",
+    "date": "2026-11-21T11:10:34+08:00",
+    "subject": "fix: 修复成员删除孤儿引用、多标签覆盖与会话不刷新",
+    "authorId": "u5"
+  },
+  {
+    "hash": "7e8adf08cc4dda9c5778c299f674d1b6b8df37d2",
+    "shortHash": "7e8adf0",
+    "author": "MaSaka0426",
+    "email": "740275230@qq.com",
+    "date": "2026-11-21T11:22:33+08:00",
+    "subject": "feat: 项目看板新增置顶泳道与泳道内排序",
+    "authorId": "u5"
+  },
+  {
+    "hash": "73ba9ba852491e23e56902bedf4cfaec1e43e7fa",
+    "shortHash": "73ba9ba",
+    "author": "MaSaka0426",
+    "email": "740275230@qq.com",
+    "date": "2026-11-21T11:34:05+08:00",
+    "subject": "fix: 项目看板补充普通泳道标题并统一卡片尺寸",
+    "authorId": "u5"
+  },
+  {
+    "hash": "eb40260367182be55b875a5ff70d523bf27c8649",
+    "shortHash": "eb40260",
+    "author": "MaSaka0426",
+    "email": "740275230@qq.com",
+    "date": "2026-11-21T11:44:30+08:00",
+    "subject": "feat: 项目卡片操作按钮改为 2x3 布局",
+    "authorId": "u5"
+  },
+  {
+    "hash": "8731350792c61e4752557018743b472c716acd50",
+    "shortHash": "8731350",
+    "author": "MaSaka0426",
+    "email": "740275230@qq.com",
+    "date": "2026-11-21T15:17:18+08:00",
+    "subject": "优化项目归档的UI界面，优化目录的图标",
+    "authorId": "u5"
+  },
+  {
+    "hash": "cdb567674fd188032c15aaac2f420e4af9e2ac71",
+    "shortHash": "cdb5676",
+    "author": "MaSaka0426",
+    "email": "740275230@qq.com",
+    "date": "2026-11-21T16:07:29+08:00",
+    "subject": "feat: 新增项目流程页并统一项目状态配色",
+    "authorId": "u5"
+  },
+  {
+    "hash": "5787102cff379454483d7537bf17dc0301059710",
+    "shortHash": "5787102",
+    "author": "MaSaka0426",
+    "email": "740275230@qq.com",
+    "date": "2026-11-21T16:28:14+08:00",
+    "subject": "feat: 任务卡片增加优先级标签并强化逾期徽标",
     "authorId": "u5"
   }
 ]
