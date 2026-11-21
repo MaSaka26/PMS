@@ -280,7 +280,7 @@ onMounted(() => {
         <section class="normal-lane">
             <div class="lane-head">
                 <span class="lane-title lane-title-normal">
-                    全部项目
+                    <el-icon><Grid /></el-icon> 全部项目
                     <span class="lane-count lane-count-normal">{{ total }}</span>
                 </span>
                 <span class="lane-hint">未置顶的项目</span>

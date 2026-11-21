@@ -47,7 +47,7 @@ const menus = [
 
 <template>
     <!-- router 属性：点击菜单自动跳转到 index 对应的路径 -->
-    <el-menu class="aside-menu" :default-active="activeMenu" :collapse="isCollapse" router unique-opened>
+    <el-menu class="aside-menu" :default-active="activeMenu" :collapse="isCollapse" router>
         <template v-for="item in menus" :key="item.path">
             <el-sub-menu v-if="item.children" :index="item.path">
                 <template #title>

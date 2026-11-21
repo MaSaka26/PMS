@@ -1,7 +1,7 @@
 <script setup>
 //   <Card title="项目1" type="类型1" createdAt="2026-11-11" owner="张经理" desc="项目1的描述" priority="高" status="active" />
 import { computed } from 'vue'
-import { ArrowDown, ArrowUp, Calendar, Delete, Edit, Star, StarFilled, SwitchButton } from '@element-plus/icons-vue'
+import { ArrowLeft, ArrowRight, Calendar, Delete, Edit, Star, StarFilled, SwitchButton } from '@element-plus/icons-vue'
 import { PROJECT_STATUS_LABEL } from '@/constants/status'
 
 const props = defineProps({
@@ -40,26 +40,8 @@ const ownerInitial = computed(() => (props.owner || '').trim().charAt(0) || '?')
     <div class="card" :class="[priorityClass, statusClass, { 'is-pinned': pinned }]" @click="emit('open')">
         <span class="accent" aria-hidden="true"></span>
 
+        <!-- 2×3：第一排 编辑 / 关闭 / 删除，第二排 置顶 / 左移 / 右移 -->
         <div class="card-actions">
-            <button v-if="canPin" type="button" class="action action-pin" :class="{ 'is-on': pinned }"
-                :title="pinned ? '取消置顶' : '置顶'" @click.stop="emit('pin')">
-                <el-icon>
-                    <StarFilled v-if="pinned" />
-                    <Star v-else />
-                </el-icon>
-            </button>
-            <button v-if="canPin" type="button" class="action" title="上移" :disabled="!canMoveUp"
-                @click.stop="emit('move-up')">
-                <el-icon>
-                    <ArrowUp />
-                </el-icon>
-            </button>
-            <button v-if="canPin" type="button" class="action" title="下移" :disabled="!canMoveDown"
-                @click.stop="emit('move-down')">
-                <el-icon>
-                    <ArrowDown />
-                </el-icon>
-            </button>
             <button v-if="canEdit" type="button" class="action" title="编辑" @click.stop="emit('edit')">
                 <el-icon>
                     <Edit />
@@ -75,6 +57,25 @@ const ownerInitial = computed(() => (props.owner || '').trim().charAt(0) || '?')
                 @click.stop="emit('delete')">
                 <el-icon>
                     <Delete />
+                </el-icon>
+            </button>
+            <button v-if="canPin" type="button" class="action action-pin" :class="{ 'is-on': pinned }"
+                :title="pinned ? '取消置顶' : '置顶'" @click.stop="emit('pin')">
+                <el-icon>
+                    <StarFilled v-if="pinned" />
+                    <Star v-else />
+                </el-icon>
+            </button>
+            <button v-if="canPin" type="button" class="action" title="左移" :disabled="!canMoveUp"
+                @click.stop="emit('move-up')">
+                <el-icon>
+                    <ArrowLeft />
+                </el-icon>
+            </button>
+            <button v-if="canPin" type="button" class="action" title="右移" :disabled="!canMoveDown"
+                @click.stop="emit('move-down')">
+                <el-icon>
+                    <ArrowRight />
                 </el-icon>
             </button>
         </div>
@@ -156,7 +157,8 @@ const ownerInitial = computed(() => (props.owner || '').trim().charAt(0) || '?')
         position: absolute;
         top: 12px;
         right: 12px;
-        display: flex;
+        display: grid;
+        grid-template-columns: repeat(3, 24px);
         gap: 4px;
         opacity: 0;
         transform: translateY(-4px);
