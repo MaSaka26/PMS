@@ -62,10 +62,31 @@ onBeforeUnmount(() => {
         background: #ef4444;
     }
 
-    // 逾期：更深 + 外圈，压过“急”
+    // 逾期：亮红 → 深红渐变，向外扩散红色阴影
     &.is-overdue {
-        background: #b91c1c;
-        box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.2);
+        background: linear-gradient(135deg, #ff4d4f 0%, #b91c1c 100%);
+        animation: due-overdue-pulse 1.8s ease-out infinite;
+    }
+}
+
+@keyframes due-overdue-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+    }
+
+    70% {
+        box-shadow: 0 0 0 7px rgba(239, 68, 68, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .due-badge.is-overdue {
+        animation: none;
+        box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.25);
     }
 }
 </style>

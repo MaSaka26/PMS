@@ -145,7 +145,10 @@ const onOpen = () => emit('open', props.task)
             </el-tooltip>
         </div>
 
-        <h4 class="title" :title="task.title">{{ task.title }}</h4>
+        <h4 class="title" :title="task.title">
+            <span class="prio-tag" :title="`优先级：${task.priority}`">{{ task.priority }}</span>
+            <span class="title-text">{{ task.title }}</span>
+        </h4>
         <p v-if="task.desc" class="desc">{{ task.desc }}</p>
         <!-- 重开留痕：说明这张卡是从"已验收"退回来的及原因 -->
         <p v-if="task.reopenReason" class="reopen-note" :title="task.reopenReason">
@@ -310,12 +313,31 @@ const onOpen = () => emit('open', props.task)
     }
 
     .title {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
         font-size: 14px;
         font-weight: 600;
         color: #1f2430;
         margin: 0;
         padding-right: 40px;
         line-height: 1.4;
+
+        // 优先级用文字标签表达，避免与「轻 / 缓 / 急 / 逾」的日期徽标混淆
+        .prio-tag {
+            flex-shrink: 0;
+            padding: 1px 6px;
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 1.5;
+            color: var(--pri);
+            background: var(--pri-soft);
+            border-radius: 4px;
+        }
+
+        .title-text {
+            min-width: 0;
+        }
     }
 
     .desc {
@@ -415,7 +437,8 @@ const onOpen = () => emit('open', props.task)
             font-size: 12px;
             font-weight: 600;
             color: #fff;
-            background: linear-gradient(135deg, var(--pri), var(--pri-soft));
+            // 头像只代表人，不再随优先级变色
+            background: linear-gradient(135deg, #64748b, #94a3b8);
             border-radius: 50%;
         }
 

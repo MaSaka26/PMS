@@ -17,7 +17,7 @@ export const diffDays = (dueDate, today = new Date()) => {
 //   ≥5 天        绿「轻」
 //   3~4 天       黄「缓」
 //   0~2 天       红「急」
-//   <0 天        深红「急」+ 逾期提示
+//   <0 天        亮红→深红渐变「逾」+ 扩散阴影
 // 已验收 / 已取消 / 无截止日期 → 不展示
 export const getDueLevel = (dueDate, status, today = new Date()) => {
     if (!dueDate) return null
@@ -26,7 +26,7 @@ export const getDueLevel = (dueDate, status, today = new Date()) => {
     const days = diffDays(dueDate, today)
 
     if (days < 0) {
-        return { level: 'overdue', char: '急', days, text: `已逾期 ${-days} 天` }
+        return { level: 'overdue', char: '逾', days, text: `已逾期 ${-days} 天` }
     }
     if (days <= 2) {
         return { level: 'urgent', char: '急', days, text: days === 0 ? '今天到期' : `距截止 ${days} 天` }
