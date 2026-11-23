@@ -4,6 +4,8 @@ import { authors as gitAuthors, commits as gitCommits } from './gitSeed.js'
 export const GIT_PROJECT_ID = 'project_seed_5'
 // 由项目经理统一验收，避免「提交人验收自己」
 export const GIT_PM_ID = 'u2'
+// 里程碑任务的执行人：这 6 个阶段都出自同一个提交作者
+export const GIT_AUTHOR_ID = gitAuthors[0]?.id || 'u5'
 
 const dayOf = (iso) => iso.slice(0, 10)
 
@@ -19,7 +21,7 @@ const gitProject = gitCommits.length
               title: 'PMS 开发记录',
               type: '内部系统',
               icon: 'Monitor',
-              desc: '提交对应的任务由 git log 生成；待办与已取消为手工补充的真实事项',
+              desc: '任务按交付物归并为里程碑，每个阶段可追溯到具体提交；待办与已取消为手工补充的真实事项',
               priority: '高',
               PM: GIT_PM_ID,
               members: [...gitAuthors.map((a) => a.id), GIT_PM_ID],
