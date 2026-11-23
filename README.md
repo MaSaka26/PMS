@@ -17,7 +17,7 @@
 - [目录结构](#目录结构)
 - [数据存储与重置](#数据存储与重置)
 - [部署到 GitHub Pages](#部署到-github-pages)
-- [已下线功能：排期视图与关键路径](#已下线功能排期视图与关键路径)
+- [决策记录：为什么删掉排期与关键路径](#决策记录为什么删掉排期与关键路径)
 - [已知限制](#已知限制)
 - [后续规划](#后续规划)
 
@@ -629,25 +629,68 @@ https://masaka26.github.io/PMS/
 - 本地验证 Pages 版：先设置 `GITHUB_ACTIONS=true`、`GITHUB_REPOSITORY=MaSaka26/PMS` 执行 `npm run build`，再用同样的环境变量执行 `npm run preview`，访问 `http://localhost:4173/PMS/`（preview 与构建的 base 必须一致，否则资源 404、页面空白）
 - Mock 数据保存在每个访问者自己的 localStorage 中，不同人之间的数据不共享
 
-## 已下线功能：排期视图与关键路径
+## 决策记录：为什么删掉排期与关键路径
 
-以下功能已经下线，不再提供入口和路由，仅保留在本文档中作为历史记录：
+排期与关键路径在这个项目里**存在过两次，又被删除过两次**。这一节不是变更日志，是留给以后的判据：什么人、在什么条件下，才值得把它再做一次。
 
-- 任务排期视图：`/task/schedule`，甘特式任务横条、项目周期、依赖连线、越界告警。
-- 项目排期分析：`/project/board/:id/schedule`、`/project/archive/:id/schedule`，CPM 关键路径、ES/EF/LS/LF、浮动时间。
-- 相关组件与工具：`ScheduleGantt.vue`、`utils/cpm.js`。
+### 删除了什么
 
-**下线原因**：系统功能逐渐增多，排期与关键路径偏向专业项目管理场景，日常使用频率低，维护成本却较高。产品决定收敛复杂度，聚焦任务看板、项目模板和成员管理。
+| 版本 | 内容 | 代码量 |
+|---|---|---|
+| 第一版 | `/task/schedule` 甘特式任务横条；`/project/board/:id/schedule`、`/project/archive/:id/schedule` 的 CPM 分析；组件 `ScheduleGantt.vue` 与工具 `utils/cpm.js` | — |
+| 第二版 | 项目详情第五个 tab「排期」：`ScheduleTable.vue` 明细表 + `CpmNetwork.vue` 活动在节点上的网络图 | 1687 行 |
+| 第二版改造 | 为它补 `estimate` 工期估算、`scheduleBaseline` 排期基线与确认动作、`historical` 历史活动分离、`auditSchedule` 排期体检 | 累计约 2500 行 |
 
-**仍保留的底层能力**：
+第二版删除时一并移除的内容：
+
+- **视图**：`src/views/project/components/ScheduleTable.vue`（1057 行）、`CpmNetwork.vue`（371 行），以及项目详情里的「排期」tab 与路由入口
+- **计算**：`src/utils/cpm.js`（521 行，含 `buildSchedule` / `buildBaseline` / `auditSchedule` / `taskEstimate` / `scheduleDuration`）
+- **服务端规则**：`src/mock/rules/schedule.js`（82 行，含 `confirmSchedule` / `canConfirmSchedule` / `getScheduleBaseline`）
+- **接口**：`POST /api/projects/:id/schedule`、项目详情返回的 `scheduleBaseline`、`src/api/project.js#confirmSchedule`、`projectStore.confirmSchedule`
+- **数据字段**：任务 `estimate`（工期估算，人天）、任务 `historical`（历史活动标记）、项目 `scheduleBaseline / scheduleConfirmedAt / scheduleConfirmedBy`
+- **表单与详情**：任务表单里的「工期估算」输入、任务抽屉里的工期估算行
+- **事件类型**：`schedule_confirmed`
+- **概念**：泳道分组的「并行道 / 流水线」命名
+- **测试**：`tests/schedule.test.js`
+- **种子**：git 任务改回由提交日期生成（不再标 `historical`、不再清空计划日期与截止日期），`SEED_VERSION` 回退
+
+### 为什么删除
+
+**1. 根本原因是一个语义错误，不是算法问题。**
+`git log` 记录的是已经发生的事（actuals），不是计划（plan）。把它当成 `plannedStart / dueDate` 灌进 CPM，算出来的不是「打算怎么走」，而是「实际怎么走」。最直接的证据：种子项目「PMS 开发记录」的峰值日出现 **17 条任务在同一天并行，且全部压在同一个人身上** —— 因为 24 条提交都出自同一作者、同一段时间，被当成了 24 条计划任务。
+
+**2. 在错误的层级迭代，导致代码体量失控。**
+真正修好的语义错误（git 提交不再当计划）核心约 **64 行**。承载它的模块约 **2500 行**。剩下的部分都在为这个模块的存在找理由：基线、体检、网络图、并行道、偏差列、风险弹窗。每修一处，就多一层需要被解释的抽象。
+
+**3. 一个对象被反复赋予新身份。**
+同一个 `task` 对象同时承担了：立项时的生命周期事项、git 导入的执行记录、看板上的工作卡片、CPM 的排期节点、想加的里程碑。每多一个身份就多一层视图，每层视图都要把其它身份排除一次。第二轮改造只成功拆出了「执行记录」（`historical`），其余仍然混在一起。
+
+**4. 需求来源不是使用者，而是「专业系统应该有」。**
+两次加回都没有真实使用者提出过需求。判断依据是「P6 和 MS Project 都有网络图」，而不是「有人要用这个页面回答一个他原本答不了的问题」。这等于把**演示价值**当成了**产品价值**。
+
+**5. 粒度上自相矛盾。**
+如果按「任务即里程碑」的思路，立项承诺应该是 5–10 条；而种子项目里有 26 条任务参与排期。26 条不是里程碑，是 WBS —— 那又回到了「排期生成器」，与敏捷「时间固定、范围可变」的前提冲突。
+
+### 现在还保留什么
+
+排期页面删掉了，但底层字段与校验一直在，并仍在服务任务表单、任务详情和时间线：
 
 - 项目 `startDate / endDate`
-- 任务 `plannedStart`
-- 任务 `dependsOn` 前置依赖
-- 日期先后校验、依赖同项目校验、循环依赖检测
+- 任务 `plannedStart`、`dependsOn` 前置依赖
+- 日期先后校验（`validatePlanDates`）、依赖同项目校验、循环依赖检测
 - 前置任务未完成时的认领提示与强制认领
 
-这些能力仍服务于任务表单、任务详情和时间线；只是不再提供排期视图与 CPM 分析页面。
+也就是说：**任务仍然可以写计划日期、可以连依赖、系统仍然会拦住明显矛盾的日期**，只是不再提供「把整张网算一遍、画出关键路径」的页面。
+
+### 什么情况下才值得重新做
+
+三条同时满足，才重新考虑：
+
+1. 至少有一个真实项目在用这个系统做实际交付，并且有人**主动要求**「我想知道从哪天开始就来不及了」；
+2. 任务总量稳定在 10–30 条（再多就不是人排的，是 WBS）；
+3. 工期估算由执行者本人填写，且已积累至少两个周期的「已验收 + 有估算」数据 —— 否则算不出速度，也校不准估算。
+
+只满足第 1 条就动手，会重复已经发生两次的事。
 
 ## 已知限制
 
