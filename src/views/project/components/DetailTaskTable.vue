@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { WarningFilled } from '@element-plus/icons-vue'
 import { TASK_STATUS_LABEL } from '@/constants/status'
 import DueBadge from '@/components/DueBadge.vue'
+import { getDueLevel } from '@/utils/due'
 
 const props = defineProps({
     tasks: { type: Array, default: () => [] },
@@ -11,9 +12,16 @@ const props = defineProps({
     status: { type: String, default: 'all' },
     assignee: { type: String, default: 'all' },
     onlyBlocked: { type: Boolean, default: false },
+    onlyOverdue: { type: Boolean, default: false },
     memberName: { type: Function, required: true }
 })
-const emit = defineEmits(['update:status', 'update:assignee', 'update:onlyBlocked', 'open-task'])
+const emit = defineEmits([
+    'update:status',
+    'update:assignee',
+    'update:onlyBlocked',
+    'update:onlyOverdue',
+    'open-task'
+])
 
 const statusOptions = [
     { value: 'todo', label: '待办' },
@@ -35,6 +43,14 @@ const onlyBlockedValue = computed({
     get: () => props.onlyBlocked,
     set: (value) => emit('update:onlyBlocked', value)
 })
+const onlyOverdueValue = computed({
+    get: () => props.onlyOverdue,
+    set: (value) => emit('update:onlyOverdue', value)
+})
+
+// 逾期行整行标红：与指标卡「逾期」口径一致（无 dueDate 或已验收/已取消不计）
+const isOverdue = (task) => getDueLevel(task.dueDate, task.status)?.level === 'overdue'
+const rowClassName = ({ row }) => (isOverdue(row) ? 'task-row is-overdue' : 'task-row')
 
 const filteredTasks = computed(() => {
     return props.tasks.filter((t) => {
@@ -47,6 +63,7 @@ const filteredTasks = computed(() => {
             }
         }
         if (onlyBlockedValue.value && !t.blocked) return false
+        if (onlyOverdueValue.value && !isOverdue(t)) return false
         return true
     })
 })
@@ -65,11 +82,12 @@ const filteredTasks = computed(() => {
                 <el-option v-for="m in members" :key="m.id" :label="m.name" :value="m.id" />
             </el-select>
             <el-checkbox v-model="onlyBlockedValue" size="small">仅看阻塞</el-checkbox>
+            <el-checkbox v-model="onlyOverdueValue" size="small">仅看逾期</el-checkbox>
             <span class="toolbar-count">共 {{ filteredTasks.length }} 条</span>
         </div>
 
-        <el-table :data="filteredTasks" stripe style="width: 100%" empty-text="暂无任务" row-class-name="task-row"
-            @row-click="emit('open-task', $event)">
+        <el-table :data="filteredTasks" stripe style="width: 100%" empty-text="暂无任务"
+            :row-class-name="rowClassName" @row-click="emit('open-task', $event)">
             <el-table-column label="任务" min-width="240">
                 <template #default="{ row }">
                     <div class="task-title-cell">
@@ -125,6 +143,18 @@ const filteredTasks = computed(() => {
 
 :deep(.task-row) {
     cursor: pointer;
+}
+
+:deep(.task-row.is-overdue) {
+    background: #fff7f7;
+
+    td {
+        color: #b91c1c;
+    }
+
+    .task-name {
+        color: #b91c1c;
+    }
 }
 
 .task-title-cell {

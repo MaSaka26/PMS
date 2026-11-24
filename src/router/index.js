@@ -82,6 +82,12 @@ const router = createRouter({
               meta: { title: "任务看板" },
             },
             {
+              path: "mine",
+              name: "TaskMine",
+              component: () => import("@/views/task/mine.vue"),
+              meta: { title: "我的任务" },
+            },
+            {
               path: "flow",
               name: "TaskFlow",
               component: () => import("@/views/task/flow.vue"),

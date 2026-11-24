@@ -37,6 +37,7 @@ const menus = [
         icon: Tickets,
         children: [
             { path: '/task/board', title: '任务看板', icon: CaretRight },
+            { path: '/task/mine', title: '我的任务', icon: CaretRight },
             { path: '/task/flow', title: '任务流程', icon: CaretRight },
         ],
     },

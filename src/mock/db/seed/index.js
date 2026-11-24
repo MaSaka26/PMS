@@ -2,8 +2,9 @@ import { seedProjects } from './projects.js'
 import { seedTasks } from './tasks.js'
 import { members, users } from './members.js'
 
-// 版本 14：PMS 开发记录从「一条提交一个任务」改为按交付物归并的 6 个里程碑
-export const SEED_VERSION = 14
+// 版本 15：补齐项目经理的待办与待验收事务（此前 u2 名下 0 条任务，「我的任务」对他永远是空页）；
+// 同时解决 ex-分支 feat/schedule-validator 也用了 14 导致旧数据不会重置的撞号问题
+export const SEED_VERSION = 15
 
 export const defaultData = {
     seedVersion: SEED_VERSION,

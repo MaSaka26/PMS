@@ -46,6 +46,7 @@ const tasks = computed(() => taskStore.taskMap?.[projectId.value] || [])
 const statusFilter = ref('all')
 const assigneeFilter = ref('all')
 const onlyBlocked = ref(false)
+const onlyOverdue = ref(false)
 
 // 动态
 const activities = ref([])
@@ -104,7 +105,7 @@ const stats = computed(() => {
     }
     const active = list.length - byStatus.canceled
     const progress = active > 0 ? Math.round((byStatus.accepted / active) * 100) : 0
-    return { total: list.length, byStatus, blocked, overdue, active, progress }
+    return { total: list.length, byStatus, blocked, overdue, active, progress, members: memberRows.value.length }
 })
 
 // 成员 + 各自任务数
@@ -269,12 +270,27 @@ const gotoTasks = (status) => {
     tab.value = 'tasks'
 }
 
-const switchTab = (name) => {
-    if (name === 'overview') {
-        statusFilter.value = 'all'
-        assigneeFilter.value = 'all'
-        onlyBlocked.value = false
+// 指标卡点击：按卡片语义切 tab 并带上筛选条件
+const resetTaskFilters = () => {
+    statusFilter.value = 'all'
+    assigneeFilter.value = 'all'
+    onlyBlocked.value = false
+    onlyOverdue.value = false
+}
+const selectStat = (payload = {}) => {
+    if (payload.tab === 'members') {
+        tab.value = 'members'
+        return
     }
+    statusFilter.value = payload.status || 'all'
+    assigneeFilter.value = payload.assignee || 'all'
+    onlyBlocked.value = !!payload.onlyBlocked
+    onlyOverdue.value = !!payload.onlyOverdue
+    tab.value = 'tasks'
+}
+
+const switchTab = (name) => {
+    if (name === 'overview') resetTaskFilters()
 }
 
 const closeHandler = async () => {
@@ -350,7 +366,7 @@ const reopenHandler = async () => {
                 </div>
 
                 <!-- 指标 -->
-                <DetailStats :stats="stats" @select="gotoTasks" />
+                <DetailStats :stats="stats" @select="selectStat" />
 
                 <!-- 标签页 -->
                 <el-tabs v-model="tab" class="detail-tabs" @tab-change="switchTab">
@@ -364,8 +380,8 @@ const reopenHandler = async () => {
                     <!-- 任务 -->
                     <el-tab-pane :label="`任务 (${stats.total})`" name="tasks">
                         <DetailTaskTable v-model:status="statusFilter" v-model:assignee="assigneeFilter"
-                            v-model:only-blocked="onlyBlocked" :tasks="tasks" :members="memberRows"
-                            :member-name="memberName" @open-task="openTask" />
+                            v-model:only-blocked="onlyBlocked" v-model:only-overdue="onlyOverdue" :tasks="tasks"
+                            :members="memberRows" :member-name="memberName" @open-task="openTask" />
                     </el-tab-pane>
 
                     <!-- 动态 -->
