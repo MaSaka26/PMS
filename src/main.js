@@ -111,6 +111,13 @@ import 'element-plus/es/components/breadcrumb/style/css'
 import 'element-plus/es/components/avatar/style/css'
 import 'element-plus/es/components/aside/style/css'
 import 'element-plus/es/components/config-provider/style/css'
+// 下面几个不是 <el-*> 标签，按标签清单补 CSS 时会漏掉：
+// - ElLoading 是 v-loading 指令，样式不在任何组件的 css 依赖里；
+// - ElMessage / ElMessageBox / ElNotification 是服务式调用，自己弹 DOM。
+// 漏了都不报错：加载遮罩没有定位与背景、弹窗撑满全屏白底无边框。
+import 'element-plus/es/components/loading/style/css'
+import 'element-plus/es/components/message/style/css'
+import 'element-plus/es/components/message-box/style/css'
 import './styles/index.css'
 
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'

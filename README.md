@@ -718,13 +718,26 @@ https://masaka26.github.io/PMS/
 
 `src/main.js` 里用一张 `EL_COMPONENTS` 表具名引入实际用到的 44 个组件，逐组件 import 样式，再循环 `app.component` 注册。
 
-这一条最容易踩坑，三个地方漏了都**不报错、只是功能静默失效**：
+这一条最容易踩坑，四个地方漏了都**不报错、只是功能静默失效或样式缺失**：
 
 | 漏了什么 | 症状 | 位置 |
 |---|---|---|
-| `app.use(ElLoading)` | `v-loading` 遮罩不再出现 | 9 处，如 [project/index.vue](src/views/project/index.vue) |
+| `app.use(ElLoading)` | `v-loading` 遮罩不再出现 | 10 处，如 [project/index.vue](src/views/project/index.vue) |
 | `<el-config-provider :locale="zhCn">` | 日期面板变英文 | [App.vue](src/App.vue) |
 | 组件没进 `EL_COMPONENTS` | Vue 把 `<el-xxx>` 当未知标签原样渲染，页面空白 | [main.js](src/main.js) |
+| 服务式组件漏 import 样式 | `ElMessageBox` 弹窗撑满全屏、白底无边框无按钮样式；`ElMessage` toast 无背景无定位 | [main.js](src/main.js) |
+
+**最后一条是三处里最隐蔽的**：`ElMessage` / `ElMessageBox` 不出现在模板里（是 JS 具名导入调用的），靠"grep 模板里的 `el-*` 标签"补 CSS 永远补不到它们，而漏了也不报错 —— 弹窗会照常出现，只是没样式。同理 `ElLoading` 是指令不是标签，它的样式不在任何组件的 css 依赖里。
+
+所以 `src/main.js` 里除了 43 行按标签补的样式，还单独 import 了这三个：
+
+```js
+import 'element-plus/es/components/loading/style/css'
+import 'element-plus/es/components/message/style/css'
+import 'element-plus/es/components/message-box/style/css'
+```
+
+新增页面如果用到 `ElNotification` 或 `ElLoading.service()`，同样要补对应 style；光 `app.use(ElLoading)` 只注册指令不引入样式。
 
 图标仍是全量注册：项目表单里的图标选择器会遍历整份图标表，无论如何都要全进包，白名单省不下体积（实测只省 81 字节）。
 
