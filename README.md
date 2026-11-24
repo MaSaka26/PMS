@@ -92,14 +92,16 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 | 路径 | 说明 |
 |---|---|
 | `/login` | 登录页 |
+| `/mine` | 我的任务（按登录人聚合的三类事务） |
 | `/project/board` | 项目看板 |
 | `/project/board/:id` | 项目详情 |
 | `/project/archive` | 项目归档 |
 | `/project/archive/:id` | 归档项目详情（只读） |
 | `/project/flow` | 项目流程与阶段规则说明 |
 | `/task/board` | 任务看板 |
-| `/task/mine` | 我的任务（按登录人聚合的三类事务） |
 | `/task/flow` | 任务流程与规则说明 |
+
+「我的任务」独立成一级菜单而不是挂在「任务规划」下：它跨项目聚合，而「任务规划」下的看板与流程都以单个项目为单位，两者不是同一层东西；且它是每天都要打开的入口，埋进二级菜单会多点一次。旧地址 `/task/mine` 仍可用，路由里重定向到 `/mine`。
 | `/field` | 字段配置 |
 | `/template` | 项目模板 |
 | `/member` | 成员管理 |
@@ -312,7 +314,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 ---
 
-### 7. 我的任务 `/task/mine`
+### 7. 我的任务 `/mine`
 
 **页面职责**：看板回答「这个项目走到哪了」，这一页回答「我今天该干什么」。按当前登录人聚合他名下的事务，跨项目、跨状态，默认按截止日期升序。
 
@@ -474,7 +476,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 |---|---|
 | [layout/index.vue](src/layout/index.vue) | 整体布局，固定头部/侧栏/面包屑，内容区 `el-scrollbar` |
 | [layout/components/header.vue](src/layout/components/header.vue) | 当前用户、角色、退出登录 |
-| [layout/components/aside.vue](src/layout/components/aside.vue) | 侧边栏菜单与路由高亮 |
+| [layout/components/aside.vue](src/layout/components/aside.vue) | 侧边栏菜单与路由高亮；一级项「我的任务 / 字段配置 / 项目模板 / 成员管理」，下拉项「项目管理」「任务规划」 |
 | [layout/components/Breadcrumb.vue](src/layout/components/Breadcrumb.vue) | 基于 `route.matched` 的三级面包屑 |
 | [router/index.js](src/router/index.js) | 路由表、嵌套路由、登录守卫、token 校验 |
 | [utils/permissions.js](src/utils/permissions.js) | 全站统一的权限判断 |

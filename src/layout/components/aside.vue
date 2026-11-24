@@ -2,7 +2,10 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { Folder, Tickets, Setting, Document, User, CaretRight } from '@element-plus/icons-vue'
+import {
+    Folder, Tickets, Setting, Document, User,
+    Checked, Odometer, FolderOpened, Share, Grid, Guide
+} from '@element-plus/icons-vue'
 
 import { useSystemStore } from '@/stores/system'
 
@@ -21,14 +24,17 @@ const activeMenu = computed(() => {
 
 // 菜单和 router 里的路由一一对应；有 children 的渲染成下拉子菜单
 const menus = [
+    // 「我的任务」是跨项目的待办入口，每天都开，放在最前面且不塞进下拉
+    // 子项图标不用 CaretRight：那个箭头看起来像还能再展开一层
+    { path: '/mine', title: '我的任务', icon: Checked },
     {
         path: '/project',
         title: '项目管理',
         icon: Folder,
         children: [
-            { path: '/project/board', title: '项目看板', icon: CaretRight },
-            { path: '/project/archive', title: '项目归档', icon: CaretRight },
-            { path: '/project/flow', title: '项目流程', icon: CaretRight },
+            { path: '/project/board', title: '项目看板', icon: Odometer },
+            { path: '/project/archive', title: '项目归档', icon: FolderOpened },
+            { path: '/project/flow', title: '项目流程', icon: Share },
         ],
     },
     {
@@ -36,9 +42,8 @@ const menus = [
         title: '任务规划',
         icon: Tickets,
         children: [
-            { path: '/task/board', title: '任务看板', icon: CaretRight },
-            { path: '/task/mine', title: '我的任务', icon: CaretRight },
-            { path: '/task/flow', title: '任务流程', icon: CaretRight },
+            { path: '/task/board', title: '任务看板', icon: Grid },
+            { path: '/task/flow', title: '任务流程', icon: Guide },
         ],
     },
     { path: '/field', title: '字段配置', icon: Setting },

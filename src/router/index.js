@@ -19,6 +19,13 @@ const router = createRouter({
       meta: { title: "项目管理后台" },
       children: [
         {
+          // 我的任务独立成一级：它跨项目，「任务规划」讲的是看板与流程，两者不是同一层东西
+          path: "mine",
+          name: "TaskMine",
+          component: () => import("@/views/task/mine.vue"),
+          meta: { title: "我的任务" },
+        },
+        {
           // 项目管理：下拉包含「项目看板」和「项目归档」
           path: "project",
           name: "ProjectPlanning",
@@ -82,10 +89,9 @@ const router = createRouter({
               meta: { title: "任务看板" },
             },
             {
+              // 兼容旧地址 /task/mine → /mine
               path: "mine",
-              name: "TaskMine",
-              component: () => import("@/views/task/mine.vue"),
-              meta: { title: "我的任务" },
+              redirect: "/mine",
             },
             {
               path: "flow",
