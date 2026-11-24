@@ -336,19 +336,22 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 - 逾期行整行标红并挂「逾期」标签，与项目详情指标卡的逾期口径一致（`getDueLevel` 返回 `overdue`）
 - 阻塞任务挂「阻塞」标签；我是该项目 PM 的任务挂「我负责这个项目」标签
 - 点行打开任务详情抽屉，点项目名跳到对应项目的任务看板
+- 操作列固定在最右侧（横向滚动时不消失），「在看板定位」跳到任务看板并自动滚到那张卡片、亮蓝框约 2.6 秒后自动撤掉；目标在别的项目时会先切换项目，在「已取消」折叠区里时会先展开
 - 已归档项目的任务不进入本页
 
 **核心代码**
 
 | 文件 | 作用 |
 |---|---|
-| [task/mine.vue](src/views/task/mine.vue) | 事务分类、筛选、排序、逾期高亮、抽屉 |
+| [task/mine.vue](src/views/task/mine.vue) | 事务分类、筛选、排序、逾期高亮、抽屉、在看板定位 |
+| [task/index.vue](src/views/task/index.vue) | 接住 `?projectId=&taskId=`，滚动定位并短暂高亮目标卡片（`locateTask`） |
+| [task/components/TaskCard.vue](src/views/task/components/TaskCard.vue) | `id="task-card-<taskId>"` 与 `highlight` 高亮态 |
 | [stores/taskStore.js](src/stores/taskStore.js) | `taskMap`（projectId → 任务数组），本页在此基础上拍平 |
 | [stores/projectStore.js](src/stores/projectStore.js)、[stores/memberStore.js](src/stores/memberStore.js) | 项目标题、负责人与成员姓名 |
 | [utils/due.js](src/utils/due.js) | 逾期判定 |
 | [components/DueBadge.vue](src/components/DueBadge.vue) | 截止日期徽标 |
 
-**与其他页面的关系**：任务来自任务看板；项目与成员来自项目看板、成员管理；点开抽屉后能看到的操作与任务看板一致（同用 `TaskDrawer`）。
+**与其他页面的关系**：任务来自任务看板；项目与成员来自项目看板、成员管理；点开抽屉后能看到的操作与任务看板一致（同用 `TaskDrawer`）。反向跳转靠 URL 参数：`/task/board?projectId=<pid>&taskId=<tid>`，看板读 query 后定位，所以「我的任务 → 某张卡片」是可分享、可刷新的深链接。
 
 ---
 
