@@ -1,4 +1,5 @@
 import axios from "axios";
+import { ensureMock } from "./mockGate";
 
 const request = axios.create({
   baseURL: "/api",
@@ -6,7 +7,10 @@ const request = axios.create({
 });
 
 request.interceptors.request.use(
-  (config) => {
+  async (config) => {
+    // 模拟数据层是异步 chunk，必须等它装好 XMLHttpRequest 再放行，
+    // 否则这个请求会打到真实网络并返回 404。真实后端模式这里是空操作。
+    await ensureMock();
     const token = localStorage.getItem('pm_token')
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`

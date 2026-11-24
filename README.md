@@ -17,6 +17,7 @@
 - [目录结构](#目录结构)
 - [数据存储与重置](#数据存储与重置)
 - [部署到 GitHub Pages](#部署到-github-pages)
+- [构建体积与加载策略](#构建体积与加载策略)
 - [决策记录：为什么删掉排期与关键路径](#决策记录为什么删掉排期与关键路径)
 - [已知限制](#已知限制)
 - [后续规划](#后续规划)
@@ -633,6 +634,54 @@ https://masaka26.github.io/PMS/
 - 本地验证 Pages 版：先设置 `GITHUB_ACTIONS=true`、`GITHUB_REPOSITORY=MaSaka26/PMS` 执行 `npm run build`，再用同样的环境变量执行 `npm run preview`，访问 `http://localhost:4173/PMS/`（preview 与构建的 base 必须一致，否则资源 404、页面空白）
 - Mock 数据保存在每个访问者自己的 localStorage 中，不同人之间的数据不共享
 
+## 构建体积与加载策略
+
+首屏下载量从 2.0 MB（gzip 520 KB）降到 1.04 MB（gzip 296 KB），做法分三步，每一步都能单独回退。
+
+### 1. 第三方依赖按变更频率分块
+
+[vite.config.js](vite.config.js) 里的 `VENDOR_RULES` 把 `element-plus`、`vue`/`pinia`、`axios`、`highcharts`、`mockjs` 各分一个 chunk。
+
+目的不是减小总体积，而是让长期不变的依赖拥有稳定 hash：改一行业务代码，用户不必重新下载整个 Element Plus（1.14 MB raw）。
+
+注意 Vite 8 底层换成了 rolldown，`manualChunks` **只接受函数形式**，写对象形式会直接报 `TypeError: manualChunks is not a function`。
+
+### 2. Mock 数据层改成异步加载
+
+原来 `src/main.js` 第一行就是 `import './mock'`，mockjs 与全部种子数据必须在任何应用代码执行前下载并解析完。
+
+现在改成 [src/api/mockGate.js](src/api/mockGate.js) 提供的就绪门：
+
+- mock 是一个动态 chunk，首屏渲染完之后在 `requestIdleCallback` 里开始预取
+- [src/api/request.js](src/api/request.js) 的请求拦截器第一行 `await ensureMock()`，保证发请求时劫持已经装好
+- 开关是 `import.meta.env.DEV || import.meta.env.VITE_USE_MOCK === 'true'`；演示站的 [.env.production](.env.production) 里设了 `VITE_USE_MOCK=true`
+
+这一层是必需的不是可选优化：mockjs 会替换 `window.XMLHttpRequest`，靠 import 顺序保证「它先装好」是不可靠的约定，改成显式等待之后，就不会出现某个请求打到真实网络返回 404 的情况。
+
+接真实后端时把 `.env.production` 改成 `VITE_USE_MOCK=false`，业务代码一行不用动；此时 `ensureMock()` 直接 resolve，mock chunk 也不会被下载。
+
+### 3. Element Plus 按需注册
+
+`src/main.js` 里用一张 `EL_COMPONENTS` 表具名引入实际用到的 44 个组件，逐组件 import 样式，再循环 `app.component` 注册。
+
+这一条最容易踩坑，三个地方漏了都**不报错、只是功能静默失效**：
+
+| 漏了什么 | 症状 | 位置 |
+|---|---|---|
+| `app.use(ElLoading)` | `v-loading` 遮罩不再出现 | 9 处，如 [project/index.vue](src/views/project/index.vue) |
+| `<el-config-provider :locale="zhCn">` | 日期面板变英文 | [App.vue](src/App.vue) |
+| 组件没进 `EL_COMPONENTS` | Vue 把 `<el-xxx>` 当未知标签原样渲染，页面空白 | [main.js](src/main.js) |
+
+图标仍是全量注册：项目表单里的图标选择器会遍历整份图标表，无论如何都要全进包，白名单省不下体积（实测只省 81 字节）。
+
+### 怎么复查体积
+
+```bash
+npm run build
+node scripts/measure-dist.mjs          # 逐文件 raw + gzip，并从 index.html 算首屏实下载量
+node scripts/measure-any.mjs dist.old  # 测任意目录，用来和旧产物对比
+```
+
 ## 决策记录：为什么删掉排期与关键路径
 
 排期与关键路径在这个项目里**存在过两次，又被删除过两次**。这一节不是变更日志，是留给以后的判据：什么人、在什么条件下，才值得把它再做一次。
@@ -713,7 +762,7 @@ https://masaka26.github.io/PMS/
 - 字段删除后，历史 `extra` 中的值仍保留但不再展示，也没有使用情况统计。
 - 任务看板一次性加载当前项目全部任务，任务量很大时需要分页或虚拟列表。
 - 自动化测试覆盖纯函数（权限判断、截止日期分级、登录与停用校验），页面与 Mock 流程仍以手工冒烟为主。
-- 生产构建存在主包体积告警（Element Plus + Highcharts + Mock.js）。
+- 生产构建的主入口 chunk 已从 1.2 MB 降到约 11 KB，但 Element Plus 仍在首屏（约 771 KB raw / 239 KB gzip），这是按需引入后剩下的真实开销，再压需要换组件库而不是继续调配置。
 
 ## 后续规划
 
