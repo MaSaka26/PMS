@@ -265,17 +265,19 @@ const openActivity = (ev) => {
     drawerVisible.value = true
 }
 
-const gotoTasks = (status) => {
-    statusFilter.value = status
-    tab.value = 'tasks'
-}
-
 // 指标卡点击：按卡片语义切 tab 并带上筛选条件
 const resetTaskFilters = () => {
     statusFilter.value = 'all'
     assigneeFilter.value = 'all'
     onlyBlocked.value = false
     onlyOverdue.value = false
+}
+
+// 概览里的「任务列表」入口：回到全部任务，不残留上一次的筛选
+const gotoTasks = (status) => {
+    resetTaskFilters()
+    statusFilter.value = status
+    tab.value = 'tasks'
 }
 const selectStat = (payload = {}) => {
     if (payload.tab === 'members') {
