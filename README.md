@@ -53,7 +53,8 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 ## 测试与 CI
 
-- `tests/*.test.js` 覆盖权限判断、截止日期分级、登录与停用校验，使用 Node 内置 `node:test`，无需额外测试依赖。
+- `tests/*.test.js` 覆盖权限判断、截止日期分级、登录与停用校验、种子数据日期合法性，使用 Node 内置 `node:test`，无需额外测试依赖。
+- `tests/on-demand.test.js` 守 Element Plus 按需引入的四个静默失效点：扫 `src/` 下所有 `<el-xxx>` 标签与 `from 'element-plus'` 的具名导入，逐个核对（1）样式目录存在（2）`main.js` 里 import 了样式（3）标签注册成了全局组件；另外单独检查 `ElMessage` / `ElMessageBox` / `v-loading` 这三个不在模板里的样式。解析 `main.js` 前会先剥注释，注释掉的 import 不会被当成还在。
 - `.github/workflows/ci.yml` 在 pull request 与非 `master` 分支的 push 时执行：安装依赖 → 单元测试 → 生产构建；`master` 的推送由部署工作流负责。
 - 页面与 Mock 流程仍以手工冒烟验证为主。
 
