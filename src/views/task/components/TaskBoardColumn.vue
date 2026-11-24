@@ -11,7 +11,9 @@ defineProps({
     canCancelTask: { type: Function, required: true },
     canEditTask: { type: Function, required: true },
     canDeleteTask: { type: Function, required: true },
-    depsInfoOf: { type: Function, required: true }
+    depsInfoOf: { type: Function, required: true },
+    // 从「我的任务」跳过来要高亮的任务 id
+    highlightId: { type: String, default: '' }
 })
 defineEmits([
     'open', 'edit', 'delete', 'claim', 'assign', 'advance',
@@ -30,7 +32,8 @@ defineEmits([
             <TaskCard v-for="t in tasks" :key="t.id" :task="t" :can-claim="canClaim"
                 :can-assign="canAssignTask(t)" :can-submit="canOperateTask(t)" :can-review="canReview"
                 :can-block="canOperateTask(t)" :can-cancel="canCancelTask(t)" :can-edit="canEditTask(t)"
-                :can-delete="canDeleteTask(t)" :deps="depsInfoOf(t)" @open="$emit('open', $event)"
+                :can-delete="canDeleteTask(t)" :deps="depsInfoOf(t)"
+                :highlight="highlightId === t.id" @open="$emit('open', $event)"
                 @edit="$emit('edit', $event)" @delete="$emit('delete', $event)"
                 @claim="$emit('claim', $event)" @assign="$emit('assign', $event)"
                 @advance="$emit('advance', $event)" @reject="$emit('reject', $event)"

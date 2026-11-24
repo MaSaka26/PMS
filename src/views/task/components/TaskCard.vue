@@ -25,7 +25,9 @@ const props = defineProps({
     deps: { type: Object, default: null },
     // 编辑 / 删除权限（由父组件按角色与项目关系计算）
     canEdit: { type: Boolean, default: false },
-    canDelete: { type: Boolean, default: false }
+    canDelete: { type: Boolean, default: false },
+    // 从「我的任务」跳过来定位时，短暂高亮这一张
+    highlight: { type: Boolean, default: false }
 })
 
 const emit = defineEmits([
@@ -126,7 +128,8 @@ const onOpen = () => emit('open', props.task)
 </script>
 
 <template>
-    <div class="task-card" :class="[priorityClass, { 'is-blocked': task.blocked, 'is-canceled': isCanceled }]"
+    <div :id="`task-card-${task.id}`" class="task-card"
+        :class="[priorityClass, { 'is-blocked': task.blocked, 'is-canceled': isCanceled, 'is-located': highlight }]"
         @click="onOpen">
         <span class="accent" aria-hidden="true"></span>
 
@@ -605,6 +608,18 @@ const onOpen = () => emit('open', props.task)
     background: linear-gradient(180deg, #fff8f9 0%, #fff 55%);
 }
 
+// 从「我的任务」定位过来：亮蓝描边 + 光晕脉冲，2.6 秒后由父组件撤掉
+.task-card.is-located {
+    border-color: #409eff;
+    box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.22), 0 12px 28px -14px rgba(64, 158, 255, 0.75);
+    animation: located-pulse 1.15s ease-in-out 2;
+}
+
+@keyframes located-pulse {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.22), 0 12px 28px -14px rgba(64, 158, 255, 0.75); }
+    50% { box-shadow: 0 0 0 7px rgba(64, 158, 255, 0.1), 0 12px 28px -14px rgba(64, 158, 255, 0.75); }
+}
+
 .task-card.is-canceled {
     opacity: 0.72;
     filter: grayscale(0.4);
@@ -623,6 +638,10 @@ const onOpen = () => emit('open', props.task)
 
     .task-card:hover {
         transform: none;
+    }
+
+    .task-card.is-located {
+        animation: none;
     }
 }
 </style>

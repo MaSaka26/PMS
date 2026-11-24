@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useFieldStore } from '@/stores/fieldStore'
@@ -103,6 +103,37 @@ watch(currentProjectId, () => {
 })
 // 已取消折叠区是否展开
 const canceledOpen = ref(false)
+
+// 从「我的任务」跳进来定位某一张卡片：滚到它、亮一下，然后自动撤掉
+const highlightId = ref('')
+let highlightTimer = null
+
+const clearHighlight = () => {
+    if (highlightTimer) {
+        clearTimeout(highlightTimer)
+        highlightTimer = null
+    }
+    highlightId.value = ''
+}
+
+const locateTask = async (taskId) => {
+    if (!taskId) return
+    // 筛选可能把目标卡片藏起来，定位前先清掉筛选条件
+    taskKeyword.value = ''
+    assigneeFilter.value = 'all'
+    onlyBlocked.value = false
+    // 已取消的任务在折叠区里，先展开
+    if (canceledTasks.value.some((t) => t.id === taskId)) canceledOpen.value = true
+    await nextTick()
+    const el = document.getElementById(`task-card-${taskId}`)
+    if (!el) return
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    highlightId.value = taskId
+    clearTimeout(highlightTimer)
+    highlightTimer = setTimeout(() => { highlightId.value = '' }, 2600)
+}
+
+onBeforeUnmount(clearHighlight)
 
 // 任务详情抽屉
 const drawerVisible = ref(false)
@@ -217,9 +248,25 @@ onMounted(async () => {
             fetchProjects(),
             taskStore.initAll()
         ])
+        // 从「我的任务」带 taskId 进来：等看板渲染完再定位
+        await locateTask(String(route.query.taskId || ''))
     } finally {
         loading.value = false
     }
+})
+
+// 已在看板页时再次跳转：组件不会重建，得自己响应 query 变化
+// 先切项目（目标任务可能属于另一个项目），再定位
+watch(() => route.query.projectId, (id) => {
+    const next = String(id || '')
+    if (!next || next === currentProjectId.value) return
+    if (!projectStore.projectList.some((p) => p.id === next)) return
+    currentProjectId.value = next
+    locateTask(String(route.query.taskId || ''))
+})
+
+watch(() => route.query.taskId, (id) => {
+    if (id) locateTask(String(id))
 })
 </script>
 
@@ -250,7 +297,8 @@ onMounted(async () => {
                 :tasks="grouped[col.status]" :can-claim="canClaimThisProject"
                 :can-review="canReviewCurrentProject" :can-assign-task="canAssignTask"
                 :can-operate-task="canOperateTask" :can-cancel-task="canCancelTask"
-                :can-edit-task="canEditTaskOf" :can-delete-task="canDeleteTaskOf" :deps-info-of="depsInfoOf"
+                :can-edit-task="canEditTaskOf" :can-delete-task="canDeleteTaskOf"
+                :deps-info-of="depsInfoOf" :highlight-id="highlightId"
                 @open="openTask" @edit="openEdit" @delete="removeTask" @claim="claimTask"
                 @assign="openAssign" @advance="advanceTask" @reject="rejectTask" @reopen="reopenTask"
                 @restore="restoreHandler" @block="blockHandler" @unblock="unblockHandler"
@@ -260,7 +308,8 @@ onMounted(async () => {
         <!-- 已取消：折叠区，不占日常视野 -->
         <CanceledTaskSection v-if="canceledTasks.length" v-model:open="canceledOpen" :tasks="canceledTasks"
             :can-review="canReviewCurrentProject" :can-edit-task="canEditTaskOf"
-            :can-delete-task="canDeleteTaskOf" :deps-info-of="depsInfoOf" @open-task="openTask"
+            :can-delete-task="canDeleteTaskOf" :deps-info-of="depsInfoOf" :highlight-id="highlightId"
+            @open-task="openTask"
             @edit="openEdit" @delete="removeTask" @restore="restoreHandler" />
 
         <!-- 任务详情抽屉：详情 + 完整时间线 -->

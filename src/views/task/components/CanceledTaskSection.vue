@@ -8,7 +8,8 @@ const props = defineProps({
     canReview: { type: Boolean, default: false },
     canEditTask: { type: Function, required: true },
     canDeleteTask: { type: Function, required: true },
-    depsInfoOf: { type: Function, required: true }
+    depsInfoOf: { type: Function, required: true },
+    highlightId: { type: String, default: '' }
 })
 const emit = defineEmits(['update:open', 'open-task', 'edit', 'delete', 'restore'])
 
@@ -30,7 +31,8 @@ const opened = computed({
         <div v-if="opened" class="canceled-body">
             <TaskCard v-for="t in tasks" :key="t.id" :task="t" :can-claim="false" :can-review="canReview"
                 :can-block="false" :can-cancel="false" :can-edit="canEditTask(t)"
-                :can-delete="canDeleteTask(t)" :deps="depsInfoOf(t)" @open="$emit('open-task', $event)"
+                :can-delete="canDeleteTask(t)" :deps="depsInfoOf(t)"
+                :highlight="highlightId === t.id" @open="$emit('open-task', $event)"
                 @edit="$emit('edit', $event)" @delete="$emit('delete', $event)"
                 @restore="$emit('restore', $event)" />
         </div>

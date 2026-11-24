@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { WarningFilled, Search } from '@element-plus/icons-vue'
+import { Aim, Search, WarningFilled } from '@element-plus/icons-vue'
 
 import { useTaskStore } from '@/stores/taskStore'
 import { useProjectStore } from '@/stores/projectStore'
@@ -130,12 +130,23 @@ const isPMOf = (t) => projectMap.value.get(t.projectId)?.PM === me.value.id
 
 const rowClassName = ({ row }) => (isOverdue(row) ? 'my-row is-overdue' : 'my-row')
 
-const openTask = (row) => {
+const openTask = (row, column, event) => {
+    // 「在看板定位」是行内按钮，点它不该再顺手弹抽屉
+    // （el-table 的 row-click 由 tr 上的监听触发，@click.stop 拦不住它）
+    if (event?.target?.closest?.('.locate-btn')) return
     drawerTaskId.value = row.id
     drawerVisible.value = true
 }
 const goBoard = (row) => {
     router.push({ path: '/task/board', query: { projectId: row.projectId } })
+}
+
+// 跳到任务看板并定位到这张卡片：项目 + 任务 id 一起带过去
+const locateOnBoard = (row) => {
+    router.push({
+        path: '/task/board',
+        query: { projectId: row.projectId, taskId: row.id }
+    })
 }
 
 const scopeHint = computed(() => SCOPES.find((s) => s.value === scope.value)?.hint || '')
@@ -281,6 +292,16 @@ onMounted(async () => {
                             <DueBadge :due-date="row.dueDate" :status="row.status" />
                         </span>
                         <span v-else class="muted">未排期</span>
+                    </template>
+                </el-table-column>
+                <!-- 固定在最右侧：横向滚动时始终可见 -->
+                <el-table-column label="操作" width="118" fixed="right" align="center">
+                    <template #default="{ row }">
+                        <el-button link type="primary" size="small" class="locate-btn"
+                            @click.stop="locateOnBoard(row)">
+                            <el-icon><Aim /></el-icon>
+                            在看板定位
+                        </el-button>
                     </template>
                 </el-table-column>
             </el-table>
@@ -508,6 +529,14 @@ onMounted(async () => {
     display: inline-flex;
     align-items: center;
     gap: 6px;
+}
+
+.locate-btn {
+    gap: 2px;
+
+    .el-icon {
+        font-size: 13px;
+    }
 }
 
 .muted {
