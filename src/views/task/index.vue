@@ -296,6 +296,7 @@ watch(() => route.query.taskId, (id) => {
                 :can-operate-task="canOperateTask" :can-cancel-task="canCancelTask"
                 :can-edit-task="canEditTaskOf" :can-delete-task="canDeleteTaskOf"
                 :deps-info-of="depsInfoOf" :highlight-id="highlightId"
+                :project-id="currentProjectId"
                 @open="openTask" @edit="openEdit" @delete="removeTask" @claim="claimTask"
                 @assign="openAssign" @advance="advanceTask" @reject="rejectTask" @reopen="reopenTask"
                 @restore="restoreHandler" @block="blockHandler" @unblock="unblockHandler"
@@ -306,7 +307,7 @@ watch(() => route.query.taskId, (id) => {
         <CanceledTaskSection v-if="canceledTasks.length" v-model:open="canceledOpen" :tasks="canceledTasks"
             :can-review="canReviewCurrentProject" :can-edit-task="canEditTaskOf"
             :can-delete-task="canDeleteTaskOf" :deps-info-of="depsInfoOf" :highlight-id="highlightId"
-            @open-task="openTask"
+            :project-id="currentProjectId" @open-task="openTask"
             @edit="openEdit" @delete="removeTask" @restore="restoreHandler" />
 
         <!-- 任务详情抽屉：详情 + 完整时间线 -->

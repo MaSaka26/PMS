@@ -23,8 +23,9 @@ const props = defineProps({
     canPin: { type: Boolean, default: false },
     canMoveUp: { type: Boolean, default: false },
     canMoveDown: { type: Boolean, default: false },
-    // 演示用的「谁正在看」实体键（project:xxx），空串则不显示
-    entityKey: { type: String, default: '' }
+    // 演示用的「谁正在看」：项目卡自己不存人头，显示的是它名下任务访客的并集
+    projectId: { type: String, default: '' },
+    taskIds: { type: Array, default: () => [] }
 })
 
 const emit = defineEmits(['edit', 'delete', 'close', 'open', 'pin', 'move-up', 'move-down'])
@@ -105,7 +106,7 @@ const ownerInitial = computed(() => (props.owner || '').trim().charAt(0) || '?')
                 <span class="owner-name">{{ owner || '未指定' }}</span>
             </div>
             <span class="foot-right">
-                <DemoViewers v-if="entityKey" :entity-key="entityKey" />
+                <DemoViewers v-if="projectId && taskIds.length" :project-id="projectId" :task-ids="taskIds" />
                 <span class="status-pill">
                     <span class="dot" aria-hidden="true"></span>{{ statusText }}
                 </span>

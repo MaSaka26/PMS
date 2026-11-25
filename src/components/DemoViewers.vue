@@ -2,20 +2,31 @@
 // 卡片角落的「谁正在看」头像堆叠。
 // 数据来自 src/composables/useDemoViewers.js —— 纯前端随机模拟，不是真实在线状态，
 // tooltip 里明写了「演示」，避免被当成已实现在线协作。
+//
+// 人只归属到任务（叶子）。所以一种卡片对应一种用法：
+//   - 任务卡：传 task-id，显示这个任务上的访客
+//   - 项目卡：传 project-id + task-ids，显示该项目所有任务访客的并集
+// 项目卡之所以要把任务 id 传进来，是因为"谁在看这个项目"在语义上就等于
+// "谁在这个项目的某个任务里"，项目本身不是一个可以进去的地方。
 import { computed, onBeforeUnmount, onMounted, watch, watchEffect } from 'vue'
 import { useMemberStore } from '@/stores/memberStore'
 import { useUserStore } from '@/stores/userStore'
 import {
     demoViewersEnabled,
-    registerViewer,
+    registerTaskSlot,
     setViewerPool,
-    unregisterViewer,
-    viewersOf
+    unregisterTaskSlot,
+    viewersOfProject,
+    viewersOfTask
 } from '@/composables/useDemoViewers'
 
 const props = defineProps({
-    // 实体键，形如 project:project_seed_1 / task:task_seed_7
-    entityKey: { type: String, default: '' }
+    // 任务卡：只看这一个任务
+    taskId: { type: String, default: '' },
+    // 任务所属项目，汇总时用来归组
+    projectId: { type: String, default: '' },
+    // 项目卡：它下面有哪些任务（汇总用）
+    taskIds: { type: Array, default: () => [] }
 })
 
 const memberStore = useMemberStore()
@@ -26,7 +37,37 @@ watchEffect(() => {
     setViewerPool(memberStore.memberList, userStore.userInfo?.id)
 })
 
-const viewers = computed(() => viewersOf(props.entityKey))
+// 需要登记的格子：任务卡是单个，项目卡是它名下所有任务
+const slots = computed(() => {
+    if (props.taskId) return [{ taskId: props.taskId, projectId: props.projectId }]
+    return props.taskIds.map((id) => ({ taskId: id, projectId: props.projectId }))
+})
+
+const viewers = computed(() => {
+    if (props.taskId) return viewersOfTask(props.taskId)
+    return viewersOfProject(props.projectId)
+})
+
+// 同一批格子成对地注册 / 注销，避免项目卡刷新列表后旧格子一直占着人
+let attached = []
+const attach = (list) => {
+    attached = list.filter((s) => s.taskId)
+    for (const slot of attached) registerTaskSlot(slot.taskId, slot.projectId)
+}
+const detach = () => {
+    for (const slot of attached) unregisterTaskSlot(slot.taskId)
+    attached = []
+}
+
+onMounted(() => attach(slots.value))
+onBeforeUnmount(detach)
+watch(
+    () => slots.value.map((s) => s.taskId).join(','),
+    () => {
+        detach()
+        attach(slots.value)
+    }
+)
 
 // 最多显示 3 个，多出来的折成 +N
 const MAX_SHOWN = 3
@@ -36,23 +77,6 @@ const overflow = computed(() => Math.max(0, viewers.value.length - MAX_SHOWN))
 const names = computed(() => viewers.value.map((v) => v.name).join('、'))
 const tipText = computed(() =>
     names.value ? `${names.value} 正在查看（演示数据，非真实在线状态）` : ''
-)
-
-const attach = (key) => {
-    if (key) registerViewer(key)
-}
-const detach = (key) => {
-    if (key) unregisterViewer(key)
-}
-
-onMounted(() => attach(props.entityKey))
-onBeforeUnmount(() => detach(props.entityKey))
-watch(
-    () => props.entityKey,
-    (next, prev) => {
-        detach(prev)
-        attach(next)
-    }
 )
 </script>
 

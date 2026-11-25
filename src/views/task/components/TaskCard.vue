@@ -30,7 +30,8 @@ const props = defineProps({
     // 从「我的任务」跳过来定位时，短暂高亮这一张
     highlight: { type: Boolean, default: false },
     // 演示用的「谁正在看」实体键（task:xxx），空串则不显示
-    entityKey: { type: String, default: '' }
+    // 演示用「谁正在看」：任务就是叶子实体，人头直接挂在这个 taskId 上
+    projectId: { type: String, default: '' }
 })
 
 const emit = defineEmits([
@@ -185,7 +186,7 @@ const onOpen = () => emit('open', props.task)
             <span v-else class="unassigned">待认领</span>
 
             <span class="foot-right">
-                <DemoViewers v-if="entityKey" :entity-key="entityKey" />
+                <DemoViewers v-if="task.id" :task-id="task.id" :project-id="projectId || task.projectId" />
                 <span v-if="task.dueDate" class="due">
                     <el-icon><Calendar /></el-icon>{{ task.dueDate }}
                     <DueBadge :due-date="task.dueDate" :status="task.status" />

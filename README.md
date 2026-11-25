@@ -198,7 +198,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 |---|---|
 | [project/index.vue](src/views/project/index.vue) | 列表加载、搜索分页、权限判断、新建/编辑/关闭/删除 |
 | [project/components/card.vue](src/views/project/components/card.vue) | 项目卡片与状态、优先级、操作按钮 |
-| [components/DemoViewers.vue](src/components/DemoViewers.vue) | 卡片右下角的「正在查看」头像堆叠（演示） |
+| [components/DemoViewers.vue](src/components/DemoViewers.vue) | 卡片右下角的「正在查看」头像堆叠（演示）；任务卡传 `task-id`，项目卡传 `project-id` + `task-ids` 由它汇总 |
 | [project/components/ProjectFormDialog.vue](src/views/project/components/ProjectFormDialog.vue) | 项目表单、图标选择、计划周期、项目自定义字段 |
 | [template/components/TemplatePickerDialog.vue](src/views/template/components/TemplatePickerDialog.vue) | 从模板创建项目的选择弹窗 |
 | [mock/api/project.js](src/mock/api/project.js) | 项目增删改查、归档过滤、权限与日期校验 |
@@ -309,7 +309,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 |---|---|
 | [task/index.vue](src/views/task/index.vue) | 项目切换、筛选、泳道分组、权限、任务表单和操作 |
 | [task/components/TaskCard.vue](src/views/task/components/TaskCard.vue) | 任务卡片、优先级、截止徽标、依赖提示、认领/指派等操作按钮 |
-| [components/DemoViewers.vue](src/components/DemoViewers.vue) | 卡片右下角的「正在查看」头像堆叠（演示） |
+| [components/DemoViewers.vue](src/components/DemoViewers.vue) | 卡片右下角的「正在查看」头像堆叠（演示）；任务卡传 `task-id`，项目卡传 `project-id` + `task-ids` 由它汇总 |
 | [task/components/AssignTaskDialog.vue](src/views/task/components/AssignTaskDialog.vue) | 显式指派弹窗：选择项目成员并确认 |
 | [task/components/TaskDrawer.vue](src/views/task/components/TaskDrawer.vue) | 任务详情、扩展字段、事件时间线 |
 | [stores/taskStore.js](src/stores/taskStore.js) | `taskMap`、任务详情、认领/阻塞/取消/恢复 |
@@ -716,6 +716,7 @@ location.reload()
 项目卡片和任务卡片右下角的头像堆叠（例如「李 / M +1」，hover 显示「张经理、Agent 正在查看（演示数据，非真实在线状态）」）**不是真实的在线状态**。
 
 - 它由 `src/composables/useDemoViewers.js` 在本地随机模拟：每 40 秒有 55% 的概率让某个成员「进来看一下」，每个人停留 2–5 分钟后自己离开；热启动时先放 1–2 个人，避免进页面一片空白。同一个人不会同时出现在两张卡上，最多显示 3 个，超出折叠成 `+N`。
+- **人只归属到任务，项目卡是汇总出来的**：内存里只有 `task:<id>` 一种"有人在"的位置，项目卡上的头像 = 该项目所有任务访客的并集（去重）。因为项目不是一个可以"进去"的地方，它是容器；「谁在看这个项目」在语义上就等于「谁在这个项目的某个任务里」。这样同一个人出现在项目卡和该项目的任务卡上不再是矛盾，而是同一件事的两个缩放层级——Figma、Linear 都是这么做的。
 - **为什么 demo 版只能模拟**：状态存在 localStorage，按浏览器隔离，本地写的记录别人看不到；而这个项目没有后端，也没有 WebSocket / SSE，没法广播「谁在看哪张卡」。
 - **为什么不把 viewers 存进 `pm_mock_db`**：`src/mock/db/index.js` 对 `pm_mock_db` 做了跨标签页监听，任何写入都会触发另一个标签页 `window.location.reload()`。高频写在线状态会让两个标签页互相刷新，停不下来。所以 presence 完全独立在内存里，一个字节都不落盘。
 - 整个功能是模块级单例单定时器，只在 `mockEnabled` 为真时启动；接真实后端后删掉 `useDemoViewers.js` 和 `DemoViewers.vue` 即可，业务代码不用动。

@@ -8,10 +8,12 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { createProject, deleteProject, getProjectList, updateProject, closeProject, pinProject, moveProject } from '@/api/project'
 import { StarFilled } from '@element-plus/icons-vue'
 import { useMemberStore } from '@/stores/memberStore'
+import { useTaskStore } from '@/stores/taskStore'
 import { useUserStore } from '@/stores/userStore'
 import { canCreateProject, canManageProject } from '@/utils/permissions'
 
 const memberStore = useMemberStore()
+const taskStore = useTaskStore()
 const userStore = useUserStore()
 const router = useRouter()
 const route = useRoute()
@@ -50,6 +52,10 @@ const editingProject = ref(null)
 
 // id -> 姓名：直接用 store 提供的方法
 const memberName = memberStore.memberName
+
+// 项目卡上的「正在查看」头像 = 该项目所有任务访客的并集，
+// 所以看板必须知道每个项目有哪些任务。这里只取 id，卡片自己不去拉任务详情。
+const taskIdsOf = (projectId) => (taskStore.taskMap[projectId] || []).map((t) => t.id)
 
 const loadProjects = async () => {
     loading.value = true
@@ -226,6 +232,8 @@ const closeProjectHandler = async (project) => {
 onMounted(() => {
     // 页面进来再兜底触发一次（幂等，不会重复请求）
     memberStore.initMembers()
+    // 只是为了让项目卡能汇总任务上的「正在查看」头像，失败不影响看板本身
+    taskStore.initAll().catch(() => {})
     loadProjects()
 })
 </script>
@@ -269,8 +277,8 @@ onMounted(() => {
                     :owner="memberName(item.PM)" :desc="item.desc" :priority="item.priority" :status="item.status"
                     :pinned="true" :can-close="canManage(item)" :can-edit="canManage(item)"
                     :can-delete="canManage(item)" :can-pin="canManage(item)" :can-move-up="index > 0"
-                    :can-move-down="index < pinnedProjects.length - 1" :entity-key="`project:${item.id}`"
-                    @open="openDetail(item)"
+                    :can-move-down="index < pinnedProjects.length - 1" :project-id="item.id"
+                    :task-ids="taskIdsOf(item.id)" @open="openDetail(item)"
                     @edit="openEdit(item)" @delete="removeProject(item)" @close="closeProjectHandler(item)"
                     @pin="pinHandler(item)" @move-up="moveHandler(item, 'up')"
                     @move-down="moveHandler(item, 'down')" />
@@ -292,7 +300,8 @@ onMounted(() => {
                     :priority="item.priority" :status="item.status" :pinned="false" :can-close="canManage(item)"
                     :can-edit="canManage(item)" :can-delete="canManage(item)" :can-pin="canManage(item)"
                     :can-move-up="index > 0" :can-move-down="index < projectList.length - 1"
-                    :entity-key="`project:${item.id}`" @open="openDetail(item)" @edit="openEdit(item)" @delete="removeProject(item)"
+                    :project-id="item.id" :task-ids="taskIdsOf(item.id)" @open="openDetail(item)"
+                    @edit="openEdit(item)" @delete="removeProject(item)"
                     @close="closeProjectHandler(item)" @pin="pinHandler(item)"
                     @move-up="moveHandler(item, 'up')" @move-down="moveHandler(item, 'down')" />
                 <el-empty v-if="!loading && !projectList.length && !pinnedProjects.length" description="暂无项目"
