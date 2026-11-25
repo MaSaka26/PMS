@@ -6,6 +6,7 @@ import {
 } from '@element-plus/icons-vue'
 import { useMemberStore } from '@/stores/memberStore'
 import DueBadge from '@/components/DueBadge.vue'
+import DemoViewers from '@/components/DemoViewers.vue'
 
 const props = defineProps({
     task: { type: Object, required: true },
@@ -27,7 +28,9 @@ const props = defineProps({
     canEdit: { type: Boolean, default: false },
     canDelete: { type: Boolean, default: false },
     // 从「我的任务」跳过来定位时，短暂高亮这一张
-    highlight: { type: Boolean, default: false }
+    highlight: { type: Boolean, default: false },
+    // 演示用的「谁正在看」实体键（task:xxx），空串则不显示
+    entityKey: { type: String, default: '' }
 })
 
 const emit = defineEmits([
@@ -181,9 +184,12 @@ const onOpen = () => emit('open', props.task)
             <!-- 无 assignee：显示"待认领"标签（Pull 制） -->
             <span v-else class="unassigned">待认领</span>
 
-            <span v-if="task.dueDate" class="due">
-                <el-icon><Calendar /></el-icon>{{ task.dueDate }}
-                <DueBadge :due-date="task.dueDate" :status="task.status" />
+            <span class="foot-right">
+                <DemoViewers v-if="entityKey" :entity-key="entityKey" />
+                <span v-if="task.dueDate" class="due">
+                    <el-icon><Calendar /></el-icon>{{ task.dueDate }}
+                    <DueBadge :due-date="task.dueDate" :status="task.status" />
+                </span>
             </span>
         </div>
 
@@ -459,6 +465,14 @@ const onOpen = () => emit('open', props.task)
         font-size: 12px;
         color: #9ca3af;
         font-style: italic;
+    }
+
+    // 右侧一组：演示用「谁在看」+ 截止日期
+    .foot-right {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
     }
 
     .due {

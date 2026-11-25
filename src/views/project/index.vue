@@ -269,7 +269,8 @@ onMounted(() => {
                     :owner="memberName(item.PM)" :desc="item.desc" :priority="item.priority" :status="item.status"
                     :pinned="true" :can-close="canManage(item)" :can-edit="canManage(item)"
                     :can-delete="canManage(item)" :can-pin="canManage(item)" :can-move-up="index > 0"
-                    :can-move-down="index < pinnedProjects.length - 1" @open="openDetail(item)"
+                    :can-move-down="index < pinnedProjects.length - 1" :entity-key="`project:${item.id}`"
+                    @open="openDetail(item)"
                     @edit="openEdit(item)" @delete="removeProject(item)" @close="closeProjectHandler(item)"
                     @pin="pinHandler(item)" @move-up="moveHandler(item, 'up')"
                     @move-down="moveHandler(item, 'down')" />
@@ -291,7 +292,7 @@ onMounted(() => {
                     :priority="item.priority" :status="item.status" :pinned="false" :can-close="canManage(item)"
                     :can-edit="canManage(item)" :can-delete="canManage(item)" :can-pin="canManage(item)"
                     :can-move-up="index > 0" :can-move-down="index < projectList.length - 1"
-                    @open="openDetail(item)" @edit="openEdit(item)" @delete="removeProject(item)"
+                    :entity-key="`project:${item.id}`" @open="openDetail(item)" @edit="openEdit(item)" @delete="removeProject(item)"
                     @close="closeProjectHandler(item)" @pin="pinHandler(item)"
                     @move-up="moveHandler(item, 'up')" @move-down="moveHandler(item, 'down')" />
                 <el-empty v-if="!loading && !projectList.length && !pinnedProjects.length" description="暂无项目"

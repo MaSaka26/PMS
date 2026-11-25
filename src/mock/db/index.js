@@ -1,4 +1,4 @@
-import { defaultData, SEED_VERSION } from './seed/index.js'
+import { defaultData, shouldResetSeed } from './seed/index.js'
 
 const STORAGE_KEY = 'pm_mock_db'
 
@@ -11,8 +11,15 @@ function load() {
     if (!raw) return clone(defaultData)
     try {
         const data = JSON.parse(raw)
-        // 版本低于当前版本：结构不完整，直接整份重置（演示项目，不做迁移脚本）
-        if (!data.seedVersion || data.seedVersion < SEED_VERSION) {
+        // 什么时候整份重置（演示项目，不做迁移脚本）：
+        // 1. 从没存过 / 没有版本号；
+        // 2. 版本号比代码旧 —— 只认「代码更新」这个方向，反过来（本地比代码新，多见于
+        //    浏览器拿到缓存里的旧 bundle）绝不能刷，否则会用旧种子把新数据抹掉；
+        // 3. 版本号相同但种子内容指纹不同 —— 这就是撞号的兜底：不同分支用过同一个
+        //    版本号时数字没法区分，只能比内容。
+        // 注意：指纹只算种子源码，用户自己改的数据不参与，所以日常操作不会触发重置。
+        // 判定逻辑在 seed/index.js 的 shouldResetSeed()，那边有单测覆盖。
+        if (shouldResetSeed(data)) {
             const fresh = clone(defaultData)
             localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh))
             return fresh

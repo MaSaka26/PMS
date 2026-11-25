@@ -16,6 +16,7 @@
 - [数据模型（概要）](#数据模型概要)
 - [目录结构](#目录结构)
 - [数据存储与重置](#数据存储与重置)
+- [卡片上的「正在查看」是演示效果](#卡片上的正在查看是演示效果)
 - [部署到 GitHub Pages](#部署到-github-pages)
 - [构建体积与加载策略](#构建体积与加载策略)
 - [决策记录：为什么删掉排期与关键路径](#决策记录为什么删掉排期与关键路径)
@@ -53,8 +54,9 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 ## 测试与 CI
 
-- `tests/*.test.js` 覆盖权限判断、截止日期分级、登录与停用校验、种子数据日期合法性，使用 Node 内置 `node:test`，无需额外测试依赖。其中权限测试同时锁住「验收权限只认管理员和项目负责人」与「自己验收自己只标记不拦截」两条约定，避免以后有人把职责分离写成硬拦截，把项目阶段卡死在「任务验收」。
+- `tests/*.test.js` 覆盖权限判断、截止日期分级、登录与停用校验、种子数据日期合法性、种子指纹重置策略，使用 Node 内置 `node:test`，无需额外测试依赖。其中权限测试同时锁住「验收权限只认管理员和项目负责人」与「自己验收自己只标记不拦截」两条约定，避免以后有人把职责分离写成硬拦截，把项目阶段卡死在「任务验收」。
 - `tests/on-demand.test.js` 守 Element Plus 按需引入的四个静默失效点：扫 `src/` 下所有 `<el-xxx>` 标签与 `from 'element-plus'` 的具名导入，逐个核对（1）样式目录存在（2）`main.js` 里 import 了样式（3）标签注册成了全局组件；另外单独检查 `ElMessage` / `ElMessageBox` / `v-loading` 这三个不在模板里的样式。解析 `main.js` 前会先剥注释，注释掉的 import 不会被当成还在。
+- `tests/seed-signature.test.js` 锁住重置策略的四种情况：从没存过 → 重置；本地版本更旧 → 重置；**本地版本更新 → 不重置**（防止浏览器缓存到旧 bundle 时把新数据刷掉）；版本相同但指纹不同 → 重置。重置判定抽成 `shouldResetSeed()` 纯函数就是为了能在没有 localStorage 的 node 环境里测。
 - `.github/workflows/ci.yml` 在 pull request 与非 `master` 分支的 push 时执行：安装依赖 → 单元测试 → 生产构建；`master` 的推送由部署工作流负责。
 - 页面与 Mock 流程仍以手工冒烟验证为主。
 
@@ -183,6 +185,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 **主要功能**
 
 - 卡片展示图标、名称、类型、负责人、优先级、项目阶段
+- 卡片右下角偶尔出现同事头像，是本地模拟的「正在查看」演示效果（见 [卡片上的「正在查看」是演示效果](#卡片上的正在查看是演示效果)）
 - 按名称搜索，分页展示
 - 「新建项目」下拉：新建空白项目 / 从模板创建
 - 只有项目负责人或管理员能看到编辑、关闭、删除操作
@@ -195,6 +198,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 |---|---|
 | [project/index.vue](src/views/project/index.vue) | 列表加载、搜索分页、权限判断、新建/编辑/关闭/删除 |
 | [project/components/card.vue](src/views/project/components/card.vue) | 项目卡片与状态、优先级、操作按钮 |
+| [components/DemoViewers.vue](src/components/DemoViewers.vue) | 卡片右下角的「正在查看」头像堆叠（演示） |
 | [project/components/ProjectFormDialog.vue](src/views/project/components/ProjectFormDialog.vue) | 项目表单、图标选择、计划周期、项目自定义字段 |
 | [template/components/TemplatePickerDialog.vue](src/views/template/components/TemplatePickerDialog.vue) | 从模板创建项目的选择弹窗 |
 | [mock/api/project.js](src/mock/api/project.js) | 项目增删改查、归档过滤、权限与日期校验 |
@@ -305,6 +309,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 |---|---|
 | [task/index.vue](src/views/task/index.vue) | 项目切换、筛选、泳道分组、权限、任务表单和操作 |
 | [task/components/TaskCard.vue](src/views/task/components/TaskCard.vue) | 任务卡片、优先级、截止徽标、依赖提示、认领/指派等操作按钮 |
+| [components/DemoViewers.vue](src/components/DemoViewers.vue) | 卡片右下角的「正在查看」头像堆叠（演示） |
 | [task/components/AssignTaskDialog.vue](src/views/task/components/AssignTaskDialog.vue) | 显式指派弹窗：选择项目成员并确认 |
 | [task/components/TaskDrawer.vue](src/views/task/components/TaskDrawer.vue) | 任务详情、扩展字段、事件时间线 |
 | [stores/taskStore.js](src/stores/taskStore.js) | `taskMap`、任务详情、认领/阻塞/取消/恢复 |
@@ -642,6 +647,7 @@ export const canReviewTask = (user, project) => canManageProject(user, project)
 | field | `id, label, type, targetType, required, options, description, enabled, order` |
 | template | `id, name, projectType, priority, description, fieldIds, tasks[], enabled` |
 | template task | `key, title, description, priority, startOffset, duration, dependsOn[]` |
+| 种子元信息 | `seedVersion`（人工维护）、`seedSignature`（种子内容指纹，自动算出），两者一起决定是否重置本地数据 |
 
 ## 目录结构
 
@@ -649,7 +655,8 @@ export const canReviewTask = (user, project) => canManageProject(user, project)
 PMS/
 ├─ src/
 │  ├─ api/                 # 请求封装（project/task/member/field/template/user）
-│  ├─ components/          # 通用组件（DueBadge）
+│  ├─ components/          # 通用组件（DueBadge、DemoViewers 演示用在线头像）
+│  ├─ composables/         # 组合式函数（useDemoViewers：本地随机模拟的「正在查看」）
 │  ├─ constants/           # 状态、事件元信息
 │  ├─ layout/              # 头部、侧边栏、面包屑、整体布局
 │  ├─ mock/                # Mock.js 接口与 localStorage 数据
@@ -673,13 +680,46 @@ PMS/
 ## 数据存储与重置
 
 - 数据保存在浏览器 localStorage，键为 `pm_mock_db`。
-- `src/mock/db/seed/index.js` 中的 `SEED_VERSION` 控制种子版本；版本变化时整份重置。
+- 种子数据的版本判定在 `src/mock/db/seed/index.js` 的 `shouldResetSeed()`，由**版本号 + 内容指纹**共同决定：
+
+```js
+export function shouldResetSeed(data) {
+    if (!data || !data.seedVersion) return true            // 从没存过
+    if (data.seedVersion < SEED_VERSION) return true       // 代码比本地新
+    return data.seedVersion === SEED_VERSION && data.seedSignature !== SEED_SIGNATURE
+}
+```
+
+判定分三种情况：
+
+| 本地状态 | 结果 | 为什么 |
+|---|---|---|
+| 从没存过 / 版本号更旧 | 重置 | 正常的版本升级 |
+| 版本号相同、指纹相同 | 保留 | 用户自己改的数据不会被刷掉 |
+| 版本号相同、指纹不同 | 重置 | 改过种子却忘了升版本号，或两个分支用了同一个版本号 |
+
+**为什么不是「版本不一致就重置」**：重置必须是单向的。用户本地已经是新版本、却因为浏览器缓存拿到旧 bundle 时，「不一致就重置」会用旧种子把新数据整份抹掉。所以只认「代码比本地新」这一个方向。
+
+**为什么还要指纹**：只靠人记得给 `SEED_VERSION` 加一，漏一次旧数据就永远停在旧版本，没有任何提示。内容指纹（djb2 哈希 `src/mock/db/seed/index.js` 的 `SIGNATURE_PAYLOAD`，实测值 `1c91mw7`）让系统自己发现「版本号没变但内容变了」，顺带免疫两个分支复用同一个版本号——`14` 这个数字曾经就这样撞过一次。
+
+注意指纹只算种子源码，**用户自己改的数据不参与计算**，所以日常使用不会触发重置。
+
 - 需要恢复初始数据时，可在浏览器控制台执行：
 
 ```js
 localStorage.removeItem('pm_mock_db')
 location.reload()
 ```
+
+## 卡片上的「正在查看」是演示效果
+
+项目卡片和任务卡片右下角的头像堆叠（例如「李 / M +1」，hover 显示「张经理、Agent 正在查看（演示数据，非真实在线状态）」）**不是真实的在线状态**。
+
+- 它由 `src/composables/useDemoViewers.js` 在本地随机模拟：每 40 秒有 55% 的概率让某个成员「进来看一下」，每个人停留 2–5 分钟后自己离开；热启动时先放 1–2 个人，避免进页面一片空白。同一个人不会同时出现在两张卡上，最多显示 3 个，超出折叠成 `+N`。
+- **为什么 demo 版只能模拟**：状态存在 localStorage，按浏览器隔离，本地写的记录别人看不到；而这个项目没有后端，也没有 WebSocket / SSE，没法广播「谁在看哪张卡」。
+- **为什么不把 viewers 存进 `pm_mock_db`**：`src/mock/db/index.js` 对 `pm_mock_db` 做了跨标签页监听，任何写入都会触发另一个标签页 `window.location.reload()`。高频写在线状态会让两个标签页互相刷新，停不下来。所以 presence 完全独立在内存里，一个字节都不落盘。
+- 整个功能是模块级单例单定时器，只在 `mockEnabled` 为真时启动；接真实后端后删掉 `useDemoViewers.js` 和 `DemoViewers.vue` 即可，业务代码不用动。
+- 接后端时正确做法：服务端存 `entityType + entityId + userId + heartbeatAt` 的 presence 表，客户端 30 秒心跳、90 秒过期，服务端用 WebSocket 或 SSE 推送变更；**实体表本身不要存 viewers 字段**。
 
 ## 部署到 GitHub Pages
 
@@ -856,7 +896,8 @@ node scripts/measure-any.mjs dist.old  # 测任意目录，用来和旧产物对
 - 字段删除后，历史 `extra` 中的值仍保留但不再展示，也没有使用情况统计。
 - 任务看板一次性加载当前项目全部任务，任务量很大时需要分页或虚拟列表。
 - 「我的任务」在内存里拍平全部项目的任务后前端排序筛选，与看板同样没有分页；数据量再大需要改成分页接口。
-- 修改种子数据的 `SEED_VERSION` 会让浏览器里的旧数据整份重置（`src/mock/db/index.js` 判定 `seedVersion < SEED_VERSION` 才重置，没有迁移脚本）。
+- 种子数据变更会让浏览器里的旧数据整份重置（判定见 [数据存储与重置](#数据存储与重置)：版本号更旧、或版本号相同但内容指纹不同，都会重置），没有迁移脚本。
+- 卡片上的「正在查看」是本地随机模拟的演示效果，不是真实在线状态，也无法跨浏览器看到别人。
 - 自动化测试覆盖纯函数（权限判断、截止日期分级、登录与停用校验），页面与 Mock 流程仍以手工冒烟为主。
 - 生产构建的主入口 chunk 已从 1.2 MB 降到约 11 KB，但 Element Plus 仍在首屏（约 771 KB raw / 239 KB gzip），这是按需引入后剩下的真实开销，再压需要换组件库而不是继续调配置。
 

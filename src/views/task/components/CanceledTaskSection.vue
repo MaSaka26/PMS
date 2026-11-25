@@ -32,7 +32,8 @@ const opened = computed({
             <TaskCard v-for="t in tasks" :key="t.id" :task="t" :can-claim="false" :can-review="canReview"
                 :can-block="false" :can-cancel="false" :can-edit="canEditTask(t)"
                 :can-delete="canDeleteTask(t)" :deps="depsInfoOf(t)"
-                :highlight="highlightId === t.id" @open="$emit('open-task', $event)"
+                :highlight="highlightId === t.id" :entity-key="`task:${t.id}`"
+                @open="$emit('open-task', $event)"
                 @edit="$emit('edit', $event)" @delete="$emit('delete', $event)"
                 @restore="$emit('restore', $event)" />
         </div>

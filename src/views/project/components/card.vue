@@ -3,6 +3,7 @@
 import { computed } from 'vue'
 import { ArrowLeft, ArrowRight, Calendar, Delete, Edit, Star, StarFilled, SwitchButton } from '@element-plus/icons-vue'
 import { PROJECT_STATUS_LABEL } from '@/constants/status'
+import DemoViewers from '@/components/DemoViewers.vue'
 
 const props = defineProps({
     title: { type: String, default: '' },
@@ -21,7 +22,9 @@ const props = defineProps({
     pinned: { type: Boolean, default: false },
     canPin: { type: Boolean, default: false },
     canMoveUp: { type: Boolean, default: false },
-    canMoveDown: { type: Boolean, default: false }
+    canMoveDown: { type: Boolean, default: false },
+    // 演示用的「谁正在看」实体键（project:xxx），空串则不显示
+    entityKey: { type: String, default: '' }
 })
 
 const emit = defineEmits(['edit', 'delete', 'close', 'open', 'pin', 'move-up', 'move-down'])
@@ -101,8 +104,11 @@ const ownerInitial = computed(() => (props.owner || '').trim().charAt(0) || '?')
                 <span class="owner-avatar">{{ ownerInitial }}</span>
                 <span class="owner-name">{{ owner || '未指定' }}</span>
             </div>
-            <span class="status-pill">
-                <span class="dot" aria-hidden="true"></span>{{ statusText }}
+            <span class="foot-right">
+                <DemoViewers v-if="entityKey" :entity-key="entityKey" />
+                <span class="status-pill">
+                    <span class="dot" aria-hidden="true"></span>{{ statusText }}
+                </span>
             </span>
         </div>
 
@@ -336,6 +342,14 @@ const ownerInitial = computed(() => (props.owner || '').trim().charAt(0) || '?')
                 text-overflow: ellipsis;
                 white-space: nowrap;
             }
+        }
+
+        // 右侧一组：演示用「谁在看」+ 状态胶囊，避免两者各自和左边抢空间
+        .foot-right {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
         }
 
         .status-pill {

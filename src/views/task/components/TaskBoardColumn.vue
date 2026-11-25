@@ -33,7 +33,7 @@ defineEmits([
                 :can-assign="canAssignTask(t)" :can-submit="canOperateTask(t)" :can-review="canReview"
                 :can-block="canOperateTask(t)" :can-cancel="canCancelTask(t)" :can-edit="canEditTask(t)"
                 :can-delete="canDeleteTask(t)" :deps="depsInfoOf(t)"
-                :highlight="highlightId === t.id" @open="$emit('open', $event)"
+                :highlight="highlightId === t.id" :entity-key="`task:${t.id}`" @open="$emit('open', $event)"
                 @edit="$emit('edit', $event)" @delete="$emit('delete', $event)"
                 @claim="$emit('claim', $event)" @assign="$emit('assign', $event)"
                 @advance="$emit('advance', $event)" @reject="$emit('reject', $event)"
