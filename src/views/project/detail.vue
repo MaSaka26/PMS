@@ -295,6 +295,23 @@ const switchTab = (name) => {
     if (name === 'overview') resetTaskFilters()
 }
 
+// 地址栏里的 :id 变了要重新拉数据。
+// /project/board/:id 只有一个路由记录，Vue 会复用同一个组件实例，
+// 于是 onMounted 不会再跑一次 —— 从看板点卡片进来时中间经过了列表页，
+// 组件是全新挂载的所以没问题；直接手改地址栏或从历史/收藏跳转就会残留上一个项目的
+// 标题、动态列表和成员数，只有任务数因为 taskStore 里没有这个 key 而变成 0。
+watch(projectId, () => {
+    tab.value = 'overview'
+    resetTaskFilters()
+    // 清空而不是等新请求回来：否则新数据到达前，页面会短暂显示上一个项目的动态
+    activities.value = []
+    activityTotal.value = 0
+    activityPage.value = 1
+    includeEdited.value = false
+    drawerVisible.value = false
+    reloadAll()
+})
+
 const closeHandler = async () => {
     try {
         await ElMessageBox.confirm(
