@@ -7,7 +7,7 @@ import { useMemberStore } from '@/stores/memberStore'
 import { useProjectStore } from '@/stores/projectStore'
 import { useTaskStore } from '@/stores/taskStore'
 import { useUserStore } from '@/stores/userStore'
-import { canDeleteTask, canEditTask, isAdmin, isProjectMember } from '@/utils/permissions'
+import { canDeleteTask, canEditTask, canReviewTask, isAdmin, isProjectMember } from '@/utils/permissions'
 import { PROJECT_STATUS_LABEL } from '@/constants/status'
 import TaskDrawer from './components/TaskDrawer.vue'
 import AssignTaskDialog from './components/AssignTaskDialog.vue'
@@ -54,13 +54,10 @@ const canCreateTask = computed(() => {
 })
 
 // 当前用户是否能"验收/驳回/重开"这个项目下的任务
-// 只有项目负责人（PM）或 admin 可以，避免自己验收自己做的任务
-const canReviewCurrentProject = computed(() => {
-    const user = userStore.userInfo
-    if (!user) return false
-    if (user.role === 'admin') return true
-    return !!currentProject.value && currentProject.value.PM === user.id
-})
+// 判定收敛到 utils/permissions.js 的 canReviewTask，与 mock 接口 403 的口径一致
+const canReviewCurrentProject = computed(() =>
+    canReviewTask(userStore.userInfo, currentProject.value)
+)
 
 // 顶部筛选：关键字 + 负责人 + 仅看阻塞
 const onlyBlocked = ref(false)

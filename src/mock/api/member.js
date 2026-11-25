@@ -219,11 +219,13 @@ Mock.mock(/\/api\/members\/\w+/, 'delete', (options) => {
   const target = db.members.find((m) => m.id === id)
   if (!target) return fail(404, '成员不存在')
   if (target.id === user.id) return fail(400, '不能删除自己')
+  // 与停用口径一致：只统计启用中的管理员。
+  // 否则「先停用另一个 admin，再删掉当前唯一启用的 admin」会绕过这条保护。
   if (
     target.role === 'admin' &&
-    db.members.filter((m) => m.role === 'admin').length <= 1
+    db.members.filter((m) => m.role === 'admin' && m.active !== false).length <= 1
   ) {
-    return fail(400, '至少需要保留一个管理员')
+    return fail(400, '至少需要保留一个启用状态的管理员')
   }
 
   // 与停用规则保持一致：仍负责进行中项目、或还有未完成任务时不允许删除，

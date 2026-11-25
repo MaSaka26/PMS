@@ -16,8 +16,8 @@ const isPM = (user, project) => !!user && project?.PM === user.id
 const validateProjectDates = (startDate, endDate) =>
   startDate && endDate && endDate < startDate ? '项目结束日期不能早于开始日期' : ''
 
-// 项目级事件（关闭 / 撤销归档），和任务事件分开存
-const logProjectEvent = (project, { type, reason }) => {
+// 项目级事件（关闭 / 撤销归档 / 换负责人），和任务事件分开存
+const logProjectEvent = (project, { type, reason, from, to }) => {
   const user = getCurrentUser()
   if (!Array.isArray(project.events)) project.events = []
   project.events.push({
@@ -26,7 +26,9 @@ const logProjectEvent = (project, { type, reason }) => {
     type,
     by: user?.id || '',
     at: nowISO(),
-    ...(reason ? { reason } : {})
+    ...(reason ? { reason } : {}),
+    ...(from !== undefined ? { from } : {}),
+    ...(to !== undefined ? { to } : {})
   })
 }
 
@@ -153,14 +155,37 @@ Mock.mock(/\/api\/projects\/\w+$/, 'put', (options) => {
   const nextEnd = body.endDate !== undefined ? body.endDate : db.projects[index].endDate
   const dateError = validateProjectDates(nextStart, nextEnd)
   if (dateError) return fail(400, dateError)
+
+  // 只改负责人、且没传 members 时，不重建成员列表
+  // （原写法 members: [...new Set([body.PM, ...(body.members || [])])] 在 members 缺省时
+  //   会把整个成员名单压成 [新 PM]，其他人全部掉出项目）
+  const nextMembers =
+    body.members !== undefined
+      ? [...new Set([body.PM, ...body.members])].filter(Boolean)
+      : [...new Set([body.PM, ...(db.projects[index].members || [])])].filter(Boolean)
+
+  const prevPM = db.projects[index].PM
+  const nextPM = body.PM !== undefined ? body.PM : prevPM
+  const pmChanged = nextPM !== prevPM
+
   db.projects[index] = {
     ...db.projects[index],
     ...body,
     id,
-    members: [...new Set([body.PM, ...(body.members || [])])].filter(Boolean),
+    members: nextMembers,
     extra: body.extra !== undefined
       ? (body.extra && typeof body.extra === 'object' ? { ...body.extra } : {})
       : (db.projects[index].extra || {}),
+  }
+  // 换负责人单独留一条事件：这条信息比「编辑了项目」重要得多，
+  // 交接给谁、什么时候交接的，之后要能查。
+  if (pmChanged) {
+    logProjectEvent(db.projects[index], {
+      type: 'pm_changed',
+      from: prevPM,
+      to: nextPM,
+      reason: body.pmChangeReason || body.reason
+    })
   }
   save()
   return ok(db.projects[index])

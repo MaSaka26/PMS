@@ -7,6 +7,7 @@ import { useUserStore } from '@/stores/userStore'
 import MemberRoleLane from './components/MemberRoleLane.vue'
 import MemberDetailDialog from './components/MemberDetailDialog.vue'
 import MemberFormDialog from './components/MemberFormDialog.vue'
+import MemberHandoverDialog from './components/MemberHandoverDialog.vue'
 
 const memberStore = useMemberStore()
 const userStore = useUserStore()
@@ -104,7 +105,42 @@ const submitMember = async (payload) => {
     }
 }
 
+// ——— 移交 ———
+const handoverVisible = ref(false)
+const handoverMember = ref(null)
+
 // ——— 停用 / 启用 ———
+// 真正提交停用。allowHandover 为 false 时（移交完的自动重试）不再重复弹移交入口，
+// 只把错误照常报出来，避免死循环。
+const submitToggle = async (member, nextActive, { askHandover = true } = {}) => {
+    try {
+        await memberStore.editMember(member.id, { active: nextActive })
+        ElMessage.success(nextActive ? '成员已启用' : '成员已停用')
+        return true
+    } catch (error) {
+        const msg = error.message || '操作失败'
+        // 停用被「还在负责项目 / 还有未完成任务」挡住时，不要只丢一句报错让人自己去翻，
+        // 直接给一条出路：现在就把他手上的事交出去。
+        const blocked = askHandover && /先移交负责人|先转派/.test(msg)
+        if (!blocked) {
+            ElMessage.error(msg)
+            return false
+        }
+        try {
+            await ElMessageBox.confirm(
+                `${msg}\n\n现在就把他手上的项目与任务移交给别人吗？`,
+                '需要先移交',
+                { type: 'warning', confirmButtonText: '去移交', cancelButtonText: '稍后处理' }
+            )
+        } catch {
+            return false
+        }
+        handoverMember.value = member
+        handoverVisible.value = true
+        return false
+    }
+}
+
 const toggleActive = async (member) => {
     if (!canToggleActive(member)) {
         ElMessage.warning('只有管理员可以停用或启用成员')
@@ -122,12 +158,13 @@ const toggleActive = async (member) => {
             return
         }
     }
-    try {
-        await memberStore.editMember(member.id, { active: nextActive })
-        ElMessage.success(nextActive ? '成员已启用' : '成员已停用')
-    } catch (error) {
-        ElMessage.error(error.message || '操作失败')
-    }
+    await submitToggle(member, nextActive)
+}
+
+const onHandoverDone = (member) => {
+    handoverVisible.value = false
+    // 移交完立刻重试停用，用户不用再点一次
+    if (member) submitToggle(member, false, { askHandover: false })
 }
 
 // ——— 详情 ———
@@ -189,6 +226,8 @@ onMounted(async () => {
 
     <MemberFormDialog v-model="formVisible" :member="editingMember" :can-assign-role="canAssignRole"
         :can-manage-account="canManageAccount" @submit="submitMember" />
+
+    <MemberHandoverDialog v-model="handoverVisible" :member="handoverMember" @done="onHandoverDone" />
 
     <MemberDetailDialog v-model="detailVisible" :member="selectedMember"
         :can-edit="!!selectedMember && canEdit(selectedMember)"

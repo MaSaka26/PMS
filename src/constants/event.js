@@ -18,6 +18,7 @@ export const EVENT_META = {
   project_status:   { label: '项目阶段推进', tone: 'primary', icon: 'Sort' },
   project_closed:   { label: '关闭了项目', tone: 'danger',  icon: 'SwitchButton' },
   project_reopened: { label: '撤销归档',   tone: 'primary', icon: 'RefreshLeft' },
+  pm_changed:       { label: '负责人交接', tone: 'warning', icon: 'SwitchButton' },
 }
 
 export const getEventMeta = (type) =>

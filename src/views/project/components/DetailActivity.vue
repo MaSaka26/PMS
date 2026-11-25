@@ -35,6 +35,11 @@ const itemText = (ev) => {
     if (ev.type === 'project_status' && ev.from && ev.to) {
         return `项目阶段：${PROJECT_STATUS_LABEL[ev.from] || ev.from} → ${PROJECT_STATUS_LABEL[ev.to] || ev.to}`
     }
+    if (ev.type === 'pm_changed') {
+        const from = ev.from ? props.memberName(ev.from) : '（无）'
+        const to = ev.to ? props.memberName(ev.to) : '（无）'
+        return `负责人交接：${from} → ${to}`
+    }
     if (ev.type === 'edited' && Array.isArray(ev.changes) && ev.changes.length) {
         return ev.changes
             .map((c) => (c.textOnly ? `修改了${c.label}` : `修改${c.label}`))

@@ -8,6 +8,8 @@ import {
     canCreateProject,
     canEditTask,
     canDeleteTask,
+    canReviewTask,
+    isSelfReview,
     canManageFields,
     canManageTemplates
 } from '../src/utils/permissions.js'
@@ -53,6 +55,30 @@ test('任务编辑与删除权限', () => {
     assert.equal(canDeleteTask(admin, project), true)
     assert.equal(canDeleteTask(pm, project), true)
     assert.equal(canDeleteTask(member, project), false)
+})
+
+test('验收权限只认管理员和项目负责人', () => {
+    assert.equal(canReviewTask(admin, project), true)
+    assert.equal(canReviewTask(pm, project), true)
+    assert.equal(canReviewTask(member, project), false)
+    // 别的项目的 PM 不能来验收
+    const otherProject = { PM: 'u9', members: ['u2', 'u3'] }
+    assert.equal(canReviewTask(pm, otherProject), false)
+    // 没有项目时不能验收（防止 project 未加载时误开权限）
+    assert.equal(canReviewTask(admin, null), true)
+    assert.equal(canReviewTask(pm, null), false)
+})
+
+test('自己验收自己：只标记不拦截', () => {
+    const own = { assignee: 'u1', status: 'done' }
+    const others = { assignee: 'u3', status: 'done' }
+    assert.equal(isSelfReview(admin, own), true)
+    assert.equal(isSelfReview(admin, others), false)
+    assert.equal(isSelfReview(null, own), false)
+    // 无负责人（待认领）不算自验收
+    assert.equal(isSelfReview(admin, { assignee: null }), false)
+    // 关键：权限判断本身不受 isSelfReview 影响，否则项目阶段会卡死
+    assert.equal(canReviewTask(admin, project), true)
 })
 
 test('字段与模板权限', () => {

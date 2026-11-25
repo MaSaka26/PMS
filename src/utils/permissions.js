@@ -22,6 +22,17 @@ export const canEditTask = (user, project, task) =>
 // 任务删除：管理员 / 项目负责人
 export const canDeleteTask = (user, project) => canManageProject(user, project)
 
+// 验收 / 驳回 / 重开：管理员 / 项目负责人
+// 这是全系统唯一的判定入口：mock 接口的 403、任务看板的按钮、我的任务的分组都调它，
+// 避免三处各写一遍（改一处漏两处是这类权限问题的老毛病）。
+export const canReviewTask = (user, project) => canManageProject(user, project)
+
+// 是否「自己验收自己做的任务」
+// 这里只用来打标记，不做拦截：一旦拦死，老板自己做的那条任务就永远没人能验收，
+// 项目阶段推导会在「所有任务已验收」这一步永远为假，卡在「任务验收」回不去。
+export const isSelfReview = (user, task) =>
+    !!user && !!task && !!task.assignee && task.assignee === user.id
+
 // 字段配置只有管理员可以修改
 export const canManageFields = (user) => isAdmin(user)
 

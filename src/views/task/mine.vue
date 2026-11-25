@@ -9,6 +9,7 @@ import { useMemberStore } from '@/stores/memberStore'
 import { useUserStore } from '@/stores/userStore'
 import { TASK_STATUS_LABEL, PRIORITY_ORDER } from '@/constants/status'
 import { getDueLevel } from '@/utils/due'
+import { canReviewTask } from '@/utils/permissions'
 import DueBadge from '@/components/DueBadge.vue'
 import TaskDrawer from '@/views/task/components/TaskDrawer.vue'
 
@@ -75,8 +76,10 @@ const buckets = computed(() => {
     for (const t of allTasks.value) {
         if (t.status === 'canceled') continue
         const isMine = t.assignee === myId && t.status !== 'accepted'
+        // 验收权限统一走 canReviewTask，和看板、接口三处用同一份判断
+        // （自己做的任务不进「待我验收」，这一页是个人收件箱，不是盖章台）
         const isReview = t.status === 'done' && t.assignee !== myId
-            && (projectMap.value.get(t.projectId)?.PM === myId || isAdmin.value)
+            && canReviewTask(me.value, projectMap.value.get(t.projectId))
         const isCreated = !t.assignee && t.status === 'todo' && t.createdBy === myId
         if (isMine) mine.push(t)
         if (isReview) review.push(t)
@@ -127,6 +130,13 @@ const overdueCount = computed(() => sortedTasks.value.filter(isOverdue).length)
 const projectTitle = (id) => projectMap.value.get(id)?.title || '未知项目'
 const memberName = (id) => memberStore.memberName(id)
 const isPMOf = (t) => projectMap.value.get(t.projectId)?.PM === me.value.id
+
+// admin 兜底：项目 PM 不是我，我却能看到并处理这条验收 —— 界面上要能看出来
+const isProxyReview = (t) =>
+    t.status === 'done' &&
+    t.assignee !== me.value.id &&
+    !isPMOf(t) &&
+    canReviewTask(me.value, projectMap.value.get(t.projectId))
 
 const rowClassName = ({ row }) => (isOverdue(row) ? 'my-row is-overdue' : 'my-row')
 
@@ -259,6 +269,7 @@ onMounted(async () => {
                             </span>
                             <span v-if="isOverdue(row)" class="mini-tag is-overdue">逾期</span>
                             <span v-if="isPMOf(row)" class="mini-tag is-pm">我负责这个项目</span>
+                            <span v-if="isProxyReview(row)" class="mini-tag is-proxy">代 PM 验收</span>
                         </div>
                     </template>
                 </el-table-column>
@@ -495,6 +506,12 @@ onMounted(async () => {
     &.is-pm {
         color: #4f46e5;
         background: #eef2ff;
+    }
+
+    // admin 代 PM 验收：不是自己的项目，却在处理它的验收
+    &.is-proxy {
+        color: #0f766e;
+        background: #ecfdf5;
     }
 }
 

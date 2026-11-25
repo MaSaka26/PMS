@@ -1,5 +1,6 @@
 import { db } from '../db/index.js'
 import { getCurrentUser } from '../services/auth.js'
+import { canReviewTask } from '@/utils/permissions'
 import { nowISO } from '../utils/date.js'
 import { uid } from '../utils/id.js'
 import { fail } from '../utils/response.js'
@@ -126,7 +127,8 @@ export const guardProject = (project) => {
 
 export const isAdmin = (user) => user?.role === 'admin'
 export const isPM = (user, project) => !!user && project?.PM === user.id
-export const canReview = (user, project) => isAdmin(user) || isPM(user, project)
+// 判定统一走 utils/permissions.js 的 canReviewTask，mock 与页面不会各说各话
+export const canReview = (user, project) => canReviewTask(user, project)
 
 // ——— 字段变更留痕 ———
 // 需要对比并记录历史的字段（白名单）
