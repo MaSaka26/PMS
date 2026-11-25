@@ -3,8 +3,8 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import {
-    Folder, Tickets, Setting, Document, User,
-    Checked, Odometer, FolderOpened, Share, Grid, Guide
+    Folder, Tickets, Operation, Document, User,
+    MessageBox, Odometer, FolderOpened, Share, Grid, Guide
 } from '@element-plus/icons-vue'
 
 import { useSystemStore } from '@/stores/system'
@@ -24,9 +24,7 @@ const activeMenu = computed(() => {
 
 // 菜单和 router 里的路由一一对应；有 children 的渲染成下拉子菜单
 const menus = [
-    // 「我的任务」是跨项目的待办入口，每天都开，放在最前面且不塞进下拉
     // 子项图标不用 CaretRight：那个箭头看起来像还能再展开一层
-    { path: '/mine', title: '我的任务', icon: Checked },
     {
         path: '/project',
         title: '项目管理',
@@ -46,7 +44,8 @@ const menus = [
             { path: '/task/flow', title: '任务流程', icon: Guide },
         ],
     },
-    { path: '/field', title: '字段配置', icon: Setting },
+    { path: '/mine', title: '我的任务', icon: MessageBox },
+    { path: '/field', title: '字段配置', icon: Operation },
     { path: '/template', title: '项目模板', icon: Document },
     { path: '/member', title: '成员管理', icon: User },
 ]
