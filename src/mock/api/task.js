@@ -15,7 +15,7 @@ import {
 } from '@/domain/task-rules.js'
 import { isAdmin, canReviewTask } from '@/utils/permissions'
 import { getCurrentUser } from '../services/auth.js'
-import { nowISO, todayLocal } from '../utils/date.js'
+import { nowISO, todayLocal } from '@/utils/date'
 import { idBeforeTail, idOf, uid } from '../utils/id.js'
 import { fail, ok } from '../utils/response.js'
 

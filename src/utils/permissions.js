@@ -1,9 +1,10 @@
 // 统一的权限判断：前端页面与 mock 接口共用同一份规则。
 // 口径：role 是全局身份，PM 是项目内授权。canManageProject 只认 PM 字段，不认 role 字符串。
+import { ROLE } from '@/constants/user'
 
-export const isAdmin = (user) => user?.role === 'admin'
+export const isAdmin = (user) => user?.role === ROLE.ADMIN
 
-export const isManager = (user) => ['admin', 'pm'].includes(user?.role)
+export const isManager = (user) => [ROLE.ADMIN, ROLE.PM].includes(user?.role)
 
 export const isProjectMember = (user, project) =>
     !!user && !!project && (project.members || []).includes(user.id)
@@ -68,7 +69,7 @@ export const canCreateMember = (user) => isManager(user)
 export const canEditMember = (user, target) => {
     if (!user || !target) return false
     if (isAdmin(user)) return true
-    if (isManager(user)) return user.id === target.id || target.role === 'member'
+    if (isManager(user)) return user.id === target.id || target.role === ROLE.MEMBER
     return user.id === target.id
 }
 

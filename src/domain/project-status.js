@@ -1,7 +1,7 @@
-import { db, save } from '@/mock/db/index.js'
 import { PROJECT_STATUS } from '@/constants/status'
-import { nowISO } from '@/mock/utils/date.js'
-import { uid } from '@/mock/utils/id.js'
+import { nowISO } from '@/utils/date'
+import { uid } from '@/utils/id'
+import { domainServices } from './services.js'
 
 // 阶段只进不退：用序号比较，避免任何任务变化把项目状态拉回去
 const STAGE_ORDER = {
@@ -11,8 +11,6 @@ const STAGE_ORDER = {
   [PROJECT_STATUS.ACCEPTING]: 3,
   [PROJECT_STATUS.ITERATING]: 4
 }
-
-import { getCurrentUser } from '@/mock/services/auth.js'
 
 /**
  * 根据项目下的未取消任务推导阶段：
@@ -33,17 +31,19 @@ export const deriveProjectStage = (tasks) => {
   return PROJECT_STATUS.PLANNING
 }
 
-// 只在推导阶段更高时推进，并留一条项目级事件
-const applyDerived = (project) => {
+// 只在推导阶段更高时推进，并留一条项目级事件。
+// 显式传 tasks 时完全纯函数：不写库、不记事件、不写日志。
+const applyDerived = (project, tasks) => {
   if (!project || project.status === PROJECT_STATUS.ARCHIVED) return false
-
-  const derived = deriveProjectStage(
-    db.tasks.filter((t) => t.projectId === project.id)
-  )
+  const derived = deriveProjectStage(tasks)
   const currentRank = STAGE_ORDER[project.status] ?? -1
   const derivedRank = STAGE_ORDER[derived] ?? 0
   if (derivedRank <= currentRank) return false
-
+  if (tasks) {
+    project.status = derived
+    return true
+  }
+  const { db, getCurrentUser, save } = domainServices()
   const from = project.status
   project.status = derived
   const user = getCurrentUser()
@@ -62,6 +62,7 @@ const applyDerived = (project) => {
 
 // 任务写操作后调用：同步单个项目
 export const syncProjectStatus = (projectId) => {
+  const { db, save } = domainServices()
   const project = db.projects.find((p) => p.id === projectId)
   if (!project) return null
   if (applyDerived(project)) save()
@@ -70,9 +71,10 @@ export const syncProjectStatus = (projectId) => {
 
 // 读取项目列表/详情时兜底：批量规范化，只保存一次
 export const normalizeProjectStatuses = (projects) => {
+  const { db, save } = domainServices()
   let changed = false
   for (const project of projects || []) {
-    if (applyDerived(project)) changed = true
+    if (applyDerived(project, db.tasks.filter((t) => t.projectId === project.id))) changed = true
   }
   if (changed) save()
 }

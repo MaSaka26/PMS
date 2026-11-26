@@ -1,4 +1,5 @@
 // 把项目结构提取成「项目模板」草稿：任务按计划开始日排序并计算相对偏移
+import { todayLocal } from '@/utils/date'
 const diffDays = (a, b) =>
     Math.round((new Date(`${b}T00:00:00`) - new Date(`${a}T00:00:00`)) / 86400000)
 
@@ -17,7 +18,7 @@ export function buildTemplateDraft({ project, tasks, enabledProjectFields = [] }
         project.startDate ||
         sorted[0]?.plannedStart ||
         sorted[0]?.createdAt ||
-        new Date().toISOString().slice(0, 10)
+        todayLocal()
 
     const included = new Set(list.map((t) => t.id))
     const keyOf = (id) => `t_${id}`

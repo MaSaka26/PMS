@@ -2,6 +2,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useUserStore } from '@/stores/userStore'
+import { ROLE } from '@/constants/user'
 import { useSystemStore } from '@/stores/system'
 import { ElementPlus, Expand, Fold, UserFilled } from '@element-plus/icons-vue'
 
@@ -17,7 +18,7 @@ const username = computed(() => {
     const name = userStore.userInfo?.name
     if (!name) return '加载中…'
     // admin 角色给个专属显示，其他人直接显示名字
-    if (userStore.userInfo?.role === 'admin') return `${name}（管理员）`
+    if (userStore.userInfo?.role === ROLE.ADMIN) return `${name}（管理员）`
     return name
 })
 </script>

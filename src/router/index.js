@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory } from "vue-router"
 import { getInfo } from "@/api/userAPI";
+import { TOKEN_KEY } from "@/constants/user";
 
 const router = createRouter({
   // GitHub Pages 不支持服务端回退，使用 Hash 路由避免刷新 404
@@ -131,7 +132,7 @@ const router = createRouter({
 // token 变化后调用 /info 校验，账号被停用 / 失效时立即退回登录页
 let verifiedToken = "";
 router.beforeEach(async (to) => {
-  const token = localStorage.getItem("pm_token") || "";
+  const token = localStorage.getItem(TOKEN_KEY) || "";
 
   // 公开路由（/login）
   if (to.meta.public) {
@@ -154,7 +155,7 @@ router.beforeEach(async (to) => {
       await getInfo();
       verifiedToken = token;
     } catch {
-      localStorage.removeItem("pm_token");
+      localStorage.removeItem(TOKEN_KEY);
       verifiedToken = "";
       return {
         path: "/login",

@@ -1,3 +1,2 @@
-export const ok = (data) => ({ code: 200, data, msg: 'success' })
-
-export const fail = (code, msg) => ({ code, data: null, msg })
+// 兼容层：历史 import 路径，统一转发到 src/utils/response.js
+export { ok, fail } from '@/utils/response.js'

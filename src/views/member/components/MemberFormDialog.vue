@@ -1,12 +1,13 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
+import { ROLE, ROLES } from '@/constants/user'
 
 const ROLE_LABEL = {
-    admin: '管理员',
-    pm: '项目经理',
-    member: '成员'
+    [ROLE.ADMIN]: '管理员',
+    [ROLE.PM]: '项目经理',
+    [ROLE.MEMBER]: '成员'
 }
-const ROLE_ORDER = ['admin', 'pm', 'member']
+const ROLE_ORDER = ROLES
 const roleLabel = (role) => ROLE_LABEL[role] || role || '成员'
 
 const props = defineProps({
@@ -30,7 +31,7 @@ const dialogTitle = computed(() => (isEdit.value ? '编辑成员' : '新增成�
 
 const emptyForm = () => ({
     name: '',
-    role: 'member',
+    role: ROLE.MEMBER,
     position: '',
     email: '',
     username: '',
@@ -74,7 +75,7 @@ const rules = {
 
 // 非管理员新增时只能选普通成员；编辑时展示原角色但不可改
 const roleOptions = computed(() => {
-    if (!props.canAssignRole && !isEdit.value) return ['member']
+    if (!props.canAssignRole && !isEdit.value) return [ROLE.MEMBER]
     return ROLE_ORDER
 })
 
@@ -85,7 +86,7 @@ watch(
         if (props.member) {
             form.value = {
                 name: props.member.name || '',
-                role: props.member.role || 'member',
+                role: props.member.role || ROLE.MEMBER,
                 position: props.member.position || '',
                 email: props.member.email || '',
                 username: props.member.username || '',

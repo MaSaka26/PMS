@@ -5,7 +5,7 @@ import router from "@/router";
 import { ElMessage } from "element-plus";
 
 // token 在 localStorage 的 key（和 request 拦截器、mock 保持一致）
-const TOKEN_KEY = "pm_token";
+import { TOKEN_KEY } from "@/constants/user";
 
 export const useUserStore = defineStore("user", () => {
   // 刷新后从 localStorage 恢复 token

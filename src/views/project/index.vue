@@ -11,6 +11,7 @@ import { useMemberStore } from '@/stores/memberStore'
 import { useTaskStore } from '@/stores/taskStore'
 import { useUserStore } from '@/stores/userStore'
 import { canCreateProject, canManageProject } from '@/utils/permissions'
+import { ROLE } from '@/constants/user'
 
 const memberStore = useMemberStore()
 const taskStore = useTaskStore()
@@ -32,7 +33,7 @@ const canManage = (project) => canManageProject(userStore.userInfo, project)
 const canCreate = computed(() => canCreateProject(userStore.userInfo))
 // 项目经理创建项目时，负责人锁定为自己，避免创建后失去管理权
 const pmLockedTo = computed(() =>
-    userStore.userInfo?.role === 'pm' ? userStore.userInfo.id : ''
+    userStore.userInfo?.role === ROLE.PM ? userStore.userInfo.id : ''
 )
 
 const dialogVisible = ref(false)

@@ -1,7 +1,9 @@
 import { db } from '../db/index.js'
+import { TOKEN_KEY } from '@/constants/user'
+import { configureDomain } from '@/domain/services.js'
 
 const parseTokenUserId = () => {
-  const token = localStorage.getItem('pm_token') || ''
+  const token = localStorage.getItem(TOKEN_KEY) || ''
   const match = token.match(/^token_(.+)_\d+$/)
   return match ? match[1] : ''
 }
@@ -48,3 +50,6 @@ export const getCurrentUser = () => {
   if (member && member.active === false) return null
   return toPublicUser(user)
 }
+
+// domain 层需要「当前用户」时用它；auth 依赖 db，等 db 加载完再注入，避免循环依赖
+configureDomain({ getCurrentUser })

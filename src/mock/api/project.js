@@ -3,7 +3,8 @@ import { db, save } from '../db/index.js'
 import { isAdmin, canCreateProject, canManageProject, canViewProject } from '@/utils/permissions'
 import { normalizeProjectStatuses, syncProjectStatus } from '@/domain/project-status.js'
 import { PROJECT_STATUS } from '@/constants/status'
-import { nowISO } from '../utils/date.js'
+import { ROLE } from '@/constants/user'
+import { nowISO, todayLocal } from '@/utils/date'
 import { idBeforeTail, uid } from '../utils/id.js'
 import { paginate } from '../utils/pagination.js'
 import { fail, ok } from '../utils/response.js'
@@ -70,7 +71,7 @@ Mock.mock('/api/projects', 'post', (options) => {
     return fail(403, '只有管理员或项目经理可以创建项目')
   }
   if (!body.PM) return fail(400, '请选择项目负责人')
-  if (user.role === 'pm' && body.PM !== user.id) {
+  if (user.role === ROLE.PM && body.PM !== user.id) {
     return fail(403, '项目经理创建项目时，负责人必须是本人')
   }
   const dateError = validateProjectDates(body.startDate, body.endDate)
@@ -79,8 +80,8 @@ Mock.mock('/api/projects', 'post', (options) => {
     id: uid('project'),
     ...body,
     status: PROJECT_STATUS.DRAFT,
-    createdAt: body.createdAt || new Date().toISOString().slice(0, 10),
-    startDate: body.startDate || body.createdAt || new Date().toISOString().slice(0, 10),
+    createdAt: body.createdAt || todayLocal(),
+    startDate: body.startDate || body.createdAt || todayLocal(),
     endDate: body.endDate || '',
     closedAt: null,
     closedBy: null,

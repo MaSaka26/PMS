@@ -1,8 +1,7 @@
-import { db } from '@/mock/db/index.js'
-import { getCurrentUser } from '@/mock/services/auth.js'
-import { nowISO } from '@/mock/utils/date.js'
-import { uid } from '@/mock/utils/id.js'
-import { fail } from '@/mock/utils/response.js'
+import { nowISO } from '@/utils/date'
+import { uid } from '@/utils/id'
+import { fail } from '@/utils/response'
+import { domainServices } from './services.js'
 
 // ——— 日期规则 ———
 // 日期区间校验：截止日期不能早于创建时间
@@ -27,14 +26,14 @@ export const validatePlanDates = (project, plannedStart, dueDate) => {
 // 前置任务进入"待验收 / 已验收"即视为交付完成，后继任务可以开始
 const DEP_SATISFIED = new Set(['done', 'accepted'])
 
-const projectTasksOf = (projectId) =>
-    db.tasks.filter((t) => t.projectId === projectId && !t.deletedAt)
+const projectTasksOf = (projectId, tasks) =>
+    (tasks || domainServices().db.tasks).filter((t) => t.projectId === projectId && !t.deletedAt)
 
-// 依赖校验：同项目、非自身、无环
-export const validateDependencies = (taskId, projectId, deps) => {
+// 依赖校验：同项目、非自身、无环。tasks 可注入；不传则用已注入的存储
+export const validateDependencies = (taskId, projectId, deps, tasks) => {
     if (!Array.isArray(deps)) return '前置任务格式不正确'
     const ids = [...new Set(deps.filter(Boolean))]
-    const map = new Map(projectTasksOf(projectId).map((t) => [t.id, t]))
+    const map = new Map(projectTasksOf(projectId, tasks).map((t) => [t.id, t]))
 
     for (const id of ids) {
         if (id === taskId) return '任务不能依赖自己'
@@ -55,16 +54,16 @@ export const validateDependencies = (taskId, projectId, deps) => {
     return ''
 }
 
-// 尚未完成的前置任务列表
-export const pendingDepsOf = (task) =>
+// 尚未完成的前置任务列表。tasks 可注入
+export const pendingDepsOf = (task, tasks) =>
     (task.dependsOn || [])
-        .map((id) => db.tasks.find((t) => t.id === id))
+        .map((id) => (tasks || domainServices().db.tasks).find((t) => t.id === id))
         .filter((t) => t && !DEP_SATISFIED.has(t.status))
 
 // ——— 事件日志：全系统唯一写入口 ———
 // 任何 handler 都不允许直接 task.events.push，必须走这里，避免漏记
 export const logEvent = (task, { type, by, reason, from, to, changes, batchId }) => {
-    const user = getCurrentUser()
+    const user = domainServices().getCurrentUser()
     const event = {
         id: uid('ev'),
         taskId: task.id,
@@ -124,9 +123,7 @@ export const guardProject = (project) => {
     return null
 }
 
-
 // ——— 字段变更留痕 ———
-// 需要对比并记录历史的字段（白名单）
 const TRACKED_FIELDS = ['title', 'priority', 'assignee', 'dueDate', 'createdAt', 'plannedStart']
 const FIELD_LABEL = {
     title: '标题',
@@ -144,11 +141,9 @@ export const diffChanges = (oldTask, body) => {
             changes.push({ field, label: FIELD_LABEL[field], from: oldTask[field], to: body[field] })
         }
     }
-    // 长文本只记"改过"，不存全文，避免日志膨胀与敏感内容留存
     if (body.desc !== undefined && body.desc !== oldTask.desc) {
         changes.push({ field: 'desc', label: '描述', textOnly: true })
     }
-    // 自定义字段整体记一条，不逐项展开
     if (
         body.extra !== undefined &&
         JSON.stringify(body.extra || {}) !== JSON.stringify(oldTask.extra || {})

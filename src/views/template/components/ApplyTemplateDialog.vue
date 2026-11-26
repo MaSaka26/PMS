@@ -2,6 +2,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { useMemberStore } from '@/stores/memberStore'
 import { useUserStore } from '@/stores/userStore'
+import { ROLE } from '@/constants/user'
 
 const props = defineProps({
     modelValue: { type: Boolean, default: false },
@@ -20,7 +21,7 @@ const formRef = ref(null)
 
 // 项目经理使用模板时，负责人锁定为自己
 const pmLockedTo = computed(() =>
-    userStore.userInfo?.role === 'pm' ? userStore.userInfo.id : ''
+    userStore.userInfo?.role === ROLE.PM ? userStore.userInfo.id : ''
 )
 
 const pad = (n) => String(n).padStart(2, '0')

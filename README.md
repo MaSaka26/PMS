@@ -54,7 +54,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 ## 测试与 CI
 
-- `tests/*.test.js` 覆盖权限判断、截止日期分级、登录与停用校验、种子数据日期合法性、种子指纹重置策略，使用 Node 内置 `node:test`，无需额外测试依赖。其中权限测试同时锁住「验收权限只认管理员和项目负责人」与「自己验收自己只标记不拦截」两条约定，避免以后有人把职责分离写成硬拦截，把项目阶段卡死在「任务验收」。
+- `tests/*.test.js` 覆盖权限判断、截止日期分级、登录与停用校验、种子数据日期合法性、种子指纹重置策略、domain 纯函数（不加载 mock）、接口级 403 兜底，使用 Node 内置 `node:test`，无需额外测试依赖。其中权限测试同时锁住「验收权限只认管理员和项目负责人」与「自己验收自己只标记不拦截」两条约定，避免以后有人把职责分离写成硬拦截，把项目阶段卡死在「任务验收」。
 - `tests/on-demand.test.js` 守 Element Plus 按需引入的四个静默失效点：扫 `src/` 下所有 `<el-xxx>` 标签与 `from 'element-plus'` 的具名导入，逐个核对（1）样式目录存在（2）`main.js` 里 import 了样式（3）标签注册成了全局组件；另外单独检查 `ElMessage` / `ElMessageBox` / `v-loading` 这三个不在模板里的样式。解析 `main.js` 前会先剥注释，注释掉的 import 不会被当成还在。
 - `tests/seed-signature.test.js` 锁住重置策略的四种情况：从没存过 → 重置；本地版本更旧 → 重置；**本地版本更新 → 不重置**（防止浏览器缓存到旧 bundle 时把新数据刷掉）；版本相同但指纹不同 → 重置。重置判定抽成 `shouldResetSeed()` 纯函数就是为了能在没有 localStorage 的 node 环境里测。
 - `.github/workflows/ci.yml` 在 pull request 与非 `master` 分支的 push 时执行：安装依赖 → 单元测试 → 生产构建；`master` 的推送由部署工作流负责。
@@ -137,7 +137,8 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 | 请求 | `src/api/**` | axios 封装，页面只关心调用和结果 |
 | 模拟后端 | `src/mock/**` | 接口注册、事件日志、localStorage 持久化；权限判定统一调 `utils/permissions.js` |
 | 业务规则 | `src/domain/**` | 项目阶段推导、任务状态机与日期依赖校验（与存储层解耦的纯逻辑） |
-| 公共能力 | `src/utils/**`、`src/constants/**` | 权限、日期、幂等加载、状态常量等纯逻辑 |
+| 公共能力 | `src/utils/**`、`src/constants/**` | 权限、日期（`todayLocal` 一律走本地时区）、幂等加载、状态常量等纯逻辑 |
+| 服务注入 | `src/domain/services.js` | domain 纯规则通过注入获取 db/身份/保存，不 import mock；测试可在无 mock 环境下跑纯函数 |
 
 理解这个项目时，可以按「页面 → 组件 → store → api → mock」的顺序追一条业务链路。
 

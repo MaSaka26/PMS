@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import { ROLE } from '@/constants/user'
 
 const props = defineProps({
     modelValue: { type: Boolean, default: false },
@@ -15,17 +16,17 @@ const visible = computed({
 })
 
 const ROLE_LABEL = {
-    admin: '管理员',
-    pm: '项目经理',
-    member: '成员'
+    [ROLE.ADMIN]: '管理员',
+    [ROLE.PM]: '项目经理',
+    [ROLE.MEMBER]: '成员'
 }
 
 const roleLabel = computed(() => ROLE_LABEL[props.member?.role] || props.member?.role || '成员')
 const initial = computed(() => (props.member?.name || '?').trim().charAt(0))
 const themeClass = computed(() => {
     switch (props.member?.role) {
-        case 'admin': return 'theme-admin'
-        case 'pm': return 'theme-pm'
+        case ROLE.ADMIN: return 'theme-admin'
+        case ROLE.PM: return 'theme-pm'
         default: return 'theme-member'
     }
 })

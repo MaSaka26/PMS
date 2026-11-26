@@ -2,9 +2,8 @@ import Mock from 'mockjs'
 import { db, save } from '../db/index.js'
 import { canCreateMember, canEditMember, canManageAccount, canChangeRole, canToggleMemberActive, canDeleteMember, isManager } from '@/utils/permissions'
 import { uid } from '../utils/id.js'
+import { ROLE, ROLES } from '@/constants/user'
 import { fail, ok } from '../utils/response.js'
-
-const ROLES = ['admin', 'pm', 'member']
 
 import { getCurrentUser } from '../services/auth.js'
 
@@ -40,8 +39,8 @@ Mock.mock('/api/members', 'post', (options) => {
   const name = String(body.name || '').trim()
   if (!name) return fail(400, '成员姓名不能为空')
 
-  let role = ROLES.includes(body.role) ? body.role : 'member'
-  if (isManager(user) && !canManageAccount(user) && role !== 'member') {
+  let role = ROLES.includes(body.role) ? body.role : ROLE.MEMBER
+  if (isManager(user) && !canManageAccount(user) && role !== ROLE.MEMBER) {
     return fail(403, '项目经理只能添加普通成员')
   }
 
@@ -104,9 +103,9 @@ Mock.mock(/\/api\/members\/\w+/, 'put', (options) => {
   // 不能把最后一个启用管理员降级，否则系统没人能管成员、字段和模板
   if (
     roleChanged &&
-    target.role === 'admin' &&
-    body.role !== 'admin' &&
-    db.members.filter((m) => m.role === 'admin' && m.active !== false).length <= 1
+    target.role === ROLE.ADMIN &&
+    body.role !== ROLE.ADMIN &&
+    db.members.filter((m) => m.role === ROLE.ADMIN && m.active !== false).length <= 1
   ) {
     return fail(400, '至少需要保留一个启用状态的管理员')
   }
@@ -167,8 +166,8 @@ Mock.mock(/\/api\/members\/\w+/, 'put', (options) => {
   if (nextActive === false && target.active !== false) {
     if (target.id === user.id) return fail(400, '不能停用自己')
     if (
-      target.role === 'admin' &&
-      db.members.filter((m) => m.role === 'admin' && m.active !== false).length <= 1
+      target.role === ROLE.ADMIN &&
+      db.members.filter((m) => m.role === ROLE.ADMIN && m.active !== false).length <= 1
     ) {
       return fail(400, '至少需要保留一个启用状态的管理员')
     }
@@ -218,8 +217,8 @@ Mock.mock(/\/api\/members\/\w+/, 'delete', (options) => {
   // 与停用口径一致：只统计启用中的管理员。
   // 否则「先停用另一个 admin，再删掉当前唯一启用的 admin」会绕过这条保护。
   if (
-    target.role === 'admin' &&
-    db.members.filter((m) => m.role === 'admin' && m.active !== false).length <= 1
+    target.role === ROLE.ADMIN &&
+    db.members.filter((m) => m.role === ROLE.ADMIN && m.active !== false).length <= 1
   ) {
     return fail(400, '至少需要保留一个启用状态的管理员')
   }

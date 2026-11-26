@@ -3,18 +3,13 @@ import { db, save } from '../db/index.js'
 import { canManageTemplates, isManager, canManageAccount } from '@/utils/permissions'
 import { syncProjectStatus } from '@/domain/project-status.js'
 import { PROJECT_STATUS } from '@/constants/status'
-import { nowISO } from '../utils/date.js'
+import { nowISO, todayLocal } from '@/utils/date'
 import { uid } from '../utils/id.js'
 import { fail, ok } from '../utils/response.js'
 
 const templatesOf = () => (Array.isArray(db.templates) ? db.templates : (db.templates = []))
 
 const pad = (n) => String(n).padStart(2, '0')
-const todayLocal = () => {
-  const d = new Date()
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-}
-
 const addDays = (dateStr, days) => {
   const d = new Date(`${dateStr}T00:00:00`)
   d.setDate(d.getDate() + days)

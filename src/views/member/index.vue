@@ -9,19 +9,20 @@ import MemberRoleLane from './components/MemberRoleLane.vue'
 import MemberDetailDialog from './components/MemberDetailDialog.vue'
 import MemberFormDialog from './components/MemberFormDialog.vue'
 import MemberHandoverDialog from './components/MemberHandoverDialog.vue'
+import { ROLE } from '@/constants/user'
 
 const memberStore = useMemberStore()
 const userStore = useUserStore()
 
 const ROLE_LABEL = {
-    admin: '管理员',
-    pm: '项目经理',
-    member: '成员'
+    [ROLE.ADMIN]: '管理员',
+    [ROLE.PM]: '项目经理',
+    [ROLE.MEMBER]: '成员'
 }
 const ROLE_LANES = [
-    { role: 'admin', label: '管理员', desc: '系统与全局配置' },
-    { role: 'pm', label: '项目经理', desc: '项目交付与成员协调' },
-    { role: 'member', label: '成员', desc: '任务执行与协作' }
+    { role: ROLE.ADMIN, label: '管理员', desc: '系统与全局配置' },
+    { role: ROLE.PM, label: '项目经理', desc: '项目交付与成员协调' },
+    { role: ROLE.MEMBER, label: '成员', desc: '任务执行与协作' }
 ]
 const roleLabel = (role) => ROLE_LABEL[role] || role || '成员'
 

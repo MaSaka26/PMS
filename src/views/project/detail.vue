@@ -16,6 +16,8 @@ import { useTemplateStore } from '@/stores/templateStore'
 import { useUserStore } from '@/stores/userStore'
 import { PROJECT_STATUS_LABEL } from '@/constants/status'
 import { canManageProject } from '@/utils/permissions'
+import { todayLocal } from '@/utils/date'
+import { ROLE } from '@/constants/user'
 import TaskDrawer from '@/views/task/components/TaskDrawer.vue'
 import TemplateFormDialog from '@/views/template/components/TemplateFormDialog.vue'
 import ProjectFormDialog from './components/ProjectFormDialog.vue'
@@ -89,7 +91,7 @@ const priorityClass = computed(() => {
 const statusText = computed(() => PROJECT_STATUS_LABEL[project.value?.status] || project.value?.status || '')
 
 // ——— 指标 ———
-const todayStr = new Date().toISOString().slice(0, 10)
+const todayStr = todayLocal()
 const stats = computed(() => {
     const list = tasks.value
     const byStatus = { todo: 0, doing: 0, done: 0, accepted: 0, canceled: 0 }
@@ -197,7 +199,7 @@ const openBoard = () => router.push({ path: '/task/board', query: { projectId: p
 // ——— 编辑项目 ———
 // 项目经理只能把负责人锁定为自己，避免改完失去管理权
 const pmLockedTo = computed(() =>
-    userStore.userInfo?.role === 'pm' ? userStore.userInfo.id : ''
+    userStore.userInfo?.role === ROLE.PM ? userStore.userInfo.id : ''
 )
 const editVisible = ref(false)
 

@@ -1,6 +1,7 @@
 <script setup>
 import { CircleCheck, CircleClose } from '@element-plus/icons-vue'
 import { PROJECT_PERMISSIONS } from '@/constants/projectFlow'
+import { ROLE } from '@/constants/user'
 </script>
 
 <template>
@@ -19,7 +20,7 @@ import { PROJECT_PERMISSIONS } from '@/constants/projectFlow'
                 <tbody>
                     <tr v-for="p in PROJECT_PERMISSIONS" :key="p.action">
                         <td class="perm-action">{{ p.action }}</td>
-                        <td v-for="key in ['admin', 'pm', 'member', 'outsider']" :key="key">
+                        <td v-for="key in [ROLE.ADMIN, ROLE.PM, ROLE.MEMBER, 'outsider']" :key="key">
                             <el-icon v-if="p[key]" class="yes"><CircleCheck /></el-icon>
                             <el-icon v-else class="no"><CircleClose /></el-icon>
                         </td>
