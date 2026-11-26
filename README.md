@@ -1,9 +1,16 @@
 <h1 align="center">PMS 项目管理系统</h1>
-[![CI](https://github.com/MaSaka26/PMS/actions/workflows/ci.yml/badge.svg)](https://github.com/MaSaka26/PMS/actions/workflows/ci.yml) [![Deploy](https://github.com/MaSaka26/PMS/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/MaSaka26/PMS/actions/workflows/deploy-pages.yml) [![Node](https://img.shields.io/badge/Node-%5E22.18%20%7C%20%3E%3D24.12-brightgreen)](https://nodejs.org/)
 
-![Vue 3.5](https://img.shields.io/badge/Vue-3.5-42b883?logo=vuedotjs&logoColor=white) ![Vue Router 5.3](https://img.shields.io/badge/Vue%20Router-5.3-4e3cc7) ![Pinia 4](https://img.shields.io/badge/Pinia-4-ea852f) ![Element Plus 2.14](https://img.shields.io/badge/Element%20Plus-2.14-409eff) ![Highcharts 13](https://img.shields.io/badge/Highcharts-13-308274?logo=highcharts&logoColor=white) ![Axios 1.21](https://img.shields.io/badge/Axios-1.21-5a29e4?logo=axios&logoColor=white) ![Mock.js 1.1](https://img.shields.io/badge/Mock.js-1.1-ea4c1b) ![Vite 8.2](https://img.shields.io/badge/Vite-8.2-646cff?logo=vite&logoColor=white)
+<p align="center">
+  <a href="https://github.com/MaSaka26/PMS/actions/workflows/ci.yml"><img src="https://github.com/MaSaka26/PMS/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/MaSaka26/PMS/actions/workflows/deploy-pages.yml"><img src="https://github.com/MaSaka26/PMS/actions/workflows/deploy-pages.yml/badge.svg" alt="Deploy"></a>
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node-%5E22.18%20%7C%20%3E%3D24.12-brightgreen" alt="Node"></a>
+</p>
 
-> 一个用 Vue 3 + Mock.js 做的前端项目管理系统：**项目 / 任务 / 成员 / 自定义字段 / 模板**一条链路闭环，数据存本地浏览器，打开就能演示，不需要后端。
+<p align="center">
+  Vue 3.5 · Vue Router 5.3 · Pinia 4 · Element Plus 2.14 · Highcharts 13 · Axios 1.21 · Mock.js 1.1 · Vite 8.2
+</p>
+
+一个用 Vue 3 + Mock.js 做的前端项目管理系统：**项目 / 任务 / 成员 / 自定义字段 / 模板**一条链路闭环，数据存本地浏览器，打开就能演示，不需要后端。
 
 ![PMS 项目看板](docs/screenshots/project-board.png)
 
