@@ -1,15 +1,30 @@
 # PMS 项目管理系统
 
-一个基于 Vue 3 的前端项目管理系统，覆盖项目、任务、成员、自定义字段和项目模板。数据全部由 Mock.js 模拟，并通过 localStorage 持久化，适合作为课程设计、演示或前端练习项目。
+[![CI](https://github.com/MaSaka26/PMS/actions/workflows/ci.yml/badge.svg)](https://github.com/MaSaka26/PMS/actions/workflows/ci.yml) [![Deploy](https://github.com/MaSaka26/PMS/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/MaSaka26/PMS/actions/workflows/deploy-pages.yml) [![Node](https://img.shields.io/badge/Node-%5E22.18%20%7C%20%3E%3D24.12-brightgreen)](https://nodejs.org/)
+
+![Vue 3.5](https://img.shields.io/badge/Vue-3.5-42b883?logo=vuedotjs&logoColor=white) ![Vue Router 5.3](https://img.shields.io/badge/Vue%20Router-5.3-4e3cc7) ![Pinia 4](https://img.shields.io/badge/Pinia-4-ea852f) ![Element Plus 2.14](https://img.shields.io/badge/Element%20Plus-2.14-409eff) ![Highcharts 13](https://img.shields.io/badge/Highcharts-13-308274?logo=highcharts&logoColor=white) ![Axios 1.21](https://img.shields.io/badge/Axios-1.21-5a29e4?logo=axios&logoColor=white) ![Mock.js 1.1](https://img.shields.io/badge/Mock.js-1.1-ea4c1b) ![Vite 8.2](https://img.shields.io/badge/Vite-8.2-646cff?logo=vite&logoColor=white)
+
+> 一个用 Vue 3 + Mock.js 做的前端项目管理系统：**项目 / 任务 / 成员 / 自定义字段 / 模板**一条链路闭环，数据存本地浏览器，打开就能演示，不需要后端。
+
+![PMS 项目看板](docs/screenshots/project-board.png)
+
+| 适合谁 | 现在就能做什么 | 在线访问 | 边界在哪 |
+|---|---|---|---|
+| 课程设计 / 演示 / 前端练习 | 登录、建项目、认领任务、验收、看图表、用模板 | [**masaka26.github.io/PMS**](https://masaka26.github.io/PMS/) | 数据只在本机浏览器，不能多人协作 |
+
+[快速开始](#快速开始) · [功能地图](#功能模块) · [常见问题](#常见问题faq)
+
 
 ## 目录
 
-- [技术栈](#技术栈)
-- [快速开始](#快速开始)
+**先看这些**：[技术栈](#技术栈) · [快速开始](#快速开始) · [测试账号](#测试账号) · [功能模块](#功能模块) · [页面路由](#页面路由) · [常见问题](#常见问题faq)
+
+**深入时再看**：
+
+<details>
+<summary>展开完整目录（页面详解 / 权限 / 业务规则 / 数据 / 部署 / 构建 / 决策记录 / 已知限制）</summary>
+
 - [测试与 CI](#测试与-ci)
-- [测试账号](#测试账号)
-- [功能模块](#功能模块)
-- [页面路由](#页面路由)
 - [页面详解与代码地图](#页面详解与代码地图)
 - [角色与权限](#角色与权限)
 - [核心业务规则](#核心业务规则)
@@ -22,6 +37,8 @@
 - [决策记录：为什么删掉排期与关键路径](#决策记录为什么删掉排期与关键路径)
 - [已知限制](#已知限制)
 - [后续规划](#后续规划)
+
+</details>
 
 ## 技术栈
 
@@ -40,17 +57,33 @@ Node 版本要求：`^22.18.0 || >=24.12.0`。
 
 ## 快速开始
 
+> [!NOTE]
+> 前置条件：Node `^22.18.0 || >=24.12.0`，npm。仓库根目录是 `PMS/`，以下命令都在该目录执行。
+
+**1 · 安装依赖**
+
 ```bash
 cd PMS
 npm install
-npm run dev      # 本地开发
-npm run test     # 单元测试（Node 内置 test runner）
-npm run build    # 生产构建
-npm run preview  # 预览构建结果
-npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 ```
 
-启动后访问终端提示的地址，默认进入登录页。
+**2 · 启动开发服务器**
+
+```bash
+npm run dev
+```
+
+启动后访问终端提示的地址（默认 `http://localhost:5173`），在登录页用 `admin/admin` 或 `pm/pm` 登录。
+
+**3 · 验证没有改坏**
+
+```bash
+npm run test
+npm run build
+npm run preview
+```
+
+`npm run seed:git` 只在需要重新生成「PMS 开发记录」的种子提交清单时才跑，日常不用执行。
 
 ## 测试与 CI
 
@@ -103,17 +136,20 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 | `/project/flow` | 项目流程与阶段规则说明 |
 | `/task/board` | 任务看板 |
 | `/task/flow` | 任务流程与规则说明 |
-
-「我的任务」独立成一级菜单而不是挂在「任务规划」下：它跨项目聚合，而「任务规划」下的看板与流程都以单个项目为单位，两者不是同一层东西；且它是每天都要打开的入口，埋进二级菜单会多点一次。旧地址 `/task/mine` 仍可用，路由里重定向到 `/mine`。
 | `/field` | 字段配置 |
 | `/template` | 项目模板 |
 | `/member` | 成员管理 |
 
+「我的任务」独立成一级菜单而不是挂在「任务规划」下：它跨项目聚合，而「任务规划」下的看板与流程都以单个项目为单位，两者不是同一层东西；且它是每天都要打开的入口，埋进二级菜单会多点一次。旧地址 `/task/mine` 仍可用，路由里重定向到 `/mine`。
+
 项目使用 Hash 路由，部署到 GitHub Pages 后地址形如 `https://用户名.github.io/PMS/#/login`。
+
+<details>
+<summary>页面详解与代码地图（12 个页面逐页说明 + 依赖速查）</summary>
 
 ## 页面详解与代码地图
 
-### 页面关联总览
+#### 页面关联总览
 
 ```
 字段配置 ──→ 任务表单 / 项目表单
@@ -127,7 +163,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 项目阶段 ──→ 项目流程（阶段规则说明）
 ```
 
-### 代码分层约定
+#### 代码分层约定
 
 | 层 | 位置 | 职责 |
 |---|---|---|
@@ -155,7 +191,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 ---
 
-### 1. 登录页 `/login`
+#### 1. 登录页 `/login`
 
 **页面职责**：账号密码登录、三个种子账号快捷填充、错误提示、登录后跳回原目标页。
 
@@ -180,7 +216,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 ---
 
-### 2. 项目看板 `/project/board`
+#### 2. 项目看板 `/project/board`
 
 **页面职责**：项目列表、搜索、分页、新建（空白 / 从模板）、编辑、关闭归档、删除、进入详情。
 
@@ -210,7 +246,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 ---
 
-### 3. 项目详情 `/project/board/:id`
+#### 3. 项目详情 `/project/board/:id`
 
 **页面职责**：单个项目的完整视图，包括指标、图表、任务、成员、动态和项目操作。
 
@@ -243,7 +279,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 ---
 
-### 4. 项目归档 `/project/archive`
+#### 4. 项目归档 `/project/archive`
 
 **页面职责**：查看已归档项目、搜索、分页、撤销归档、只读查看详情。
 
@@ -266,7 +302,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 ---
 
-### 5. 项目流程 `/project/flow`
+#### 5. 项目流程 `/project/flow`
 
 **页面职责**：说明项目从立项到收尾的阶段推导、关闭归档流程与项目级权限。
 
@@ -291,7 +327,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 ---
 
-### 6. 任务看板 `/task/board`
+#### 6. 任务看板 `/task/board`
 
 **页面职责**：按项目查看任务泳道，执行认领、指派、验收、阻塞、取消等全部任务操作。
 
@@ -323,7 +359,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 ---
 
-### 7. 我的任务 `/mine`
+#### 7. 我的任务 `/mine`
 
 **页面职责**：看板回答「这个项目走到哪了」，这一页回答「我今天该干什么」。按当前登录人聚合他名下的事务，跨项目、跨状态，默认按截止日期升序。
 
@@ -367,7 +403,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 ---
 
-### 8. 任务流程 `/task/flow`
+#### 8. 任务流程 `/task/flow`
 
 **页面职责**：用静态文档说明任务状态、流转、权限，以及阻塞与取消的语义。
 
@@ -390,7 +426,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 ---
 
-### 9. 字段配置 `/field`
+#### 9. 字段配置 `/field`
 
 **页面职责**：维护任务字段和项目字段，控制表单上还能填哪些扩展信息。
 
@@ -415,7 +451,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 ---
 
-### 10. 项目模板 `/template`
+#### 10. 项目模板 `/template`
 
 **页面职责**：维护项目模板，支持从模板创建项目，也支持把已有项目另存为模板。
 
@@ -444,7 +480,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 ---
 
-### 11. 成员管理 `/member`
+#### 11. 成员管理 `/member`
 
 **页面职责**：按角色管理成员、岗位、登录账号和启用状态。
 
@@ -478,7 +514,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 ---
 
-### 12. 全局布局与公共能力
+#### 12. 全局布局与公共能力
 
 **页面职责**：提供固定头部、侧边栏、面包屑和内容区滚动。
 
@@ -497,7 +533,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 **与其他页面的关系**：所有业务页面都挂载在布局下；路由守卫控制访问；权限工具和状态常量被各页面复用。
 
-### 页面依赖速查
+#### 页面依赖速查
 
 | 页面 | 主要依赖 | 主要影响 |
 |---|---|---|
@@ -516,9 +552,15 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 ---
 
+
+</details>
+
+<details>
+<summary>角色与权限（管理员 / 项目经理 / 成员能做什么）</summary>
+
 ## 角色与权限
 
-### 全局角色
+#### 全局角色
 
 | 操作 | 管理员 | 项目经理 | 成员 |
 |---|---|---|---|
@@ -531,14 +573,14 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 | 字段配置 | 增删改 | 只读 | 只读 |
 | 项目模板 | 增删改、套用 | 增删改、套用 | 只读 |
 
-### 项目
+#### 项目
 
 - 创建项目：管理员、项目经理；项目经理创建时负责人固定为自己。
 - 编辑 / 删除 / 关闭归档：项目负责人或管理员。
 - 项目负责人变更：仅管理员。变更会写一条 `pm_changed` 事件（含原负责人、新负责人、原因），显示在项目详情「动态」里，用来回答「这个项目什么时候换的人、为什么换」。项目经理编辑项目时负责人字段锁死为自己，所以交接只能由管理员发起。
 - 查看项目：项目成员或管理员。
 
-### 任务
+#### 任务
 
 - 创建任务：项目成员或管理员。
 - 编辑任务基本信息：管理员、项目负责人、任务创建人、任务负责人。
@@ -552,9 +594,15 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 - 取消任务：项目负责人、管理员、任务创建人。
 - 恢复已取消任务：项目负责人、管理员。
 
+
+</details>
+
+<details>
+<summary>核心业务规则（状态机 / 阶段推导 / 字段 / 模板 / 验收）</summary>
+
 ## 核心业务规则
 
-### 1. 待办 = 无人负责
+#### 1. 待办 = 无人负责
 
 - 新建任务时负责人留空 → 任务进入「待办」，由成员认领。
 - 新建或编辑时选择负责人 → 直接进入「进行中」，选择负责人即视为开工。
@@ -563,7 +611,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 - 「认领」只能把任务给自己；「指派」是把任务交给别人，只有项目负责人或管理员操作。
 - 管理员如果不是项目成员，不能认领该项目的任务，但可以指派；要亲自执行需先加入项目成员。
 
-### 2. 任务生命周期
+#### 2. 任务生命周期
 
 ```
 待办 --认领/指派--> 进行中 --提交验收--> 待验收 --验收--> 已验收
@@ -577,7 +625,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 - 阻塞是叠加标记，不改变泳道；阻塞中的任务提交验收前会自动解除阻塞。
 - 所有状态变化都会写入任务事件日志，任务详情抽屉按天展示时间线。
 
-### 3. 项目阶段自动推导
+#### 3. 项目阶段自动推导
 
 项目阶段由任务状态自动汇总，**只进不退**：
 
@@ -592,7 +640,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 
 新增待办任务、取消任务都不会让项目回退；撤销归档后会按当前任务重新推导阶段。
 
-### 4. 自定义字段
+#### 4. 自定义字段
 
 - 分为「任务字段」和「项目字段」，两个命名空间允许同名。
 - 字段值分别存入 `task.extra` 和 `project.extra`，键为字段 id。
@@ -600,7 +648,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 - 模板生成的项目会携带 `fieldIds`，项目表单只展示模板勾选的字段。
 - 必填校验目前在前端表单层完成。
 
-### 5. 项目模板
+#### 5. 项目模板
 
 - 模板包含：名称、默认类型、默认优先级、说明、项目字段、任务清单。
 - 模板任务的日期使用相对项目开始日的 `T+N` 和工期天数。
@@ -608,7 +656,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 - 生成的任务全部进入「待办」，不复制负责人、状态、事件和自定义字段值。
 - 本功能使用快照语义：修改模板不影响已生成项目，修改项目也不会反写模板。
 
-### 6. 成员与岗位
+#### 6. 成员与岗位
 
 - 角色 `role` 决定权限：`admin` / `pm` / `member`。
 - 岗位 `position` 仅用于展示和详情预览，不参与权限判断，手动填写。
@@ -621,7 +669,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 - 停用保护：不能停用自己或最后一个启用管理员；成员仍是进行中项目负责人、或还有未完成任务时，必须先移交 / 转派。
 - 删除成员的统计口径与停用一致，只算「启用中的管理员」，避免「先停用另一个 admin，再删掉当前唯一启用的 admin」绕过保护。
 
-### 7. 验收权限与「代 PM 验收」
+#### 7. 验收权限与「代 PM 验收」
 
 验收权限只有一种判定：
 
@@ -639,6 +687,12 @@ export const canReviewTask = (user, project) => canManageProject(user, project)
 
 ---
 
+
+</details>
+
+<details>
+<summary>数据模型与目录结构</summary>
+
 ## 数据模型（概要）
 
 | 实体 | 关键字段 |
@@ -650,6 +704,9 @@ export const canReviewTask = (user, project) => canManageProject(user, project)
 | template | `id, name, projectType, priority, description, fieldIds, tasks[], enabled` |
 | template task | `key, title, description, priority, startOffset, duration, dependsOn[]` |
 | 种子元信息 | `seedVersion`（人工维护）、`seedSignature`（种子内容指纹，自动算出），两者一起决定是否重置本地数据 |
+
+
+</details>
 
 ## 目录结构
 
@@ -679,6 +736,9 @@ PMS/
 ├─ package.json
 └─ vite.config.js
 ```
+
+<details>
+<summary>数据存储与重置（含种子版本 / 指纹判定）</summary>
 
 ## 数据存储与重置
 
@@ -714,6 +774,12 @@ localStorage.removeItem('pm_mock_db')
 location.reload()
 ```
 
+
+</details>
+
+<details>
+<summary>卡片上的「正在查看」为什么只能是演示效果</summary>
+
 ## 卡片上的「正在查看」是演示效果
 
 项目卡片和任务卡片右下角的头像堆叠（例如「李 / M +1」，hover 显示「张经理、Agent 正在查看（演示数据，非真实在线状态）」）**不是真实的在线状态**。
@@ -725,6 +791,12 @@ location.reload()
 - 整个功能是模块级单例单定时器，只在 `mockEnabled` 为真时启动；接真实后端后删掉 `useDemoViewers.js` 和 `DemoViewers.vue` 即可，业务代码不用动。
 - 接后端时正确做法：服务端存 `entityType + entityId + userId + heartbeatAt` 的 presence 表，客户端 30 秒心跳、90 秒过期，服务端用 WebSocket 或 SSE 推送变更；**实体表本身不要存 viewers 字段**。
 
+
+</details>
+
+<details>
+<summary>部署到 GitHub Pages</summary>
+
 ## 部署到 GitHub Pages
 
 项目已内置 GitHub Pages 部署配置：
@@ -733,7 +805,7 @@ location.reload()
 - [vite.config.js](vite.config.js) 在 GitHub Actions 中自动使用 `/<仓库名>/` 作为 base，本地开发仍为 `/`
 - [deploy-pages.yml](.github/workflows/deploy-pages.yml) 在 push 到 `master` / `main` 时执行测试、构建并发布
 
-### 操作步骤
+#### 操作步骤
 
 1. 推送代码到 GitHub：
 
@@ -752,18 +824,24 @@ git push -u origin master
 https://masaka26.github.io/PMS/
 ```
 
-### 说明
+#### 说明
 
 - 如果仓库名不是 `PMS`，base 会自动跟随仓库名，不需要改代码
 - 如果仓库是 `用户名.github.io` 形式，会自动部署在根路径
 - 本地验证 Pages 版：先设置 `GITHUB_ACTIONS=true`、`GITHUB_REPOSITORY=MaSaka26/PMS` 执行 `npm run build`，再用同样的环境变量执行 `npm run preview`，访问 `http://localhost:4173/PMS/`（preview 与构建的 base 必须一致，否则资源 404、页面空白）
 - Mock 数据保存在每个访问者自己的 localStorage 中，不同人之间的数据不共享
 
+
+</details>
+
+<details>
+<summary>构建体积与加载策略（首屏从 520 KB gzip 降到 296 KB）</summary>
+
 ## 构建体积与加载策略
 
 首屏下载量从 2.0 MB（gzip 520 KB）降到 1.04 MB（gzip 296 KB），做法分三步，每一步都能单独回退。
 
-### 1. 第三方依赖按变更频率分块
+#### 1. 第三方依赖按变更频率分块
 
 [vite.config.js](vite.config.js) 里的 `VENDOR_RULES` 把 `element-plus`、`vue`/`pinia`、`axios`、`highcharts`、`mockjs` 各分一个 chunk。
 
@@ -771,7 +849,7 @@ https://masaka26.github.io/PMS/
 
 注意 Vite 8 底层换成了 rolldown，`manualChunks` **只接受函数形式**，写对象形式会直接报 `TypeError: manualChunks is not a function`。
 
-### 2. Mock 数据层改成异步加载
+#### 2. Mock 数据层改成异步加载
 
 原来 `src/main.js` 第一行就是 `import './mock'`，mockjs 与全部种子数据必须在任何应用代码执行前下载并解析完。
 
@@ -785,7 +863,7 @@ https://masaka26.github.io/PMS/
 
 接真实后端时把 `.env.production` 改成 `VITE_USE_MOCK=false`，业务代码一行不用动；此时 `ensureMock()` 直接 resolve，mock chunk 也不会被下载。
 
-### 3. Element Plus 按需注册
+#### 3. Element Plus 按需注册
 
 `src/main.js` 里用一张 `EL_COMPONENTS` 表具名引入实际用到的 44 个组件，逐组件 import 样式，再循环 `app.component` 注册。
 
@@ -812,7 +890,7 @@ import 'element-plus/es/components/message-box/style/css'
 
 图标仍是全量注册：项目表单里的图标选择器会遍历整份图标表，无论如何都要全进包，白名单省不下体积（实测只省 81 字节）。
 
-### 怎么复查体积
+#### 怎么复查体积
 
 ```bash
 npm run build
@@ -820,11 +898,17 @@ node scripts/measure-dist.mjs          # 逐文件 raw + gzip，并从 index.htm
 node scripts/measure-any.mjs dist.old  # 测任意目录，用来和旧产物对比
 ```
 
+
+</details>
+
+<details>
+<summary>决策记录：为什么删掉排期与关键路径</summary>
+
 ## 决策记录：为什么删掉排期与关键路径
 
 排期与关键路径在这个项目里**存在过两次，又被删除过两次**。这一节不是变更日志，是留给以后的判据：什么人、在什么条件下，才值得把它再做一次。
 
-### 删除了什么
+#### 删除了什么
 
 | 版本 | 内容 | 代码量 |
 |---|---|---|
@@ -845,7 +929,7 @@ node scripts/measure-any.mjs dist.old  # 测任意目录，用来和旧产物对
 - **测试**：`tests/schedule.test.js`
 - **种子**：git 任务改回由提交日期生成（不再标 `historical`、不再清空计划日期与截止日期），`SEED_VERSION` 回退
 
-### 为什么删除
+#### 为什么删除
 
 **1. 根本原因是一个语义错误，不是算法问题。**
 `git log` 记录的是已经发生的事（actuals），不是计划（plan）。把它当成 `plannedStart / dueDate` 灌进 CPM，算出来的不是「打算怎么走」，而是「实际怎么走」。最直接的证据：种子项目「PMS 开发记录」的峰值日出现 **17 条任务在同一天并行，且全部压在同一个人身上** —— 因为 24 条提交都出自同一作者、同一段时间，被当成了 24 条计划任务。
@@ -862,7 +946,7 @@ node scripts/measure-any.mjs dist.old  # 测任意目录，用来和旧产物对
 **5. 粒度上自相矛盾。**
 如果按「任务即里程碑」的思路，立项承诺应该是 5–10 条；而种子项目里有 26 条任务参与排期。26 条不是里程碑，是 WBS —— 那又回到了「排期生成器」，与敏捷「时间固定、范围可变」的前提冲突。
 
-### 现在还保留什么
+#### 现在还保留什么
 
 排期页面删掉了，但底层字段与校验一直在，并仍在服务任务表单、任务详情和时间线：
 
@@ -873,13 +957,13 @@ node scripts/measure-any.mjs dist.old  # 测任意目录，用来和旧产物对
 
 也就是说：**任务仍然可以写计划日期、可以连依赖、系统仍然会拦住明显矛盾的日期**，只是不再提供「把整张网算一遍、画出关键路径」的页面。
 
-### 粒度问题后来怎么处理的
+#### 粒度问题后来怎么处理的
 
 上面第 5 条指出的「26 条不是里程碑，是 WBS」，没有靠重新做排期页解决，而是改种子数据解决的：把「PMS 开发记录」的 24 条 git 任务按交付物归并成 6 个里程碑（M0–M5），判据是「去掉这一步，后面哪一步会做不了」。归并后每个里程碑的说明里保留了它包含哪些提交，可追溯到具体 hash；依赖只画真实存在的约束，M2 / M3 / M4 都接在 M1 后面并行推进，不串成一条假的关键路径。
 
 结果是不需要 CPM 也能回答「现在到哪一步了、下一步卡在谁身上」——因为 6 条里程碑加上 2 条待办的依赖关系，本身就构成了一条一屏能读完的链路。**粒度对了，图就不需要了。**
 
-### 什么情况下才值得重新做
+#### 什么情况下才值得重新做
 
 三条同时满足，才重新考虑：
 
@@ -888,6 +972,19 @@ node scripts/measure-any.mjs dist.old  # 测任意目录，用来和旧产物对
 3. 工期估算由执行者本人填写，且已积累至少两个周期的「已验收 + 有估算」数据 —— 否则算不出速度，也校不准估算。
 
 只满足第 1 条就动手，会重复已经发生两次的事。
+
+
+</details>
+
+## 常见问题（FAQ）
+
+| 问题 | 答案 |
+|---|---|
+| 为什么我改了数据，别人看不到？ | 数据存在你自己浏览器的 `localStorage`，没有后端，也不共享。见 [数据存储与重置](#数据存储与重置)。 |
+| 用 `pm/pm` 登录，「我的任务」为什么有内容？ | 种子数据给 u2 补了进行中任务、待验收提交和待认领事项，四类事务都能演示；账号归属按 `user.id`，不看账号名。 |
+| 我给浏览器换了台机器，数据还在吗？ | 不在。`/project/board/:id` 这种 hash 地址可以收藏，但数据只在原浏览器。 |
+| 为什么排期 / 关键路径被删了？ | 做过两次又删了两次，根因是「拿 git log 当计划」。完整判据在 [决策记录](#决策记录为什么删掉排期与关键路径)。 |
+| 构建后入口 chunk 只有 11 KB，是不是漏打包了？ | 没有。Element Plus 被拆到独立 chunk，仍在首屏；详见 [构建体积与加载策略](#构建体积与加载策略)。 |
 
 ## 已知限制
 
@@ -902,12 +999,12 @@ node scripts/measure-any.mjs dist.old  # 测任意目录，用来和旧产物对
 - 「我的任务」在内存里拍平全部项目的任务后前端排序筛选，与看板同样没有分页；数据量再大需要改成分页接口。
 - 种子数据变更会让浏览器里的旧数据整份重置（判定见 [数据存储与重置](#数据存储与重置)：版本号更旧、或版本号相同但内容指纹不同，都会重置），没有迁移脚本。
 - 卡片上的「正在查看」是本地随机模拟的演示效果，不是真实在线状态，也无法跨浏览器看到别人。
-- 自动化测试覆盖纯函数（权限判断、截止日期分级、登录与停用校验、种子版本与内容指纹），mock 接口写操作与页面流程仍以手工冒烟为主。
+- 自动化测试覆盖 37 条：权限判断、截止日期分级、登录与停用校验、种子版本与指纹、domain 纯函数、接口级 403 兜底；页面流程仍以手工冒烟为主。
 - 生产构建的主入口 chunk 已从 1.2 MB 降到约 11 KB，但 Element Plus 仍在首屏（约 771 KB raw / 239 KB gzip），这是按需引入后剩下的真实开销，再压需要换组件库而不是继续调配置。
 
 ## 后续规划
 
 1. 视数据量补充任务分页或虚拟滚动。
 2. 为字段增加使用情况统计和删除影响预览。
-3. 补充自动化测试和 CI。
+3. ~~补充自动化测试和 CI。~~（已完成：37 条单元测试 + GitHub Actions CI / Pages 部署）
 4. 按实际使用情况细化任务编辑、改派等细粒度权限。
