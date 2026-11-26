@@ -7,18 +7,34 @@
 </p>
 
 <p align="center">
-  Vue 3.5 · Vue Router 5.3 · Pinia 4 · Element Plus 2.14 · Highcharts 13 · Axios 1.21 · Mock.js 1.1 · Vite 8.2
+  <img src="https://img.shields.io/badge/Vue-3.5-42b883?logo=vuedotjs&logoColor=white" alt="Vue 3.5">
+  <img src="https://img.shields.io/badge/Vue%20Router-5.3-4e3cc7" alt="Vue Router 5.3">
+  <img src="https://img.shields.io/badge/Pinia-4-ea852f" alt="Pinia 4">
+  <img src="https://img.shields.io/badge/Element%20Plus-2.14-409eff" alt="Element Plus 2.14">
+  <img src="https://img.shields.io/badge/Highcharts-13-308274?logo=highcharts&logoColor=white" alt="Highcharts 13">
+  <img src="https://img.shields.io/badge/Axios-1.21-5a29e4?logo=axios&logoColor=white" alt="Axios 1.21">
+  <img src="https://img.shields.io/badge/Mock.js-1.1-ea4c1b" alt="Mock.js 1.1">
+  <img src="https://img.shields.io/badge/Vite-8.2-646cff?logo=vite&logoColor=white" alt="Vite 8.2">
 </p>
 
-一个用 Vue 3 + Mock.js 做的前端项目管理系统：**项目 / 任务 / 成员 / 自定义字段 / 模板**一条链路闭环，数据存本地浏览器，打开就能演示，不需要后端。
+<p align="center">
+  一个用 Vue 3 + Mock.js 做的前端项目管理系统：项目 / 任务 / 成员 / 自定义字段 / 模板一条链路闭环，数据存本地浏览器，打开就能演示，不需要后端。
+</p>
 
-![PMS 项目看板](docs/screenshots/project-board.png)
+<p align="center">
+  <a href="https://masaka26.github.io/PMS/"><strong>在线演示</strong></a> ·
+  <a href="#快速开始">快速开始</a> ·
+  <a href="#常见问题faq">常见问题</a>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/project-board.png" alt="PMS 项目看板" width="760">
+</p>
 
 | 适合谁 | 现在就能做什么 | 在线访问 | 边界在哪 |
 |---|---|---|---|
 | 课程设计 / 演示 / 前端练习 | 登录、建项目、认领任务、验收、看图表、用模板 | [**masaka26.github.io/PMS**](https://masaka26.github.io/PMS/) | 数据只在本机浏览器，不能多人协作 |
 
-[快速开始](#快速开始) · [功能地图](#功能模块) · [常见问题](#常见问题faq)
 
 
 ## 目录
