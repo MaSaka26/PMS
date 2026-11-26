@@ -27,7 +27,10 @@ const statusFilter = ref('all')
 const selected = ref(null)
 const childrenVisible = ref(false)
 
-const ROW_H = 34
+// 横轴是时间（列），纵轴是里程碑（行）
+const COL_W = 96
+const ROW_H = 40
+const HEAD_H = 34
 const STATUS_COLOR = {
   todo: '#909399', doing: '#409eff', done: '#e6a23c',
   accepted: '#67c23a', canceled: '#c0c4cc'
@@ -55,11 +58,19 @@ const dateAdd = (dateStr, days) => {
   return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate())
 }
 const diffDate = (a, b) => Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 86400000)
+const planEnd = (m) => dateAdd(m.startDate || m.dueDate, Math.max(1, Number(m.duration) || 1) - 1)
 
 const today = computed(() => todayLocal())
 const timeline = computed(() => {
   const list = lanes.value
-  const dates = list.flatMap((m) => [m.startDate || m.dueDate, m.dueDate || m.startDate]).filter(Boolean).sort()
+  const dates = []
+  for (const m of list) {
+    if (m.startDate) dates.push(m.startDate)
+    if (m.dueDate) dates.push(m.dueDate)
+    if (m.startDate) dates.push(planEnd(m))
+    if (m.commitment?.dueDate) dates.push(m.commitment.dueDate)
+  }
+  dates.sort()
   if (!dates.length) return { days: [], start: '', todayIndex: -1 }
   let start = dates[0]
   let end = dates[dates.length - 1]
@@ -77,16 +88,21 @@ const timeline = computed(() => {
 
 const dayIndex = (date) => date ? timeline.value.days.findIndex((d) => d.date === date) : -1
 const barStyle = (m) => {
-  const s = dayIndex(m.startDate || m.dueDate)
-  const e = dayIndex(m.dueDate || m.startDate)
-  if (s < 0 || e < 0) return { display: 'none' }
-  const from = Math.min(s, e)
-  const to = Math.max(s, e)
+  const from = dayIndex(m.startDate || m.dueDate)
+  if (from < 0) return { display: 'none' }
+  let to = from + Math.max(1, Number(m.duration) || 1) - 1
+  const actual = dayIndex(m.dueDate)
+  if (actual > to) to = actual
+  if (to >= timeline.value.days.length) to = timeline.value.days.length - 1
   return {
-    top: (from * ROW_H + 5) + 'px',
-    height: (Math.max(ROW_H - 8, (to - from + 1) * ROW_H - 8)) + 'px',
+    left: (from * COL_W + 8) + 'px',
+    width: ((to - from + 1) * COL_W - 16) + 'px',
     background: STATUS_COLOR[m.status] || STATUS_COLOR.todo
   }
+}
+const deadlineLeft = (m) => {
+  const i = dayIndex(m.commitment?.dueDate || m.dueDate)
+  return i < 0 ? '-9999px' : ((i + 0.5) * COL_W) + 'px'
 }
 const statusColor = (m) => STATUS_COLOR[m.status] || STATUS_COLOR.todo
 const taskCount = (m) => (taskStore.taskMap?.[m.projectId] || []).filter((t) => t.milestoneId === m.id && !t.deletedAt).length
@@ -94,8 +110,15 @@ const doneCount = (m) => (taskStore.taskMap?.[m.projectId] || []).filter((t) => 
 const projectName = (id) => projectStore.getById(id)?.name || id
 const ownerName = (id) => memberStore.memberName(id)
 const isOverdue = (m) => {
-  const due = m.commitment?.dueDate || m.dueDate
-  return !!due && diffDays(due, new Date()) < 0 && m.status !== 'canceled'
+  if (!m || m.status === 'canceled') return false
+  const committed = m.commitment?.dueDate || m.dueDate
+  if (!committed) return false
+  // 已验收：只有「实际结束晚于承诺截止」才算逾期；历史里程碑按提交日交付，不该因为今天更晚就标红
+  if (m.status === 'accepted') {
+    const actual = m.dueDate || committed
+    return actual > committed
+  }
+  return diffDays(committed, new Date()) < 0
 }
 const draggingChildren = computed(() => {
   const m = selected.value
@@ -123,9 +146,9 @@ const createMilestone = async () => {
   if (!projectId.value) { ElMessage.warning('请先选择项目'); return }
   try {
     const { value } = await ElMessageBox.prompt('输入里程碑标题', '新建里程碑', { inputPattern: /\S+/, inputErrorMessage: '标题不能为空' })
-    const today = todayLocal()
-    await milestoneStore.addMilestone({ projectId: projectId.value, title: value, startDate: today, dueDate: today })
-    ElMessage.success('里程碑已创建')
+    const start = todayLocal()
+    await milestoneStore.addMilestone({ projectId: projectId.value, title: value, startDate: start, duration: 3 })
+    ElMessage.success('里程碑已创建，默认计划工期 3 天')
   } catch (e) { if (e !== 'cancel' && e?.message) ElMessage.error(String(e.message)) }
 }
 const removeMilestone = async (m) => {
@@ -157,7 +180,7 @@ onMounted(async () => {
     <div class="ms-head">
       <div>
         <h2>里程碑看板</h2>
-        <p>每个里程碑一条横向泳道，纵向是时间；颜色代表状态。点色块查看里程碑与子任务。</p>
+        <p>横轴是时间，纵轴是每个里程碑一条泳道；色块长度是计划工期，颜色是状态，白色竖线是承诺截止。点色块看子任务。</p>
       </div>
       <el-button v-if="canManage" type="primary" @click="createMilestone">新建里程碑</el-button>
     </div>
@@ -181,34 +204,38 @@ onMounted(async () => {
       <span v-for="(color, st) in STATUS_COLOR" :key="st" class="legend-item">
         <i :style="{ background: color }"></i>{{ TASK_STATUS_LABEL[st] || st }}
       </span>
+      <span class="legend-item"><i class="deadline-swatch"></i>承诺截止</span>
       <span class="legend-item"><i class="today-swatch"></i>今天</span>
     </div>
 
     <div v-if="lanes.length && timeline.days.length" class="timeline-card">
       <div class="timeline-scroll">
-        <div class="timeline-grid" :style="{ gridTemplateColumns: '220px repeat(' + lanes.length + ', 180px)' }">
-          <div class="tl-corner" style="grid-column:1;grid-row:1">时间 / 里程碑</div>
-          <div v-for="(m, mi) in lanes" :key="'h' + m.id" class="tl-head" :style="{ gridColumn: (mi + 2) + '', gridRow: '1' }" @click="openDetail(m)">
-            <div class="tl-head-title"><el-icon><Flag /></el-icon>{{ m.title }}</div>
-            <div class="tl-head-sub">{{ doneCount(m) }}/{{ taskCount(m) }} 子任务 · {{ ownerName(m.owner) }}</div>
+        <div class="timeline-grid" :style="{ gridTemplateColumns: '220px repeat(' + timeline.days.length + ', ' + COL_W + 'px)' }">
+          <div class="tl-corner" style="grid-column:1;grid-row:1">里程碑 / 时间</div>
+
+          <div v-for="(d, di) in timeline.days" :key="d.date" class="tl-date" :class="{ 'is-today': d.isToday }"
+            :style="{ gridColumn: (di + 2) + '', gridRow: '1' }">
+            <span>{{ d.label }}</span><small>周{{ d.weekday }}</small>
           </div>
 
-          <template v-for="(d, di) in timeline.days" :key="d.date">
-            <div class="tl-date" :class="{ 'is-today': d.isToday }" :style="{ gridColumn: '1', gridRow: (di + 2) + '' }">
-              <span>{{ d.label }}</span><small>周{{ d.weekday }}</small>
+          <template v-for="(m, mi) in lanes" :key="m.id">
+            <div class="tl-name" :style="{ gridColumn: '1', gridRow: (mi + 2) + '' }" @click="openDetail(m)">
+              <div class="tl-name-title"><el-icon><Flag /></el-icon>{{ m.title }}</div>
+              <div class="tl-name-sub">{{ doneCount(m) }}/{{ taskCount(m) }} 子任务 · {{ ownerName(m.owner) }} · 工期 {{ m.duration || 1 }} 天</div>
             </div>
-            <div v-for="(m, mi) in lanes" :key="m.id + d.date" class="tl-cell" :class="{ 'is-today': d.isToday }" :style="{ gridColumn: (mi + 2) + '', gridRow: (di + 2) + '' }"></div>
+            <div v-for="d in timeline.days" :key="m.id + d.date" class="tl-cell" :class="{ 'is-today': d.isToday }"
+              :style="{ gridColumn: timeline.days.indexOf(d) + 2 + '', gridRow: (mi + 2) + '' }"></div>
+            <div class="tl-bar-wrap" :style="{ gridColumn: '2 / span ' + timeline.days.length, gridRow: (mi + 2) + '' }">
+              <div class="tl-bar" :style="barStyle(m)" @click="openDetail(m)" :title="m.title + '（计划工期 ' + (m.duration || 1) + ' 天）'">
+                <span class="tl-bar-text">{{ m.title }}</span>
+                <el-tag v-if="isOverdue(m)" type="danger" size="small" class="tl-overdue">逾期</el-tag>
+              </div>
+              <div class="tl-deadline" :style="{ left: deadlineLeft(m) }" :title="'承诺截止：' + (m.commitment?.dueDate || m.dueDate || '—')"></div>
+            </div>
           </template>
 
-          <div v-for="(m, mi) in lanes" :key="'bar' + m.id" class="tl-bar-wrap" :style="{ gridColumn: (mi + 2) + '', gridRow: '2 / span ' + timeline.days.length }">
-            <div class="tl-bar" :style="barStyle(m)" @click="openDetail(m)" :title="m.title">
-              <span class="tl-bar-text">{{ m.title }}</span>
-              <el-tag v-if="isOverdue(m)" type="danger" size="small" class="tl-overdue">逾期</el-tag>
-            </div>
-          </div>
-
           <div v-if="timeline.todayIndex >= 0" class="tl-today-line"
-            :style="{ top: (34 + (timeline.todayIndex + 0.5) * ROW_H) + 'px' }"></div>
+            :style="{ gridColumn: (timeline.todayIndex + 2) + '', gridRow: '2 / span ' + lanes.length }"></div>
         </div>
       </div>
     </div>
@@ -219,6 +246,7 @@ onMounted(async () => {
         <div class="ms-detail-meta">
           <p>{{ selected.desc }}</p>
           <p>状态：<span :style="{ color: statusColor(selected) }">{{ TASK_STATUS_LABEL[selected.status] || selected.status }}</span> · {{ doneCount(selected) }}/{{ taskCount(selected) }} 子任务已完成</p>
+          <p>计划：{{ selected.startDate || '—' }} 起，工期 {{ selected.duration || 1 }} 天，计划结束 {{ planEnd(selected) }}</p>
           <p>承诺截止：{{ (selected.commitment?.dueDate || selected.dueDate) || '—' }}</p>
           <p v-if="isOverdue(selected)" class="ms-warn"><el-icon><WarningFilled /></el-icon> 里程碑已逾期，下面标红的子任务拖慢了进度：</p>
         </div>
@@ -255,32 +283,34 @@ onMounted(async () => {
 .timeline-legend { display: flex; gap: 14px; align-items: center; margin-bottom: 10px; font-size: 12px; color: #6b7280; }
 .legend-item { display: inline-flex; align-items: center; gap: 5px;
   i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .deadline-swatch { background: #fff; border-left: 2px solid #303133; width: 2px; height: 12px; border-radius: 0; }
   .today-swatch { background: transparent; border-left: 2px dashed #f56c6c; width: 2px; height: 12px; border-radius: 0; }
 }
 .timeline-card { background: #fff; border: 1px solid #e8eaef; border-radius: 12px; overflow: hidden; }
 .timeline-scroll { overflow: auto; max-height: calc(100vh - 260px); }
-.timeline-grid { display: grid; position: relative; min-height: 200px; }
-.tl-corner, .tl-head { position: sticky; top: 0; z-index: 4; height: 34px; display: flex; align-items: center; background: #f7f8fa; border-bottom: 1px solid #e8eaef; border-right: 1px solid #eef0f4; font-size: 12px; }
-.tl-corner { left: 0; z-index: 6; padding-left: 12px; color: #909399; }
-.tl-head { flex-direction: column; align-items: flex-start; justify-content: center; padding: 0 10px; cursor: pointer; gap: 1px;
-  &:hover { background: #eef3fb; }
-}
-.tl-head-title { display: flex; align-items: center; gap: 4px; font-weight: 600; color: #1f2430; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tl-head-sub { color: #9ca3af; font-size: 10px; }
-.tl-date { position: sticky; left: 0; z-index: 3; height: 34px; display: flex; align-items: center; gap: 8px; padding: 0 12px; background: #fff; border-bottom: 1px solid #f2f3f5; font-size: 12px; color: #4b5563;
-  small { color: #c0c4cc; }
+.timeline-grid { display: grid; position: relative; min-height: 200px; width: max-content; }
+.tl-corner, .tl-date { position: sticky; top: 0; z-index: 5; height: 34px; display: flex; align-items: center; justify-content: center; background: #f7f8fa; border-bottom: 1px solid #e8eaef; border-right: 1px solid #eef0f4; font-size: 12px; }
+.tl-corner { left: 0; z-index: 8; justify-content: flex-start; padding-left: 12px; color: #909399; }
+.tl-date { gap: 3px; color: #4b5563;
+  small { color: #c0c4cc; font-size: 10px; }
   &.is-today { color: #f56c6c; font-weight: 700; background: #fff8f8; }
 }
-.tl-cell { height: 34px; border-bottom: 1px solid #f2f3f5; border-right: 1px solid #fafafa;
+.tl-name { position: sticky; left: 0; z-index: 4; height: 40px; padding: 0 10px; display: flex; flex-direction: column; justify-content: center; gap: 2px; background: #fff; border-bottom: 1px solid #f2f3f5; border-right: 1px solid #e8eaef; cursor: pointer;
+  &:hover { background: #f5f9ff; }
+}
+.tl-name-title { display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: #1f2430; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tl-name-sub { font-size: 10px; color: #9ca3af; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tl-cell { height: 40px; border-bottom: 1px solid #f2f3f5; border-right: 1px solid #fafafa;
   &.is-today { background: #fffafa; }
 }
-.tl-bar-wrap { position: relative; pointer-events: none; z-index: 1; }
-.tl-bar { position: absolute; left: 10px; right: 10px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; color: #fff; font-size: 11px; font-weight: 600; cursor: pointer; pointer-events: auto; box-shadow: 0 4px 10px -4px rgba(0,0,0,.35); transition: transform .15s, box-shadow .15s;
+.tl-bar-wrap { position: relative; pointer-events: none; z-index: 2; }
+.tl-bar { position: absolute; top: 7px; height: 26px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; color: #fff; font-size: 11px; font-weight: 600; cursor: pointer; pointer-events: auto; box-shadow: 0 4px 10px -4px rgba(0,0,0,.35); transition: transform .15s, box-shadow .15s;
   &:hover { transform: translateY(-1px); box-shadow: 0 8px 16px -6px rgba(0,0,0,.45); }
 }
 .tl-bar-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tl-overdue { flex: none; }
-.tl-today-line { position: absolute; left: 220px; right: 0; border-top: 2px dashed #f56c6c; z-index: 2; pointer-events: none; }
+.tl-deadline { position: absolute; top: 4px; height: 32px; width: 2px; background: #303133; opacity: .85; pointer-events: none; }
+.tl-today-line { border-left: 2px dashed #f56c6c; z-index: 3; pointer-events: none; }
 .ms-detail-meta { margin-bottom: 12px; font-size: 13px; p { margin: 4px 0; } }
 .ms-warn { color: #f56c6c; display: flex; align-items: center; gap: 4px; }
 .child-title { font-size: 12px; color: #909399; margin: 10px 0 6px; }

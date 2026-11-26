@@ -47,11 +47,13 @@ Mock.mock('/api/milestones', 'post', (options) => {
   const title = String(body.title || '').trim()
   if (!title) return fail(400, '里程碑标题不能为空')
   if (body.dueDate && body.startDate && body.dueDate < body.startDate) return fail(400, '截止日期不能早于开始日期')
+  const duration = body.duration === undefined || body.duration === null || body.duration === '' ? 1 : Number(body.duration)
+  if (!Number.isInteger(duration) || duration < 1 || duration > 365) return fail(400, '计划工期必须是 1-365 的整数（天）')
   const m = {
     id: uid('ms'), projectId: body.projectId, title,
     desc: String(body.desc || ''), code: String(body.code || ''),
     status: 'todo', owner: body.owner || user.id,
-    startDate: body.startDate || todayLocal(), dueDate: body.dueDate || body.startDate || '',
+    startDate: body.startDate || todayLocal(), dueDate: body.dueDate || body.startDate || '', duration,
     commitment: body.commitment || null,
     commitHashes: [], deletedAt: null, createdAt: nowISO(), createdBy: user.id
   }
@@ -76,6 +78,11 @@ Mock.mock(/\/api\/milestones\/[\w-]+$/, 'put', (options) => {
   }
   for (const key of ['desc', 'code', 'status', 'startDate', 'dueDate', 'commitment']) {
     if (body[key] !== undefined) m[key] = body[key]
+  }
+  if (body.duration !== undefined) {
+    const duration = Number(body.duration)
+    if (!Number.isInteger(duration) || duration < 1 || duration > 365) return fail(400, '计划工期必须是 1-365 的整数（天）')
+    m.duration = duration
   }
   save()
   return ok(m)

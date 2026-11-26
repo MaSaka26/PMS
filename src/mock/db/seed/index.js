@@ -2,9 +2,9 @@ import { seedProjects } from './projects.js'
 import { seedMilestones, seedTasks } from './tasks.js'
 import { members, users } from './members.js'
 
-// 版本 16：方案 A —— 里程碑从任务表拆成独立 milestones 实体；每条提交的信息保留在里程碑上，
-// 子任务通过 milestoneId 关联；任务表只保留真正的执行项（原 6 条里程碑任务移出）。
-export const SEED_VERSION = 16
+// 版本 17：里程碑增加独立的「计划工期 duration」，时间线按工期画横条；
+// 版本 16 起里程碑已是从任务表拆出的独立 milestones 实体，每条提交的信息保留在里程碑上。
+export const SEED_VERSION = 17
 
 // 比对键：只有「种子内容」参与，不含 seedVersion 本身。
 // 用户自己改的数据（新建任务、改状态）不在这里，所以不会因为用户操作触发重置。
