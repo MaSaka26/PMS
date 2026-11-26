@@ -36,20 +36,20 @@ const menus = [
         ],
     },
     {
+        path: '/milestone',
+        title: '里程碑管理',
+        icon: Flag,
+        children: [
+            { path: '/milestone/board', title: '里程碑看板', icon: Odometer },
+        ],
+    },
+    {
         path: '/task',
         title: '任务管理',
         icon: Tickets,
         children: [
             { path: '/task/board', title: '任务看板', icon: Grid },
             { path: '/task/flow', title: '任务流程', icon: Guide },
-        ],
-    },
-    {
-        path: '/milestone',
-        title: '里程碑管理',
-        icon: Flag,
-        children: [
-            { path: '/milestone/board', title: '里程碑看板', icon: Odometer },
         ],
     },
     { path: '/mine', title: '我的任务', icon: MessageBox },
