@@ -183,6 +183,11 @@ const goMembers = () => emit('select', { tab: 'members' })
 }
 
 @media (max-width: 1280px) {
+    // 这个宽度下 wide 和 compact 都是四列，切换按钮点了也没有视觉变化，直接隐藏
+    .layout-btn {
+        display: none;
+    }
+
     .stat-grid.layout-wide {
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
