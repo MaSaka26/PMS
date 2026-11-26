@@ -11,6 +11,7 @@ import {
 } from '@/api/project'
 import { useFieldStore } from '@/stores/fieldStore'
 import { useTaskStore } from '@/stores/taskStore'
+import { useMilestoneStore } from '@/stores/milestoneStore'
 import { useMemberStore } from '@/stores/memberStore'
 import { useTemplateStore } from '@/stores/templateStore'
 import { useUserStore } from '@/stores/userStore'
@@ -32,6 +33,7 @@ import { buildTemplateDraft } from './composables/buildTemplateDraft'
 const route = useRoute()
 const router = useRouter()
 const taskStore = useTaskStore()
+const milestoneStore = useMilestoneStore()
 const memberStore = useMemberStore()
 const userStore = useUserStore()
 const fieldStore = useFieldStore()
@@ -143,7 +145,7 @@ const loadProject = async () => {
 
 const loadTasks = async () => {
     try {
-        await taskStore.refreshProject(projectId.value)
+        await Promise.all([taskStore.refreshProject(projectId.value), milestoneStore.refreshProject(projectId.value)])
     } catch (error) {
         ElMessage.error(error.message || '任务加载失败')
     }

@@ -4,7 +4,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import {
     Folder, Tickets, Operation, Document, User,
-    MessageBox, Odometer, FolderOpened, Share, Grid, Guide
+    MessageBox, Odometer, FolderOpened, Share, Grid, Guide, Flag
 } from '@element-plus/icons-vue'
 
 import { useSystemStore } from '@/stores/system'
@@ -16,7 +16,7 @@ const isCollapse = computed(() => systemStore.isCollapse)
 // 详情页（/project/board/:id、/project/archive/:id）激活时，高亮所属的二级菜单
 const activeMenu = computed(() => {
     const parts = route.path.split('/').filter(Boolean)
-    if ((parts[0] === 'project' || parts[0] === 'task') && parts.length >= 2) {
+    if (['project', 'task', 'milestone'].includes(parts[0]) && parts.length >= 2) {
         return `/${parts[0]}/${parts[1]}`
     }
     return route.path
@@ -37,11 +37,19 @@ const menus = [
     },
     {
         path: '/task',
-        title: '任务规划',
+        title: '任务管理',
         icon: Tickets,
         children: [
             { path: '/task/board', title: '任务看板', icon: Grid },
             { path: '/task/flow', title: '任务流程', icon: Guide },
+        ],
+    },
+    {
+        path: '/milestone',
+        title: '里程碑管理',
+        icon: Flag,
+        children: [
+            { path: '/milestone/board', title: '里程碑看板', icon: Odometer },
         ],
     },
     { path: '/mine', title: '我的任务', icon: MessageBox },

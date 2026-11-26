@@ -2,6 +2,7 @@ import { PROJECT_STATUS } from '@/constants/status'
 import { nowISO } from '@/utils/date'
 import { uid } from '@/utils/id'
 import { domainServices } from './services.js'
+import { deriveProjectStage as deriveWithMilestones } from './milestone.js'
 
 // 阶段只进不退：用序号比较，避免任何任务变化把项目状态拉回去
 const STAGE_ORDER = {
@@ -17,25 +18,25 @@ const STAGE_ORDER = {
  * 无任务 → 立项；全待办 → 规划；有进行中 → 执行；
  * 无待办/进行中且至少一个待验收 → 验收；全部已验收 → 收尾。
  */
-export const deriveProjectStage = (tasks) => {
+export const deriveProjectStage = (tasks, milestones) => {
+  if (Array.isArray(milestones) && milestones.length) {
+    return deriveWithMilestones(tasks, milestones)
+  }
   const active = (tasks || []).filter((t) => !t.deletedAt && t.status !== 'canceled')
   if (!active.length) return PROJECT_STATUS.DRAFT
   if (active.every((t) => t.status === 'accepted')) return PROJECT_STATUS.ITERATING
-
   const hasTodo = active.some((t) => t.status === 'todo')
   const hasDoing = active.some((t) => t.status === 'doing')
   const hasDone = active.some((t) => t.status === 'done')
-
   if (!hasTodo && !hasDoing && hasDone) return PROJECT_STATUS.ACCEPTING
   if (hasDoing) return PROJECT_STATUS.ACTIVE
   return PROJECT_STATUS.PLANNING
 }
-
 // 只在推导阶段更高时推进，并留一条项目级事件。
 // 显式传 tasks 时完全纯函数：不写库、不记事件、不写日志。
-const applyDerived = (project, tasks) => {
+const applyDerived = (project, tasks, milestones) => {
   if (!project || project.status === PROJECT_STATUS.ARCHIVED) return false
-  const derived = deriveProjectStage(tasks)
+  const derived = deriveProjectStage(tasks, milestones)
   const currentRank = STAGE_ORDER[project.status] ?? -1
   const derivedRank = STAGE_ORDER[derived] ?? 0
   if (derivedRank <= currentRank) return false
@@ -65,7 +66,7 @@ export const syncProjectStatus = (projectId) => {
   const { db, save } = domainServices()
   const project = db.projects.find((p) => p.id === projectId)
   if (!project) return null
-  if (applyDerived(project)) save()
+  if (applyDerived(project, null, db.milestones?.filter((m) => m.projectId === projectId))) save()
   return project
 }
 
@@ -74,7 +75,7 @@ export const normalizeProjectStatuses = (projects) => {
   const { db, save } = domainServices()
   let changed = false
   for (const project of projects || []) {
-    if (applyDerived(project, db.tasks.filter((t) => t.projectId === project.id))) changed = true
+    if (applyDerived(project, db.tasks.filter((t) => t.projectId === project.id), db.milestones?.filter((m) => m.projectId === project.id))) changed = true
   }
   if (changed) save()
 }

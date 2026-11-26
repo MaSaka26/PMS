@@ -61,6 +61,11 @@ Mock.mock('/api/tasks', 'post', (options) => {
   const id = uid('task')
   const depError = validateDependencies(id, project.id, body.dependsOn || [])
   if (depError) return fail(400, depError)
+  // 方案 A：任务可挂到同项目里程碑下；旧数据 milestoneId 缺省为空
+  if (body.milestoneId) {
+    const ms = (db.milestones || []).find((m) => m.id === body.milestoneId && !m.deletedAt)
+    if (!ms || ms.projectId !== project.id) return fail(400, '里程碑不存在或不属于该项目')
+  }
 
   // 待办 = 无人负责；一旦指派负责人，直接视为开工
   let status = body.status || (body.assignee ? 'doing' : 'todo')
@@ -81,6 +86,7 @@ Mock.mock('/api/tasks', 'post', (options) => {
     createdAt,
     plannedStart,
     dependsOn: [...new Set((body.dependsOn || []).filter(Boolean))],
+    milestoneId: body.milestoneId || '',
     createdBy: body.createdBy || user?.id || '',
     blocked: false,
     blockedReason: '',

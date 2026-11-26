@@ -5,8 +5,9 @@ import { useMemberStore } from '@/stores/memberStore'
 import { useFieldStore } from '@/stores/fieldStore'
 import { TASK_STATUS_LABEL } from '@/constants/status'
 import { getEventMeta } from '@/constants/event'
-import { Calendar, Clock, Link, User, WarningFilled } from '@element-plus/icons-vue'
+import { Calendar, Clock, Link, User, WarningFilled, Flag } from '@element-plus/icons-vue'
 import DueBadge from '@/components/DueBadge.vue'
+import { useMilestoneStore } from '@/stores/milestoneStore'
 
 const props = defineProps({
     modelValue: { type: Boolean, default: false },
@@ -22,6 +23,7 @@ const visible = computed({
 const taskStore = useTaskStore()
 const memberStore = useMemberStore()
 const fieldStore = useFieldStore()
+const milestoneStore = useMilestoneStore()
 
 const loading = ref(false)
 const tab = ref('detail')
@@ -217,6 +219,10 @@ watch(
                                     <DueBadge v-if="detail.dueDate" :due-date="detail.dueDate"
                                         :status="detail.status" />
                                 </span>
+                            </div>
+                            <div v-if="detail.milestoneId" class="info-item">
+                                <span class="label"><el-icon><Flag /></el-icon>所属里程碑</span>
+                                <span class="value">{{ milestoneStore.nameOf(detail.milestoneId) }}</span>
                             </div>
                             <div v-if="depList.length" class="info-item deps-item">
                                 <span class="label"><el-icon><Link /></el-icon>前置任务</span>

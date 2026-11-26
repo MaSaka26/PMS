@@ -6,6 +6,7 @@ import { useFieldStore } from '@/stores/fieldStore'
 import { useMemberStore } from '@/stores/memberStore'
 import { useProjectStore } from '@/stores/projectStore'
 import { useTaskStore } from '@/stores/taskStore'
+import { useMilestoneStore } from '@/stores/milestoneStore'
 import { useUserStore } from '@/stores/userStore'
 import { canDeleteTask, canEditTask, canReviewTask, isAdmin, isProjectMember } from '@/utils/permissions'
 import { PROJECT_STATUS_LABEL } from '@/constants/status'
@@ -28,6 +29,7 @@ const COLUMN_DEFS = [
 const memberStore = useMemberStore()
 const projectStore = useProjectStore()
 const taskStore = useTaskStore()
+const milestoneStore = useMilestoneStore()
 const userStore = useUserStore()
 const fieldStore = useFieldStore()
 const route = useRoute()
@@ -37,6 +39,7 @@ const currentProjectId = ref('')
 
 const currentProject = computed(() => projectStore.getById(currentProjectId.value))
 const currentTasks = computed(() => taskStore.taskMap?.[currentProjectId.value] || [])
+const projectMilestones = computed(() => milestoneStore.ofProject(currentProjectId.value))
 
 // 项目内的成员（用于"指派"下拉过滤）
 const membersOfCurrentProject = computed(() => {
@@ -243,7 +246,8 @@ onMounted(async () => {
             memberStore.initMembers().catch(() => {}),
             fieldStore.initFields().catch(() => {}),
             fetchProjects(),
-            taskStore.initAll()
+            taskStore.initAll(),
+            milestoneStore.milestoneList()
         ])
         // 从「我的任务」带 taskId 进来：等看板渲染完再定位
         await locateTask(String(route.query.taskId || ''))
@@ -319,7 +323,7 @@ watch(() => route.query.taskId, (id) => {
 
         <!-- 新建/编辑弹窗 -->
         <TaskFormDialog v-model="dialogVisible" :task="editingTask" :members="membersOfCurrentProject"
-            :tasks="currentTasks" @submit="submitForm" />
+            :tasks="currentTasks" :milestones="projectMilestones" @submit="submitForm" />
     </div>
 </template>
 

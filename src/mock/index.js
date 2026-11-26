@@ -2,6 +2,7 @@ import Mock from 'mockjs'
 
 // 各业务模块的 mock 在这里注册，main.js 只需要 import './mock'
 import './api/member'
+import './api/milestone'
 import './api/field'
 import './api/project'
 import './api/task'

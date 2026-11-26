@@ -1,16 +1,17 @@
 import { seedProjects } from './projects.js'
-import { seedTasks } from './tasks.js'
+import { seedMilestones, seedTasks } from './tasks.js'
 import { members, users } from './members.js'
 
-// 版本 15：补齐项目经理的待办与待验收事务（此前 u2 名下 0 条任务，「我的任务」对他永远是空页）；
-// 同时解决 ex-分支 feat/schedule-validator 也用了 14 导致旧数据不会重置的撞号问题
-export const SEED_VERSION = 15
+// 版本 16：方案 A —— 里程碑从任务表拆成独立 milestones 实体；每条提交的信息保留在里程碑上，
+// 子任务通过 milestoneId 关联；任务表只保留真正的执行项（原 6 条里程碑任务移出）。
+export const SEED_VERSION = 16
 
 // 比对键：只有「种子内容」参与，不含 seedVersion 本身。
 // 用户自己改的数据（新建任务、改状态）不在这里，所以不会因为用户操作触发重置。
 const SIGNATURE_PAYLOAD = {
     projects: seedProjects,
     tasks: seedTasks,
+    milestones: seedMilestones,
     members,
     users,
 }
@@ -43,6 +44,7 @@ export const defaultData = {
     seedSignature: SEED_SIGNATURE,
     projects: seedProjects,
     tasks: seedTasks,
+    milestones: seedMilestones,
     fields: [],
     templates: [],
     members,

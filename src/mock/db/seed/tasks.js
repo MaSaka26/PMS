@@ -12,135 +12,16 @@ const mkEvent = (taskId, projectId, type, by, at, extra = {}) => ({
     ...extra,
 })
 
-// 里程碑任务：把 git 提交按「交付物 + 依赖关系」归并而成。
-// 一条提交是实际发生过的事实，但粒度太细——24 条里有 18 条是同一批交付的补丁，
-// 直接当任务会让看板失去阶段感，也表达不了任务之间的先后约束。
-// 归并判据：去掉这一步，后面哪一步会做不了。有答案的留下，没有答案的并入相邻里程碑。
-const gitTaskId = (code) => `task_git_${code}`
-
-const milestone = ({ code, title, desc, start, due, dependsOn = [], priority = '中' }) => {
-    const id = gitTaskId(code)
-    return {
-        id,
-        projectId: GIT_PROJECT_ID,
-        title,
-        desc,
-        assignee: GIT_AUTHOR_ID,
-        priority,
-        status: 'accepted',
-        dueDate: due,
-        createdAt: start,
-        createdBy: GIT_PM_ID,
-        plannedStart: start,
-        dependsOn,
-        blocked: false,
-        blockedReason: '',
-        blockedAt: null,
-        blockedBy: null,
-        deletedAt: null,
-        extra: {},
-        events: [
-            mkEvent(id, GIT_PROJECT_ID, 'created', GIT_PM_ID, `${start}T01:00:00.000Z`, { to: 'todo' }),
-            mkEvent(id, GIT_PROJECT_ID, 'assigned', GIT_PM_ID, `${start}T01:10:00.000Z`, {
-                from: 'todo',
-                to: 'doing',
-                changes: [{ field: 'assignee', from: '', to: GIT_AUTHOR_ID }],
-            }),
-            mkEvent(id, GIT_PROJECT_ID, 'submitted', GIT_AUTHOR_ID, `${due}T09:00:00.000Z`, {
-                from: 'doing',
-                to: 'done',
-            }),
-            mkEvent(id, GIT_PROJECT_ID, 'accepted', GIT_PM_ID, `${due}T10:00:00.000Z`, {
-                from: 'done',
-                to: 'accepted',
-            }),
-        ],
-    }
-}
-
-// 依赖只画真实存在的约束：M2/M3 都接在 M1 后面并行推进，
-// 把它们连成 M0→M1→M2→M3 会凭空造出一条并不存在的关键路径。
-const gitTasks = [
-    milestone({
-        code: 'm0',
-        title: 'M0 项目骨架',
-        desc: [
-            '交付：仓库初始化、包管理与脚手架配置',
-            '判据：本地能启动一个空壳应用',
-            '提交：6aff5d9 initial commit',
-        ].join('\n'),
-        start: '2026-11-18',
-        due: '2026-11-18',
-    }),
-    milestone({
-        code: 'm1',
-        title: 'M1 MVP 可运行',
-        desc: [
-            '交付：Mock 数据层 + 权限 + 状态管理 + 项目/任务/成员/字段/模板五大页面 + 单测与 CI',
-            '判据：四泳道看板能走完 认领→提交→验收，npm test 与 npm run build 均通过',
-            '提交：e0b41fe 完善项目配置与应用入口 / 2e977ff 搭建 Mock 数据层、权限与状态管理 /',
-            '      6357501 实现项目、任务、成员、字段与模板页面 / 55dd072 补充单元测试、CI 与项目文档',
-        ].join('\n'),
-        start: '2026-11-20',
-        due: '2026-11-20',
-        dependsOn: [gitTaskId('m0')],
-        priority: '高',
-    }),
-    milestone({
-        code: 'm2',
-        title: 'M2 GitHub Pages 上线',
-        desc: [
-            '交付：动态 base、Hash 路由、部署工作流与本地验证说明',
-            '判据：推送到 master 后线上地址可直接打开登录页',
-            '提交：ac27d66 适配 GitHub Pages 部署 / 968bc64 补充 Pages 本地验证方式与部署分支说明',
-        ].join('\n'),
-        start: '2026-11-20',
-        due: '2026-11-20',
-        dependsOn: [gitTaskId('m1')],
-        priority: '高',
-    }),
-    milestone({
-        code: 'm3',
-        title: 'M3 自举演示数据',
-        desc: [
-            '交付：Agent 成员、PMS 自举演示项目，开发记录改为由 git log 生成，并补充真实待办与已取消任务',
-            '判据：打开本项目详情就能看到构成它自己的那些任务',
-            '提交：e6f1c0c 新增 Agent 成员与自举种子 / ede9e2e 开发记录改为由 git log 生成 /',
-            '      67c017f 开发记录补充真实待办与已取消任务',
-        ].join('\n'),
-        start: '2026-11-21',
-        due: '2026-11-21',
-        dependsOn: [gitTaskId('m1')],
-    }),
-    milestone({
-        code: 'm4',
-        title: 'M4 组件化重构',
-        desc: [
-            '交付：项目详情、任务看板、任务流程页拆分为区块组件，模板草稿抽到 composables，mock 按 api/services/rules/db 分层',
-            '判据：页面行为不变，单文件不再同时承担数据、交互与视图',
-            '提交：2e663ae 看板列内滚动 / cdb8a85 详情页支持编辑 / a326b28 详情页拆分 Detail* /',
-            '      0d443c3 流程页拆分并抽离文案 / 6803060 看板拆分并抽离操作逻辑 /',
-            '      3746b21 buildTemplateDraft 移至 composables / 79d5beb mock 分层',
-        ].join('\n'),
-        start: '2026-11-21',
-        due: '2026-11-21',
-        dependsOn: [gitTaskId('m1')],
-    }),
-    milestone({
-        code: 'm5',
-        title: 'M5 交互与视觉打磨',
-        desc: [
-            '交付：置顶泳道与泳道内排序、卡片 2×3 操作区、流程页与状态配色、优先级标签与逾期徽标、归档页与目录图标',
-            '判据：不点进详情也能从卡片看出优先级、逾期与归属',
-            '提交：0747a23 成员删除与多标签修复 / 7e8adf0 置顶泳道与排序 / 73ba9ba 泳道标题与卡片尺寸 /',
-            '      eb40260 卡片操作 2×3 / 8731350 归档 UI 与图标 / cdb5676 流程页与状态配色 /',
-            '      5787102 优先级标签与逾期徽标',
-        ].join('\n'),
-        start: '2026-11-21',
-        due: '2026-11-21',
-        dependsOn: [gitTaskId('m4')],
-        priority: '高',
-    }),
+// 方案 A：里程碑是独立实体。把 6 条原「里程碑任务」从任务表迁到 milestones 表，
+// 任务表只保留真正的执行项；子任务通过 milestoneId 指向所属里程碑。
+// commitHash / 交付 / 判据都从原 desc 平移，信息不丢。
+export const seedMilestones = [
+    { id: 'ms_m0', projectId: GIT_PROJECT_ID, code: 'M0', title: 'M0 项目骨架', desc: '交付：仓库初始化、包管理与脚手架配置\n判据：本地能启动一个空壳应用', status: 'accepted', owner: GIT_AUTHOR_ID, startDate: '2026-11-18', dueDate: '2026-11-18', commitment: { dueDate: '2026-11-18', confirmedAt: '2026-11-18T10:00:00.000Z' }, commitHashes: ['6aff5d9'] },
+    { id: 'ms_m1', projectId: GIT_PROJECT_ID, code: 'M1', title: 'M1 MVP 可运行', desc: '交付：Mock 数据层 + 权限 + 状态管理 + 项目/任务/成员/字段/模板五大页面 + 单测与 CI\n判据：四泳道看板能走完 认领→提交→验收，npm test 与 npm run build 均通过', status: 'accepted', owner: GIT_AUTHOR_ID, startDate: '2026-11-20', dueDate: '2026-11-20', commitment: { dueDate: '2026-11-20', confirmedAt: '2026-11-20T10:00:00.000Z' }, commitHashes: ['e0b41fe', '2e977ff', '6357501', '55dd072'] },
+    { id: 'ms_m2', projectId: GIT_PROJECT_ID, code: 'M2', title: 'M2 GitHub Pages 上线', desc: '交付：GitHub Pages 部署配置与本地验证文档\n判据：线上地址可访问', status: 'accepted', owner: GIT_AUTHOR_ID, startDate: '2026-11-20', dueDate: '2026-11-20', commitment: { dueDate: '2026-11-20', confirmedAt: '2026-11-20T10:00:00.000Z' }, commitHashes: ['ac27d66', '968bc64'] },
+    { id: 'ms_m3', projectId: GIT_PROJECT_ID, code: 'M3', title: 'M3 自举演示数据', desc: '交付：Agent 成员、git log 生成开发记录、真实待办与已取消事项\n判据：开发记录可按提交追溯', status: 'accepted', owner: GIT_AUTHOR_ID, startDate: '2026-11-21', dueDate: '2026-11-21', commitment: { dueDate: '2026-11-21', confirmedAt: '2026-11-21T10:00:00.000Z' }, commitHashes: ['e6f1c0c', 'ede9e2e', '67c017f'] },
+    { id: 'ms_m4', projectId: GIT_PROJECT_ID, code: 'M4', title: 'M4 组件化重构', desc: '交付：项目详情/任务看板/模板 Draft 拆分，mock 分层\n判据：页面行为不变', status: 'accepted', owner: GIT_AUTHOR_ID, startDate: '2026-11-21', dueDate: '2026-11-21', commitment: { dueDate: '2026-11-21', confirmedAt: '2026-11-21T10:00:00.000Z' }, commitHashes: ['2e663ae', 'cdb8a85', 'a326b28', '0d443c3', '6803060', '3746b21', '79d5beb'] },
+    { id: 'ms_m5', projectId: GIT_PROJECT_ID, code: 'M5', title: 'M5 交互与视觉打磨', desc: '交付：置顶泳道、卡片 2×3 操作区、流程页与状态配色、优先级标签与逾期徽标\n判据：不点进详情也能看出优先级、逾期与归属', status: 'accepted', owner: GIT_AUTHOR_ID, startDate: '2026-11-21', dueDate: '2026-11-21', commitment: { dueDate: '2026-11-21', confirmedAt: '2026-11-21T10:00:00.000Z' }, commitHashes: ['0747a23', '7e8adf0', '73ba9ba', 'eb40260', '8731350', 'cdb5676', '5787102'] },
 ]
 
 // 手工补充的真实事项：未落地的工作不会出现在 git 里，只能按对话记录补
@@ -157,8 +38,8 @@ const backlogTasks = [
         createdAt: '2026-11-21',
         createdBy: 'u2',
         plannedStart: '2026-11-24',
-        // 组件拆完（M4）才知道按哪条路由切包，所以排在重构之后
-        dependsOn: [gitTaskId('m4')],
+        // 组件拆完（M4）才知道按哪条路由切包，所以挂在 M4 下
+        milestoneId: 'ms_m4',
         blocked: false,
         blockedReason: '',
         blockedAt: null,
@@ -184,7 +65,7 @@ const backlogTasks = [
         createdBy: 'u2',
         plannedStart: '2026-11-25',
         // 依赖已经落地的部署工作流（M2），改的是那条流水线
-        dependsOn: [gitTaskId('m2')],
+        milestoneId: 'ms_m2',
         blocked: false,
         blockedReason: '',
         blockedAt: null,
@@ -582,6 +463,5 @@ export const seedTasks = [
             }),
         ],
     },
-    ...gitTasks,
     ...backlogTasks,
 ]

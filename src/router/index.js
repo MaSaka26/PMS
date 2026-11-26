@@ -77,11 +77,11 @@ const router = createRouter({
           ],
         },
         {
-          // 任务规划：下拉包含「任务看板」和「任务流程」
+          // 任务管理：下拉包含「任务看板」和「任务流程」
           path: "task",
           name: "TaskPlanning",
           redirect: "/task/board",
-          meta: { title: "任务规划" },
+          meta: { title: "任务管理" },
           children: [
             {
               path: "board",
@@ -99,6 +99,21 @@ const router = createRouter({
               name: "TaskFlow",
               component: () => import("@/views/task/flow.vue"),
               meta: { title: "任务流程" },
+            },
+          ],
+        },
+        {
+          // 里程碑管理：独立一级菜单，二级为里程碑看板
+          path: "milestone",
+          name: "MilestoneManagement",
+          redirect: "/milestone/board",
+          meta: { title: "里程碑管理" },
+          children: [
+            {
+              path: "board",
+              name: "MilestoneBoard",
+              component: () => import("@/views/milestone/index.vue"),
+              meta: { title: "里程碑看板" },
             },
           ],
         },

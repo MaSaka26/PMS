@@ -44,6 +44,11 @@ function load() {
             persist(fresh)
             return fresh
         }
+        // 老数据没有 milestones 字段：补一份种子（方案 A 新增实体）
+        if (!Array.isArray(data.milestones)) {
+            data.milestones = clone(defaultData.milestones)
+            persist(data)
+        }
         // tasks 为空（用户删光了所有种子任务），也重新 seed 一份
         if (!Array.isArray(data.tasks) || data.tasks.length === 0) {
             data.tasks = clone(defaultData.tasks)
