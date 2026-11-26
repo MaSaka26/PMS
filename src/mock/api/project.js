@@ -1,6 +1,7 @@
 import Mock from 'mockjs'
 import { db, save } from '../db/index.js'
-import { normalizeProjectStatuses, syncProjectStatus } from '../rules/projectStatus.js'
+import { isAdmin, canCreateProject, canManageProject, canViewProject } from '@/utils/permissions'
+import { normalizeProjectStatuses, syncProjectStatus } from '@/domain/project-status.js'
 import { PROJECT_STATUS } from '@/constants/status'
 import { nowISO } from '../utils/date.js'
 import { idBeforeTail, uid } from '../utils/id.js'
@@ -8,9 +9,6 @@ import { paginate } from '../utils/pagination.js'
 import { fail, ok } from '../utils/response.js'
 
 import { getCurrentUser } from '../services/auth.js'
-
-const isAdmin = (user) => user?.role === 'admin'
-const isPM = (user, project) => !!user && project?.PM === user.id
 
 // 项目计划周期校验
 const validateProjectDates = (startDate, endDate) =>
@@ -68,7 +66,7 @@ Mock.mock(/\/api\/projects(\?.*)?$/, 'get', (options) => {
 Mock.mock('/api/projects', 'post', (options) => {
   const body = JSON.parse(options.body)
   const user = getCurrentUser()
-  if (!user || !['admin', 'pm'].includes(user.role)) {
+  if (!canCreateProject(user)) {
     return fail(403, '只有管理员或项目经理可以创建项目')
   }
   if (!body.PM) return fail(400, '请选择项目负责人')
@@ -105,7 +103,7 @@ Mock.mock(/\/api\/projects\/[\w-]+\/pin$/, 'put', (options) => {
   const project = db.projects.find((p) => p.id === id)
   if (!project) return fail(404, '项目不存在')
   const user = getCurrentUser()
-  if (!(isAdmin(user) || isPM(user, project))) {
+  if (!canManageProject(user, project)) {
     return fail(403, '只有项目负责人或管理员可以置顶项目')
   }
   project.pinned = !!body.pinned
@@ -120,7 +118,7 @@ Mock.mock(/\/api\/projects\/[\w-]+\/move$/, 'put', (options) => {
   const project = db.projects.find((p) => p.id === id)
   if (!project) return fail(404, '项目不存在')
   const user = getCurrentUser()
-  if (!(isAdmin(user) || isPM(user, project))) {
+  if (!canManageProject(user, project)) {
     return fail(403, '只有项目负责人或管理员可以调整项目顺序')
   }
   const lane = db.projects.filter((p) => !!p.pinned === !!project.pinned)
@@ -142,7 +140,7 @@ Mock.mock(/\/api\/projects\/\w+$/, 'put', (options) => {
   if (index === -1) return fail(404, '项目不存在')
   const current = db.projects[index]
   const user = getCurrentUser()
-  if (!(isAdmin(user) || isPM(user, current))) {
+  if (!canManageProject(user, current)) {
     return fail(403, '只有项目负责人或管理员可以编辑项目')
   }
   if (!isAdmin(user) && body.PM !== undefined && body.PM !== current.PM) {
@@ -197,7 +195,7 @@ Mock.mock(/\/api\/projects\/\w+$/, 'delete', (options) => {
   const project = db.projects.find((p) => p.id === id)
   if (!project) return fail(404, '项目不存在')
   const user = getCurrentUser()
-  if (!(isAdmin(user) || isPM(user, project))) {
+  if (!canManageProject(user, project)) {
     return fail(403, '只有项目负责人或管理员可以删除项目')
   }
   db.projects = db.projects.filter((p) => p.id !== id)
@@ -216,7 +214,7 @@ Mock.mock(/\/api\/projects\/\w+\/close$/, 'post', (options) => {
   const project = db.projects.find((p) => p.id === id)
   if (!project) return fail(404, '项目不存在')
   const user = getCurrentUser()
-  if (!(isAdmin(user) || isPM(user, project))) {
+  if (!canManageProject(user, project)) {
     return fail(403, '只有项目负责人或管理员可以关闭项目')
   }
   if (project.status === PROJECT_STATUS.ARCHIVED) return fail(400, '项目已归档')
@@ -235,7 +233,7 @@ Mock.mock(/\/api\/projects\/\w+\/reopen$/, 'post', (options) => {
   const project = db.projects.find((p) => p.id === id)
   if (!project) return fail(404, '项目不存在')
   const user = getCurrentUser()
-  if (!(isAdmin(user) || isPM(user, project))) {
+  if (!canManageProject(user, project)) {
     return fail(403, '只有项目负责人或管理员可以撤销归档')
   }
   if (project.status !== PROJECT_STATUS.ARCHIVED) return fail(400, '项目未归档')
@@ -256,7 +254,7 @@ Mock.mock(/\/api\/projects\/[\w-]+$/, 'get', (options) => {
   const project = db.projects.find((p) => p.id === id)
   if (!project) return fail(404, '项目不存在')
   const user = getCurrentUser()
-  const allowed = isAdmin(user) || isPM(user, project) || (project.members || []).includes(user?.id)
+  const allowed = canViewProject(user, project)
   if (!allowed) return fail(403, '你不是该项目成员，无权查看')
   syncProjectStatus(project.id)
   return ok(project)
@@ -270,7 +268,7 @@ Mock.mock(/\/api\/projects\/\w+\/activities(\?.*)?$/, 'get', (options) => {
   const project = db.projects.find((p) => p.id === id)
   if (!project) return fail(404, '项目不存在')
   const user = getCurrentUser()
-  const allowed = isAdmin(user) || isPM(user, project) || (project.members || []).includes(user?.id)
+  const allowed = canViewProject(user, project)
   if (!allowed) return fail(403, '你不是该项目成员，无权查看')
 
   const page = Number(url.searchParams.get('page')) || 1

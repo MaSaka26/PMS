@@ -1,5 +1,6 @@
 import Mock from 'mockjs'
 import { db, save } from '../db/index.js'
+import { canManageFields } from '@/utils/permissions'
 import { uid } from '../utils/id.js'
 import { fail, ok } from '../utils/response.js'
 
@@ -10,7 +11,7 @@ import { getCurrentUser } from '../services/auth.js'
 
 const requireAdmin = () => {
   const user = getCurrentUser()
-  if (!user || user.role !== 'admin') {
+  if (!canManageFields(user)) {
     return { code: 403, data: null, msg: '只有管理员可以修改字段配置' }
   }
   return null

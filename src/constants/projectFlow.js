@@ -1,6 +1,6 @@
 import { FolderOpened, Lock, RefreshRight, Sort } from '@element-plus/icons-vue'
 
-// 项目阶段：与 mock/rules/projectStatus.js 的推导规则一一对应
+// 项目阶段：与 domain/project-status.js 的推导规则一一对应
 export const PROJECT_STAGES = [
     {
         key: 'draft',

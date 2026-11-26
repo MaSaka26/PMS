@@ -1,4 +1,23 @@
 import { defaultData, shouldResetSeed } from './seed/index.js'
+import { ElMessage } from 'element-plus'
+
+// 写盘失败不能静默：localStorage 满 / 隐私模式禁用 / 配额超限都会抛异常。
+// 以前 26 处 save() 无处 catch，用户点了「保存」看到成功提示但刷新后全丢。
+let storageFailed = false
+const persist = (data) => {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+        storageFailed = false
+        return true
+    } catch (error) {
+        if (!storageFailed) {
+            storageFailed = true
+            ElMessage.error('本地数据保存失败，请检查浏览器存储权限或空间（本次改动可能不会保留）')
+        }
+        console.error('[mock] localStorage 写入失败', error)
+        return false
+    }
+}
 
 const STORAGE_KEY = 'pm_mock_db'
 
@@ -21,13 +40,13 @@ function load() {
         // 判定逻辑在 seed/index.js 的 shouldResetSeed()，那边有单测覆盖。
         if (shouldResetSeed(data)) {
             const fresh = clone(defaultData)
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh))
+            persist(fresh)
             return fresh
         }
         // tasks 为空（用户删光了所有种子任务），也重新 seed 一份
         if (!Array.isArray(data.tasks) || data.tasks.length === 0) {
             data.tasks = clone(defaultData.tasks)
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+            persist(data)
         }
         // 规则修正：待办 = 无人负责。历史遗留的“待办 + 负责人”自动视为已开工
         let normalized = false
@@ -50,7 +69,7 @@ function load() {
                 normalized = true
             }
         }
-        if (normalized) localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+        if (normalized) persist(data)
         return data
     } catch {
         return clone(defaultData)
@@ -60,7 +79,7 @@ function load() {
 export const db = load()
 
 export function save() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(db))
+    persist(db)
 }
 
 // 跨标签页同步：其他标签页写入后，本页内存里的整份快照已经过期。

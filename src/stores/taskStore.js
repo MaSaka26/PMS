@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { createIdempotentLoader } from '@/utils/async'
 import {
     getTasksByProject,
     getAllTasks,
@@ -20,8 +21,6 @@ export const useTaskStore = defineStore('task', () => {
     const taskMap = ref({}) // { projectId: [task, task, ...] }
     // 任务详情（含事件日志），只在打开抽屉时拉
     const taskDetail = ref(null)
-    let initPromise = null
-
     const memberStore = useMemberStore()
 
     // 按项目取任务（普通函数；看板的 grouped computed 会直接引用 taskMap 追踪响应式）
@@ -37,21 +36,14 @@ export const useTaskStore = defineStore('task', () => {
         }
     }
 
-    const initAll = () => {
-        if (initPromise) return initPromise
-        initPromise = getAllTasks()
-            .then((list) => {
-                taskMap.value = {}
-                for (const t of list) {
-                    if (!taskMap.value[t.projectId]) taskMap.value[t.projectId] = []
-                    taskMap.value[t.projectId].push(t)
-                }
-            })
-            .finally(() => {
-                initPromise = null
-            })
-        return initPromise
-    }
+    const initAll = createIdempotentLoader(async () => {
+        const list = await getAllTasks()
+        taskMap.value = {}
+        for (const t of list) {
+            if (!taskMap.value[t.projectId]) taskMap.value[t.projectId] = []
+            taskMap.value[t.projectId].push(t)
+        }
+    })
 
     // 强制刷新某一项目的任务
     const refreshProject = async (projectId) => {

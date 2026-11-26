@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { createKeyedIdempotentLoader } from '@/utils/async'
 import {
     getProjectList,
     createProject as createProjectApi,
@@ -12,21 +13,13 @@ import {
 export const useProjectStore = defineStore('project', () => {
     const projectList = ref([])
     const total = ref(0)
-    // 按 scope 缓存 promise，避免项目和任务页重复拉
-    const initPromises = {}
-
-    // scope: 'active'（默认，未归档）| 'archived' | 'all'
-    const initProjects = async (scope = 'active') => {
-        if (initPromises[scope]) return initPromises[scope]
-        initPromises[scope] = getProjectList({ page: 1, size: 100, scope })
-            .then((res) => {
-                // request.js 已拆包，res 就是 { list, total }
-                projectList.value = res.list || []
-                total.value = res.total || 0
-            })
-            .finally(() => { delete initPromises[scope] })
-        return initPromises[scope]
-    }
+    // 按 scope 隔离：active / archived / all 各自幂等，互不覆盖
+    const initProjects = createKeyedIdempotentLoader(async (scope) => {
+        const res = await getProjectList({ page: 1, size: 100, scope })
+        // request.js 已拆包，res 就是 { list, total }
+        projectList.value = res.list || []
+        total.value = res.total || 0
+    })
 
     const refresh = (scope = 'active') => initProjects(scope)
 
@@ -63,7 +56,7 @@ export const useProjectStore = defineStore('project', () => {
 
     // 下拉选择友好的 label（只给进行中的项目，归档项目不可选）
     const projectOptions = computed(() =>
-        projectList
+        projectList.value
             .filter((p) => p.status !== 'archived')
             .map((p) => ({
                 value: p.id,

@@ -1,11 +1,9 @@
 import Mock from 'mockjs'
 import { db, save } from '../db/index.js'
-import { syncProjectStatus } from '../rules/projectStatus.js'
+import { syncProjectStatus } from '@/domain/project-status.js'
 import {
-  canReview,
   diffChanges,
   guardProject,
-  isAdmin,
   logEvent,
   pendingDepsOf,
   REVIEW_TRANSITIONS,
@@ -14,7 +12,8 @@ import {
   validateDependencies,
   validatePlanDates,
   validateTransition
-} from '../rules/taskRules.js'
+} from '@/domain/task-rules.js'
+import { isAdmin, canReviewTask } from '@/utils/permissions'
 import { getCurrentUser } from '../services/auth.js'
 import { nowISO, todayLocal } from '../utils/date.js'
 import { idBeforeTail, idOf, uid } from '../utils/id.js'
@@ -113,7 +112,7 @@ Mock.mock(/\/api\/tasks\/[\w-]+$/, 'put', (options) => {
   if (guard) return guard
 
   const user = getCurrentUser()
-  const canManage = canReview(user, project)
+  const canManage = canReviewTask(user, project)
   const isCreator = oldTask.createdBy === user?.id
   const isAssignee = oldTask.assignee === user?.id
 
@@ -197,7 +196,7 @@ Mock.mock(/\/api\/tasks\/[\w-]+$/, 'put', (options) => {
 
   // 验收 / 驳回 / 重开：仅项目负责人（PM）或 admin
   const transitionKey = `${oldTask.status}->${nextStatus}`
-  if (statusChanged && REVIEW_TRANSITIONS.has(transitionKey) && !canReview(user, project)) {
+  if (statusChanged && REVIEW_TRANSITIONS.has(transitionKey) && !canReviewTask(user, project)) {
     return fail(403, '只有项目负责人或管理员可以验收、驳回或重开任务')
   }
 
@@ -277,7 +276,7 @@ Mock.mock(/\/api\/tasks\/[\w-]+$/, 'delete', (options) => {
   const guard = guardProject(project)
   if (guard) return guard
   const user = getCurrentUser()
-  if (!canReview(user, project)) return fail(403, '只有项目负责人或管理员可以删除任务')
+  if (!canReviewTask(user, project)) return fail(403, '只有项目负责人或管理员可以删除任务')
 
   task.deletedAt = nowISO()
   logEvent(task, { type: 'deleted' })
@@ -328,7 +327,7 @@ Mock.mock(/\/api\/tasks\/[\w-]+\/block$/, 'post', (options) => {
   if (guard) return guard
 
   const user = getCurrentUser()
-  if (!(canReview(user, project) || task.assignee === user?.id)) {
+  if (!(canReviewTask(user, project) || task.assignee === user?.id)) {
     return fail(403, '只有任务负责人、项目负责人或管理员可以标记阻塞')
   }
   if (task.status === 'canceled') return fail(400, '已取消的任务不能标记阻塞')
@@ -358,7 +357,7 @@ Mock.mock(/\/api\/tasks\/[\w-]+\/unblock$/, 'post', (options) => {
   if (guard) return guard
 
   const user = getCurrentUser()
-  if (!(canReview(user, project) || task.assignee === user?.id)) {
+  if (!(canReviewTask(user, project) || task.assignee === user?.id)) {
     return fail(403, '只有任务负责人、项目负责人或管理员可以解除阻塞')
   }
   if (!task.blocked) return fail(400, '任务当前没有阻塞')
@@ -383,7 +382,7 @@ Mock.mock(/\/api\/tasks\/[\w-]+\/cancel$/, 'post', (options) => {
   if (guard) return guard
 
   const user = getCurrentUser()
-  const allowed = canReview(user, project) || task.createdBy === user?.id
+  const allowed = canReviewTask(user, project) || task.createdBy === user?.id
   if (!allowed) return fail(403, '只有项目负责人、管理员或任务创建人可以取消任务')
   if (task.status === 'accepted') return fail(400, '已验收的任务不能取消，如需返工请使用重开')
   if (task.status === 'canceled') return fail(400, '任务已取消')
@@ -413,7 +412,7 @@ Mock.mock(/\/api\/tasks\/[\w-]+\/restore$/, 'post', (options) => {
   if (guard) return guard
 
   const user = getCurrentUser()
-  if (!canReview(user, project)) return fail(403, '只有项目负责人或管理员可以恢复任务')
+  if (!canReviewTask(user, project)) return fail(403, '只有项目负责人或管理员可以恢复任务')
   if (task.status !== 'canceled') return fail(400, '只有已取消的任务可以恢复')
 
   // 待办 = 无人负责：恢复时清空负责人，回到任务池重新认领

@@ -15,6 +15,7 @@ import { useMemberStore } from '@/stores/memberStore'
 import { useTemplateStore } from '@/stores/templateStore'
 import { useUserStore } from '@/stores/userStore'
 import { PROJECT_STATUS_LABEL } from '@/constants/status'
+import { canManageProject } from '@/utils/permissions'
 import TaskDrawer from '@/views/task/components/TaskDrawer.vue'
 import TemplateFormDialog from '@/views/template/components/TemplateFormDialog.vue'
 import ProjectFormDialog from './components/ProjectFormDialog.vue'
@@ -75,11 +76,7 @@ const projectExtraRows = computed(() => {
 })
 
 const isArchived = computed(() => project.value?.status === 'archived')
-const canManage = computed(() => {
-    const user = userStore.userInfo
-    if (!user || !project.value) return false
-    return user.role === 'admin' || project.value.PM === user.id
-})
+const canManage = computed(() => canManageProject(userStore.userInfo, project.value))
 
 const memberName = (id) => memberStore.memberName(id)
 const initial = (id) => (memberName(id) || '?').trim().charAt(0).toUpperCase()

@@ -1,5 +1,6 @@
 import Mock from 'mockjs'
 import { db, save } from '../db/index.js'
+import { canCreateMember, canEditMember, canManageAccount, canChangeRole, canToggleMemberActive, canDeleteMember, isManager } from '@/utils/permissions'
 import { uid } from '../utils/id.js'
 import { fail, ok } from '../utils/response.js'
 
@@ -31,7 +32,7 @@ Mock.mock(/\/api\/members(\?.*)?$/, 'get', (options) => {
 // 新增：admin / pm 可以添加；pm 只能添加普通成员
 Mock.mock('/api/members', 'post', (options) => {
   const user = getCurrentUser()
-  if (!user || !['admin', 'pm'].includes(user.role)) {
+  if (!canCreateMember(user)) {
     return fail(403, '只有管理员或项目经理可以添加成员')
   }
 
@@ -40,7 +41,7 @@ Mock.mock('/api/members', 'post', (options) => {
   if (!name) return fail(400, '成员姓名不能为空')
 
   let role = ROLES.includes(body.role) ? body.role : 'member'
-  if (user.role === 'pm' && role !== 'member') {
+  if (isManager(user) && !canManageAccount(user) && role !== 'member') {
     return fail(403, '项目经理只能添加普通成员')
   }
 
@@ -48,7 +49,7 @@ Mock.mock('/api/members', 'post', (options) => {
   const username = String(body.username || '').trim()
   const password = String(body.password || '')
   if (username) {
-    if (user.role !== 'admin') {
+    if (!canManageAccount(user)) {
       return fail(403, '只有管理员可以开通登录账号')
     }
     if (password.length < 4) return fail(400, '初始密码至少 4 位')
@@ -89,17 +90,12 @@ Mock.mock(/\/api\/members\/\w+/, 'put', (options) => {
   if (index === -1) return fail(404, '成员不存在')
 
   const target = db.members[index]
-  const isSelf = user.id === target.id
-  const allowed =
-    user.role === 'admin' ||
-    (user.role === 'pm' && (isSelf || target.role === 'member')) ||
-    (user.role === 'member' && isSelf)
-  if (!allowed) return fail(403, '没有权限修改该成员')
+  if (!canEditMember(user, target)) return fail(403, '没有权限修改该成员')
 
   const body = JSON.parse(options.body)
   const roleChanged = body.role !== undefined && body.role !== target.role
   // 角色只有管理员可以改；其他人即使传了也直接拒绝
-  if (roleChanged && user.role !== 'admin') {
+  if (roleChanged && !canChangeRole(user)) {
     return fail(403, '只有管理员可以修改角色')
   }
   if (roleChanged && !ROLES.includes(body.role)) {
@@ -122,7 +118,7 @@ Mock.mock(/\/api\/members\/\w+/, 'put', (options) => {
   // 登录账号：只有管理员可以开通 / 重置密码
   const account = (db.users || []).find((u) => u.id === id)
   const wantsAccount = body.username !== undefined || body.password !== undefined
-  if (wantsAccount && user.role !== 'admin') {
+  if (wantsAccount && !canManageAccount(user)) {
     return fail(403, '只有管理员可以管理登录账号')
   }
   if (wantsAccount) {
@@ -163,7 +159,7 @@ Mock.mock(/\/api\/members\/\w+/, 'put', (options) => {
   }
 
   // 停用 / 启用只有管理员可以操作
-  if (body.active !== undefined && user.role !== 'admin') {
+  if (body.active !== undefined && !canToggleMemberActive(user)) {
     return fail(403, '只有管理员可以停用或启用成员')
   }
   const nextActive =
@@ -211,7 +207,7 @@ Mock.mock(/\/api\/members\/\w+/, 'put', (options) => {
 // 删除：只有管理员可以删除；不能删自己，也不能删最后一个管理员
 Mock.mock(/\/api\/members\/\w+/, 'delete', (options) => {
   const user = getCurrentUser()
-  if (!user || user.role !== 'admin') {
+  if (!canDeleteMember(user)) {
     return fail(403, '只有管理员可以删除成员')
   }
 

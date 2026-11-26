@@ -3,7 +3,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useMemberStore } from '@/stores/memberStore'
 import { useTaskStore } from '@/stores/taskStore'
 import { useUserStore } from '@/stores/userStore'
-import { canDeleteTask, isProjectMember } from '@/utils/permissions'
+import { canDeleteTask, isProjectMember, canOperateTask as canOperate, canCancelTask as canCancel } from '@/utils/permissions'
 
 // 待验收 / 已验收都视为前置任务已完成
 const DEP_DONE = ['done', 'accepted']
@@ -28,21 +28,9 @@ export function useTaskBoardActions({
     )
 
     // 提交验收 / 阻塞 / 解除：负责人本人、PM 或 admin
-    const canOperateTask = (task) => {
-        const user = userStore.userInfo
-        if (!user) return false
-        if (user.role === 'admin') return true
-        if (currentProject.value?.PM === user.id) return true
-        return task.assignee === user.id
-    }
+    const canOperateTask = (task) => canOperate(userStore.userInfo, currentProject.value, task)
 
-    const canCancelTask = (task) => {
-        const user = userStore.userInfo
-        if (!user) return false
-        if (user.role === 'admin') return true
-        if (currentProject.value?.PM === user.id) return true
-        return task.createdBy === user.id
-    }
+    const canCancelTask = (task) => canCancel(userStore.userInfo, currentProject.value, task)
 
     const projectTasks = () => taskStore.taskMap?.[currentProjectId.value] || []
 

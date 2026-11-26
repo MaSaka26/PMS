@@ -1,6 +1,7 @@
 import Mock from 'mockjs'
 import { db, save } from '../db/index.js'
-import { syncProjectStatus } from '../rules/projectStatus.js'
+import { canManageTemplates, isManager, canManageAccount } from '@/utils/permissions'
+import { syncProjectStatus } from '@/domain/project-status.js'
 import { PROJECT_STATUS } from '@/constants/status'
 import { nowISO } from '../utils/date.js'
 import { uid } from '../utils/id.js'
@@ -24,7 +25,7 @@ import { getCurrentUser } from '../services/auth.js'
 
 const requireManager = () => {
   const user = getCurrentUser()
-  if (!user || !['admin', 'pm'].includes(user.role)) {
+  if (!canManageTemplates(user)) {
     return { code: 403, data: null, msg: '只有管理员或项目经理可以维护模板' }
   }
   return null
@@ -192,7 +193,7 @@ Mock.mock(/\/api\/templates\/[\w-]+\/apply$/, 'post', (options) => {
   const user = getCurrentUser()
   const PM = body.PM || user?.id || ''
   if (!PM) return fail(400, '请选择项目负责人')
-  if (user.role === 'pm' && PM !== user.id) {
+  if (isManager(user) && !canManageAccount(user) && PM !== user?.id) {
     return fail(400, '项目经理使用模板创建项目时，负责人必须是本人')
   }
   const members = [...new Set([PM, ...(body.members || [])])].filter(Boolean)

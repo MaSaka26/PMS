@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { createIdempotentLoader } from '@/utils/async'
 import {
     getMemberList as fetchMemberList,
     createMember as createMemberApi,
@@ -13,30 +14,15 @@ export const useMemberStore = defineStore('member', () => {
     const userStore = useUserStore()
 
     // 幂等初始化锁：确保全局只发一次拉取请求
-    let initPromise = null
-    const isInitialized = ref(false)
-
-    const initMembers = () => {
-        if (isInitialized.value) return Promise.resolve(memberList.value)
-        if (initPromise) return initPromise
-
-        initPromise = fetchMemberList()
-            .then((list) => {
-                memberList.value = list || []
-                isInitialized.value = true
-                return memberList.value
-            })
-            .finally(() => {
-                initPromise = null
-            })
-
-        return initPromise
-    }
+    // 并发调用共享一次拉取；完成后释放，允许后续显式刷新
+    const initMembers = createIdempotentLoader(async () => {
+        memberList.value = (await fetchMemberList()) || []
+        return memberList.value
+    })
 
     // 强制全量刷新（成员管理页增删改后可调用）
     const refreshMembers = async () => {
-        memberList.value = await fetchMemberList() || []
-        isInitialized.value = true
+        memberList.value = (await fetchMemberList()) || []
         return memberList.value
     }
 
@@ -76,7 +62,6 @@ export const useMemberStore = defineStore('member', () => {
 
     return {
         memberList,
-        isInitialized,
         initMembers,
         refreshMembers,
         memberName,

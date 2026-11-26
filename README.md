@@ -135,8 +135,9 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 | 组件 | `src/views/**/components`、`src/components` | 可复用的展示与交互单元，不直接写业务接口 |
 | 状态 | `src/stores/**` | 跨页面共享的数据，如成员列表、任务缓存、字段配置 |
 | 请求 | `src/api/**` | axios 封装，页面只关心调用和结果 |
-| 模拟后端 | `src/mock/**` | 接口、业务规则、权限校验、事件日志、localStorage 持久化 |
-| 公共能力 | `src/utils/**`、`src/constants/**` | 权限、日期、状态常量等纯逻辑 |
+| 模拟后端 | `src/mock/**` | 接口注册、事件日志、localStorage 持久化；权限判定统一调 `utils/permissions.js` |
+| 业务规则 | `src/domain/**` | 项目阶段推导、任务状态机与日期依赖校验（与存储层解耦的纯逻辑） |
+| 公共能力 | `src/utils/**`、`src/constants/**` | 权限、日期、幂等加载、状态常量等纯逻辑 |
 
 理解这个项目时，可以按「页面 → 组件 → store → api → mock」的顺序追一条业务链路。
 
@@ -202,7 +203,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 | [project/components/ProjectFormDialog.vue](src/views/project/components/ProjectFormDialog.vue) | 项目表单、图标选择、计划周期、项目自定义字段 |
 | [template/components/TemplatePickerDialog.vue](src/views/template/components/TemplatePickerDialog.vue) | 从模板创建项目的选择弹窗 |
 | [mock/api/project.js](src/mock/api/project.js) | 项目增删改查、归档过滤、权限与日期校验 |
-| [mock/rules/projectStatus.js](src/mock/rules/projectStatus.js) | 读取项目时按任务规范化项目阶段 |
+| [domain/project-status.js](src/domain/project-status.js) | 读取项目时按任务规范化项目阶段 |
 
 **与其他页面的关系**：项目来源于空白创建或模板套用；项目负责人和成员来自成员管理；任务状态会反向推动项目阶段；项目关闭后进入项目归档。
 
@@ -313,7 +314,7 @@ npm run seed:git # 从 git log 生成「PMS 开发记录」种子数据
 | [task/components/AssignTaskDialog.vue](src/views/task/components/AssignTaskDialog.vue) | 显式指派弹窗：选择项目成员并确认 |
 | [task/components/TaskDrawer.vue](src/views/task/components/TaskDrawer.vue) | 任务详情、扩展字段、事件时间线 |
 | [stores/taskStore.js](src/stores/taskStore.js) | `taskMap`、任务详情、认领/阻塞/取消/恢复 |
-| [mock/api/task.js](src/mock/api/task.js)、[mock/rules/taskRules.js](src/mock/rules/taskRules.js) | 任务接口；状态机、权限校验、日期与依赖校验、事件日志、项目阶段同步 |
+| [mock/api/task.js](src/mock/api/task.js)、[domain/task-rules.js](src/domain/task-rules.js) | 任务接口；状态机、权限校验、日期与依赖校验、事件日志、项目阶段同步 |
 | [constants/status.js](src/constants/status.js) | 任务状态、项目状态、优先级常量 |
 | [utils/due.js](src/utils/due.js) | 截止日期分级计算 |
 
@@ -629,7 +630,7 @@ export const canReviewTask = (user, project) => canManageProject(user, project)
 // = 管理员，或该项目的负责人
 ```
 
-这条判断原先在三个地方各写了一遍（mock 接口的 403、任务看板的 `canReviewCurrentProject`、我的任务的分组），第三处还多了一条 `assignee !== me.id`，于是同一件事在不同页面结论不同。现在三处都调 `canReviewTask`，改一处即可。
+这条判断原先散落在四处（mock 接口的 403、任务看板的操作判定、我的任务的分组、项目详情的编辑按钮），其中「我的任务」还多了一条 `assignee !== me.id`，于是同一件事在不同页面结论不同。现在所有页面与 mock 接口都调 `utils/permissions.js` 的同一组函数，`canReviewTask` 改一处即可。
 
 **职责分离为什么只标记不拦截**：如果不允许「自己做的任务自己验收」，老板自己负责的那条任务就永远没人能验收，项目阶段推导「全部未取消任务已验收 → 项目收尾」恒为假，而阶段只进不退，项目会永久卡在「任务验收」。所以保留 `isSelfReview(user, task)` 只用于界面提示，不参与拦截。
 
@@ -658,12 +659,13 @@ PMS/
 │  ├─ components/          # 通用组件（DueBadge、DemoViewers 演示用在线头像）
 │  ├─ composables/         # 组合式函数（useDemoViewers：本地随机模拟的「正在查看」）
 │  ├─ constants/           # 状态、事件元信息
+│  ├─ domain/              # 业务规则（项目阶段、任务状态机 / 日期 / 依赖校验）
 │  ├─ layout/              # 头部、侧边栏、面包屑、整体布局
 │  ├─ mock/                # Mock.js 接口与 localStorage 数据
 │  ├─ router/              # 路由与登录守卫
 │  ├─ stores/              # Pinia stores
 │  ├─ styles/              # 全局样式
-│  ├─ utils/               # 日期与倒计时工具
+│  ├─ utils/               # 日期、权限、幂等加载、状态工具
 │  └─ views/
 │     ├─ Login/            # 登录
 │     ├─ project/          # 项目看板、详情、归档、表单弹窗
@@ -899,7 +901,7 @@ node scripts/measure-any.mjs dist.old  # 测任意目录，用来和旧产物对
 - 「我的任务」在内存里拍平全部项目的任务后前端排序筛选，与看板同样没有分页；数据量再大需要改成分页接口。
 - 种子数据变更会让浏览器里的旧数据整份重置（判定见 [数据存储与重置](#数据存储与重置)：版本号更旧、或版本号相同但内容指纹不同，都会重置），没有迁移脚本。
 - 卡片上的「正在查看」是本地随机模拟的演示效果，不是真实在线状态，也无法跨浏览器看到别人。
-- 自动化测试覆盖纯函数（权限判断、截止日期分级、登录与停用校验），页面与 Mock 流程仍以手工冒烟为主。
+- 自动化测试覆盖纯函数（权限判断、截止日期分级、登录与停用校验、种子版本与内容指纹），mock 接口写操作与页面流程仍以手工冒烟为主。
 - 生产构建的主入口 chunk 已从 1.2 MB 降到约 11 KB，但 Element Plus 仍在首屏（约 771 KB raw / 239 KB gzip），这是按需引入后剩下的真实开销，再压需要换组件库而不是继续调配置。
 
 ## 后续规划

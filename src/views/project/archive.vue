@@ -6,6 +6,7 @@ import { RefreshLeft, Search } from '@element-plus/icons-vue'
 import { getProjectList, reopenProject } from '@/api/project'
 import { useMemberStore } from '@/stores/memberStore'
 import { useUserStore } from '@/stores/userStore'
+import { canManageProject } from '@/utils/permissions'
 
 const router = useRouter()
 const route = useRoute()
@@ -24,11 +25,7 @@ const total = ref(0)
 
 const memberName = (id) => memberStore.memberName(id)
 
-const canManage = (project) => {
-    const user = userStore.userInfo
-    if (!user) return false
-    return user.role === 'admin' || project.PM === user.id
-}
+const canManage = (project) => canManageProject(userStore.userInfo, project)
 
 const formatTime = (iso) => {
     if (!iso) return '—'

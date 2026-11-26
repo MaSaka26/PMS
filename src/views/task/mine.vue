@@ -9,7 +9,7 @@ import { useMemberStore } from '@/stores/memberStore'
 import { useUserStore } from '@/stores/userStore'
 import { TASK_STATUS_LABEL, PRIORITY_ORDER } from '@/constants/status'
 import { getDueLevel } from '@/utils/due'
-import { canReviewTask } from '@/utils/permissions'
+import { canReviewTask, isAdmin as isAdminUser, canManageProject } from '@/utils/permissions'
 import DueBadge from '@/components/DueBadge.vue'
 import TaskDrawer from '@/views/task/components/TaskDrawer.vue'
 
@@ -37,7 +37,7 @@ const statusFilter = ref('all')
 const showDone = ref(true)
 
 const me = computed(() => userStore.userInfo || {})
-const isAdmin = computed(() => me.value.role === 'admin')
+const isAdmin = computed(() => isAdminUser(me.value))
 
 const projectMap = computed(() => {
     const map = new Map()
@@ -129,7 +129,7 @@ const overdueCount = computed(() => sortedTasks.value.filter(isOverdue).length)
 
 const projectTitle = (id) => projectMap.value.get(id)?.title || '未知项目'
 const memberName = (id) => memberStore.memberName(id)
-const isPMOf = (t) => projectMap.value.get(t.projectId)?.PM === me.value.id
+const isPMOf = (t) => canManageProject(me.value, projectMap.value.get(t.projectId))
 
 // admin 兜底：项目 PM 不是我，我却能看到并处理这条验收 —— 界面上要能看出来
 const isProxyReview = (t) =>

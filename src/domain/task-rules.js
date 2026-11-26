@@ -1,9 +1,8 @@
-import { db } from '../db/index.js'
-import { getCurrentUser } from '../services/auth.js'
-import { canReviewTask } from '@/utils/permissions'
-import { nowISO } from '../utils/date.js'
-import { uid } from '../utils/id.js'
-import { fail } from '../utils/response.js'
+import { db } from '@/mock/db/index.js'
+import { getCurrentUser } from '@/mock/services/auth.js'
+import { nowISO } from '@/mock/utils/date.js'
+import { uid } from '@/mock/utils/id.js'
+import { fail } from '@/mock/utils/response.js'
 
 // ——— 日期规则 ———
 // 日期区间校验：截止日期不能早于创建时间
@@ -125,10 +124,6 @@ export const guardProject = (project) => {
     return null
 }
 
-export const isAdmin = (user) => user?.role === 'admin'
-export const isPM = (user, project) => !!user && project?.PM === user.id
-// 判定统一走 utils/permissions.js 的 canReviewTask，mock 与页面不会各说各话
-export const canReview = (user, project) => canReviewTask(user, project)
 
 // ——— 字段变更留痕 ———
 // 需要对比并记录历史的字段（白名单）

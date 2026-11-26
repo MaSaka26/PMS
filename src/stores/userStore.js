@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import { login as loginApi, getInfo, getUserList } from "@/api/userAPI";
+import { login as loginApi, getInfo } from "@/api/userAPI";
 import router from "@/router";
 import { ElMessage } from "element-plus";
 
@@ -88,42 +88,13 @@ export const useUserStore = defineStore("user", () => {
     router.push("/login");
   };
 
-  // 当前用户拥有的权限标识
-  const permissions = computed(() => userInfo.value?.permissions || []);
-
-  // 权限判断：支持传入单个标识或标识数组（命中任意一个即可）
-  const hasPermission = (permission) => {
-    if (!permission || !userInfo.value) return true;
-    const list = Array.isArray(permission) ? permission : [permission];
-    return list.some((item) => permissions.value.includes(item));
-  };
-
-  // 用户列表（分页）
-  const userList = ref([]);
-  const total = ref(0);
-  const page = ref(1);
-  const pageSize = ref(10);
-  const getUserListData = async (extraParams = {}) => {
-    const res = await getUserList({ page: page.value, pageSize: pageSize.value, ...extraParams });
-    // request.js 已拆包，具体结构取决于 /api/user/list 的 mock 返回
-    userList.value = res.list || [];
-    total.value = res.total || 0;
-  };
-
   return {
     token,
     userInfo,
     isLogged,
-    permissions,
-    userList,
-    total,
-    page,
-    pageSize,
     login,
     restoreUserInfo,
     getUserInfoData,
-    hasPermission,
-    getUserListData,
     logoutUser,
   };
 });

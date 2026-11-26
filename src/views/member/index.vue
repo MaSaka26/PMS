@@ -4,6 +4,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { useMemberStore } from '@/stores/memberStore'
 import { useUserStore } from '@/stores/userStore'
+import { canCreateMember, canEditMember, canToggleMemberActive, canManageAccount } from '@/utils/permissions'
 import MemberRoleLane from './components/MemberRoleLane.vue'
 import MemberDetailDialog from './components/MemberDetailDialog.vue'
 import MemberFormDialog from './components/MemberFormDialog.vue'
@@ -26,23 +27,11 @@ const roleLabel = (role) => ROLE_LABEL[role] || role || '成员'
 
 // ——— 权限 ———
 const currentUser = computed(() => userStore.userInfo)
-const canCreate = computed(() => ['admin', 'pm'].includes(currentUser.value?.role))
-const canAssignRole = computed(() => currentUser.value?.role === 'admin')
-const canManageAccount = computed(() => currentUser.value?.role === 'admin')
-
-const canEdit = (member) => {
-    const user = currentUser.value
-    if (!user) return false
-    if (user.role === 'admin') return true
-    if (user.role === 'pm') return member.role === 'member' || member.id === user.id
-    return member.id === user.id
-}
-
-const canToggleActive = (member) => {
-    const user = currentUser.value
-    if (!user || user.role !== 'admin') return false
-    return member.id !== user.id
-}
+const canCreate = computed(() => canCreateMember(currentUser.value))
+const canAssignRole = computed(() => canManageAccount(currentUser.value))
+const canManageAccountUser = computed(() => canManageAccount(currentUser.value))
+const canEdit = (member) => canEditMember(currentUser.value, member)
+const canToggleActive = (member) => canToggleMemberActive(currentUser.value) && member.id !== currentUser.value?.id
 
 // ——— 搜索：只覆盖姓名和角色 ———
 const keyword = ref('')
@@ -225,7 +214,7 @@ onMounted(async () => {
     </div>
 
     <MemberFormDialog v-model="formVisible" :member="editingMember" :can-assign-role="canAssignRole"
-        :can-manage-account="canManageAccount" @submit="submitMember" />
+        :can-manage-account="canManageAccountUser" @submit="submitMember" />
 
     <MemberHandoverDialog v-model="handoverVisible" :member="handoverMember" @done="onHandoverDone" />
 
