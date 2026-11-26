@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Flag, WarningFilled } from '@element-plus/icons-vue'
+import { Flag, Sort, WarningFilled } from '@element-plus/icons-vue'
 import { useMilestoneStore } from '@/stores/milestoneStore'
 import { useProjectStore } from '@/stores/projectStore'
 import { useTaskStore } from '@/stores/taskStore'
@@ -26,6 +26,8 @@ const keyword = ref('')
 const statusFilter = ref('all')
 const selected = ref(null)
 const childrenVisible = ref(false)
+const axis = ref('time-x') // time-x: 横轴时间；ms-x: 横轴里程碑
+const swapped = computed(() => axis.value === 'ms-x')
 
 // 横轴是时间（列），纵轴是里程碑（行）
 const COL_W = 96
@@ -104,6 +106,29 @@ const deadlineLeft = (m) => {
   const i = dayIndex(m.commitment?.dueDate || m.dueDate)
   return i < 0 ? '-9999px' : ((i + 0.5) * COL_W) + 'px'
 }
+// 横轴里程碑时的竖向色块与承诺横线
+const spanOf = (m) => {
+  const from = dayIndex(m.startDate || m.dueDate)
+  if (from < 0) return null
+  let to = from + Math.max(1, Number(m.duration) || 1) - 1
+  const actual = dayIndex(m.dueDate)
+  if (actual > to) to = actual
+  if (to >= timeline.value.days.length) to = timeline.value.days.length - 1
+  return { from, to }
+}
+const barStyleV = (m) => {
+  const s = spanOf(m)
+  if (!s) return { display: 'none' }
+  return {
+    top: (s.from * ROW_H + 5) + 'px',
+    height: ((s.to - s.from + 1) * ROW_H - 10) + 'px',
+    background: STATUS_COLOR[m.status] || STATUS_COLOR.todo
+  }
+}
+const deadlineTop = (m) => {
+  const i = dayIndex(m.commitment?.dueDate || m.dueDate)
+  return i < 0 ? '-9999px' : ((i + 0.5) * ROW_H) + 'px'
+}
 const statusColor = (m) => STATUS_COLOR[m.status] || STATUS_COLOR.todo
 const taskCount = (m) => (taskStore.taskMap?.[m.projectId] || []).filter((t) => t.milestoneId === m.id && !t.deletedAt).length
 const doneCount = (m) => (taskStore.taskMap?.[m.projectId] || []).filter((t) => t.milestoneId === m.id && !t.deletedAt && t.status === 'accepted').length
@@ -180,9 +205,13 @@ onMounted(async () => {
     <div class="ms-head">
       <div>
         <h2>里程碑看板</h2>
-        <p>横轴是时间，纵轴是每个里程碑一条泳道；色块长度是计划工期，颜色是状态，白色竖线是承诺截止。点色块看子任务。</p>
+        <p v-if="!swapped">横轴是时间，纵轴是每个里程碑一条泳道；色块长度是计划工期，颜色是状态，白色竖线是承诺截止。点色块看子任务。</p>
+        <p v-else>横轴是每个里程碑，纵轴是时间；色块高度是计划工期，颜色是状态，横线是承诺截止。点色块看子任务。</p>
       </div>
-      <el-button v-if="canManage" type="primary" @click="createMilestone">新建里程碑</el-button>
+      <div class="ms-head-actions">
+        <el-button @click="axis = swapped ? 'time-x' : 'ms-x'"><el-icon><Sort /></el-icon>{{ swapped ? '横轴改为时间' : '横轴改为里程碑' }}</el-button>
+        <el-button v-if="canManage" type="primary" @click="createMilestone">新建里程碑</el-button>
+      </div>
     </div>
 
     <div class="ms-toolbar">
@@ -209,7 +238,7 @@ onMounted(async () => {
     </div>
 
     <div v-if="lanes.length && timeline.days.length" class="timeline-card">
-      <div class="timeline-scroll">
+      <div v-if="!swapped" class="timeline-scroll">
         <div class="timeline-grid" :style="{ gridTemplateColumns: '220px repeat(' + timeline.days.length + ', ' + COL_W + 'px)' }">
           <div class="tl-corner" style="grid-column:1;grid-row:1">里程碑 / 时间</div>
 
@@ -236,6 +265,29 @@ onMounted(async () => {
 
           <div v-if="timeline.todayIndex >= 0" class="tl-today-line"
             :style="{ gridColumn: (timeline.todayIndex + 2) + '', gridRow: '2 / span ' + lanes.length }"></div>
+        </div>
+      </div>
+      <div v-else class="timeline-scroll">
+        <div class="timeline-grid" :style="{ gridTemplateColumns: '96px repeat(' + lanes.length + ', 220px)' }">
+          <div class="tl-corner" style="grid-column:1;grid-row:1">时间 / 里程碑</div>
+          <div v-for="(m, mi) in lanes" :key="'h' + m.id" class="tl-colhead" :style="{ gridColumn: (mi + 2) + '', gridRow: '1' }" @click="openDetail(m)">
+            <div class="tl-colhead-title"><el-icon><Flag /></el-icon>{{ m.code || m.title }}</div>
+            <div class="tl-colhead-sub">{{ m.title }}</div>
+          </div>
+          <template v-for="(d, di) in timeline.days" :key="d.date">
+            <div class="tl-rowhead" :class="{ 'is-today': d.isToday }" :style="{ gridColumn: '1', gridRow: (di + 2) + '' }">{{ d.label }}<small>周{{ d.weekday }}</small></div>
+            <div v-for="m in lanes" :key="m.id + d.date" class="tl-cell" :class="{ 'is-today': d.isToday }" :style="{ gridColumn: lanes.indexOf(m) + 2 + '', gridRow: (di + 2) + '' }"></div>
+          </template>
+          <template v-for="(m, mi) in lanes" :key="'b' + m.id">
+            <div class="tl-bar-wrap-v" :style="{ gridColumn: (mi + 2) + '', gridRow: '2 / span ' + timeline.days.length }">
+              <div class="tl-bar-v" :style="barStyleV(m)" @click="openDetail(m)" :title="m.title + '（计划工期 ' + (m.duration || 1) + ' 天）'">
+                <span class="tl-bar-v-text">{{ m.title }}</span>
+                <el-tag v-if="isOverdue(m)" type="danger" size="small" class="tl-overdue">逾期</el-tag>
+              </div>
+              <div class="tl-deadline-v" :style="{ top: deadlineTop(m) }" :title="'承诺截止：' + (m.commitment?.dueDate || m.dueDate || '—')"></div>
+            </div>
+          </template>
+          <div v-if="timeline.todayIndex >= 0" class="tl-today-line-v" :style="{ gridColumn: '2 / span ' + lanes.length, gridRow: (timeline.todayIndex + 2) + '' }"></div>
         </div>
       </div>
     </div>
@@ -322,4 +374,19 @@ onMounted(async () => {
 .child-meta { font-size: 11px; color: #909399; margin-top: 2px; }
 .child-overdue { color: #f56c6c; margin-left: 6px; }
 .drawer-foot { margin-top: 16px; text-align: right; }
+.ms-head-actions { display: flex; align-items: center; gap: 8px; }
+.ms-head-actions .el-icon { margin-right: 4px; }
+.tl-colhead { position: sticky; top: 0; z-index: 5; height: 40px; padding: 0 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; background: #f7f8fa; border-bottom: 1px solid #e8eaef; border-right: 1px solid #eef0f4; cursor: pointer; }
+.tl-colhead:hover { background: #f5f9ff; }
+.tl-colhead-title { display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: #1f2430; }
+.tl-colhead-sub { max-width: 100%; font-size: 10px; color: #9ca3af; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tl-rowhead { position: sticky; left: 0; z-index: 4; height: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; border-bottom: 1px solid #f2f3f5; border-right: 1px solid #e8eaef; font-size: 11px; color: #4b5563; }
+.tl-rowhead small { font-size: 9px; color: #c0c4cc; }
+.tl-rowhead.is-today { color: #f56c6c; font-weight: 700; background: #fff8f8; }
+.tl-bar-wrap-v { position: relative; pointer-events: none; z-index: 2; }
+.tl-bar-v { position: absolute; left: 8px; width: calc(100% - 16px); border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 6px; color: #fff; font-size: 11px; font-weight: 600; cursor: pointer; pointer-events: auto; box-shadow: 0 4px 10px -4px rgba(0,0,0,.35); transition: transform .15s, box-shadow .15s; }
+.tl-bar-v:hover { transform: translateX(-1px); box-shadow: 0 8px 16px -6px rgba(0,0,0,.45); }
+.tl-bar-v-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl-deadline-v { position: absolute; left: 4px; right: 4px; height: 2px; background: #303133; opacity: .85; pointer-events: none; }
+.tl-today-line-v { border-top: 2px dashed #f56c6c; z-index: 3; pointer-events: none; }
 </style>
