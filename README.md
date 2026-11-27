@@ -160,7 +160,7 @@ npm run preview
 | `/project/flow` | 项目流程与阶段规则说明 |
 | `/task/board` | 任务看板 |
 | `/task/flow` | 任务流程与规则说明 |
-| `/milestone/board` | 里程碑看板（可切换横轴时间 / 横轴里程碑；条形长度/高度=计划工期，逾期下钻到子任务） |
+| `/milestone/board` | 里程碑看板（可切换横轴时间 / 横轴里程碑；筛选只隐藏内容不改坐标轴，逾期下钻到子任务） |
 | `/field` | 字段配置 |
 | `/template` | 项目模板 |
 | `/member` | 成员管理 |

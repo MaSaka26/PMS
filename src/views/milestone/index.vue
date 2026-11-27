@@ -48,10 +48,12 @@ const all = computed(() => {
   return list.filter((m) => !m.deletedAt)
 })
 
-const lanes = computed(() => all.value
-  .filter((m) => statusFilter.value === 'all' || m.status === statusFilter.value)
-  .filter((m) => !keyword.value.trim() || (m.title + ' ' + (m.desc || '')).toLowerCase().includes(keyword.value.toLowerCase()))
+// 坐标轴固定用全量数据：筛选只控制内容显示，不改变行数/列数/日期范围
+const lanes = computed(() => [...all.value]
   .sort((a, b) => (a.startDate || a.dueDate || '9999').localeCompare(b.startDate || b.dueDate || '9999')))
+const isMatched = (m) => (statusFilter.value === 'all' || m.status === statusFilter.value)
+  && (!keyword.value.trim() || (m.title + ' ' + (m.desc || '')).toLowerCase().includes(keyword.value.toLowerCase()))
+const matchedCount = computed(() => lanes.value.filter(isMatched).length)
 
 const dateAdd = (dateStr, days) => {
   const d = new Date(dateStr + 'T00:00:00')
@@ -64,7 +66,7 @@ const planEnd = (m) => dateAdd(m.startDate || m.dueDate, Math.max(1, Number(m.du
 
 const today = computed(() => todayLocal())
 const timeline = computed(() => {
-  const list = lanes.value
+  const list = all.value
   const dates = []
   for (const m of list) {
     if (m.startDate) dates.push(m.startDate)
@@ -226,7 +228,7 @@ onMounted(async () => {
         <el-radio-button value="done">待验收</el-radio-button>
         <el-radio-button value="accepted">已验收</el-radio-button>
       </el-radio-group>
-      <span class="ms-count">共 {{ lanes.length }} 条泳道</span>
+      <span class="ms-count">显示 {{ matchedCount }} / {{ lanes.length }} 条里程碑（筛选只隐藏内容，不改变坐标轴）</span>
     </div>
 
     <div class="timeline-legend">
@@ -237,7 +239,7 @@ onMounted(async () => {
       <span class="legend-item"><i class="today-swatch"></i>今天</span>
     </div>
 
-    <div v-if="lanes.length && timeline.days.length" class="timeline-card">
+    <div v-if="all.length && timeline.days.length" class="timeline-card">
       <div v-if="!swapped" class="timeline-scroll">
         <div class="timeline-grid" :style="{ gridTemplateColumns: '220px repeat(' + timeline.days.length + ', ' + COL_W + 'px)' }">
           <div class="tl-corner" style="grid-column:1;grid-row:1">里程碑 / 时间</div>
@@ -248,13 +250,12 @@ onMounted(async () => {
           </div>
 
           <template v-for="(m, mi) in lanes" :key="m.id">
-            <div class="tl-name" :style="{ gridColumn: '1', gridRow: (mi + 2) + '' }" @click="openDetail(m)">
+            <div class="tl-name" :class="{ 'is-filtered': !isMatched(m) }" :style="{ gridColumn: '1', gridRow: (mi + 2) + '' }" @click="openDetail(m)">
               <div class="tl-name-title"><el-icon><Flag /></el-icon>{{ m.title }}</div>
               <div class="tl-name-sub">{{ doneCount(m) }}/{{ taskCount(m) }} 子任务 · {{ ownerName(m.owner) }} · 工期 {{ m.duration || 1 }} 天</div>
             </div>
-            <div v-for="d in timeline.days" :key="m.id + d.date" class="tl-cell" :class="{ 'is-today': d.isToday }"
-              :style="{ gridColumn: timeline.days.indexOf(d) + 2 + '', gridRow: (mi + 2) + '' }"></div>
-            <div class="tl-bar-wrap" :style="{ gridColumn: '2 / span ' + timeline.days.length, gridRow: (mi + 2) + '' }">
+            <div v-for="d in timeline.days" :key="m.id + d.date" class="tl-cell" :class="{ 'is-today': d.isToday, 'is-filtered': !isMatched(m) }" :style="{ gridColumn: timeline.days.indexOf(d) + 2 + '', gridRow: (mi + 2) + '' }"></div>
+            <div class="tl-bar-wrap" :class="{ 'is-filtered': !isMatched(m) }" :style="{ gridColumn: '2 / span ' + timeline.days.length, gridRow: (mi + 2) + '' }">
               <div class="tl-bar" :style="barStyle(m)" @click="openDetail(m)" :title="m.title + '（计划工期 ' + (m.duration || 1) + ' 天）'">
                 <span class="tl-bar-text">{{ m.title }}</span>
                 <el-tag v-if="isOverdue(m)" type="danger" size="small" class="tl-overdue">逾期</el-tag>
@@ -270,16 +271,16 @@ onMounted(async () => {
       <div v-else class="timeline-scroll">
         <div class="timeline-grid" :style="{ gridTemplateColumns: '96px repeat(' + lanes.length + ', 220px)' }">
           <div class="tl-corner" style="grid-column:1;grid-row:1">时间 / 里程碑</div>
-          <div v-for="(m, mi) in lanes" :key="'h' + m.id" class="tl-colhead" :style="{ gridColumn: (mi + 2) + '', gridRow: '1' }" @click="openDetail(m)">
+          <div v-for="(m, mi) in lanes" :key="'h' + m.id" class="tl-colhead" :class="{ 'is-filtered': !isMatched(m) }" :style="{ gridColumn: (mi + 2) + '', gridRow: '1' }" @click="openDetail(m)">
             <div class="tl-colhead-title"><el-icon><Flag /></el-icon>{{ m.code || m.title }}</div>
             <div class="tl-colhead-sub">{{ m.title }}</div>
           </div>
           <template v-for="(d, di) in timeline.days" :key="d.date">
             <div class="tl-rowhead" :class="{ 'is-today': d.isToday }" :style="{ gridColumn: '1', gridRow: (di + 2) + '' }">{{ d.label }}<small>周{{ d.weekday }}</small></div>
-            <div v-for="m in lanes" :key="m.id + d.date" class="tl-cell" :class="{ 'is-today': d.isToday }" :style="{ gridColumn: lanes.indexOf(m) + 2 + '', gridRow: (di + 2) + '' }"></div>
+            <div v-for="m in lanes" :key="m.id + d.date" class="tl-cell" :class="{ 'is-today': d.isToday, 'is-filtered': !isMatched(m) }" :style="{ gridColumn: lanes.indexOf(m) + 2 + '', gridRow: (di + 2) + '' }"></div>
           </template>
           <template v-for="(m, mi) in lanes" :key="'b' + m.id">
-            <div class="tl-bar-wrap-v" :style="{ gridColumn: (mi + 2) + '', gridRow: '2 / span ' + timeline.days.length }">
+            <div class="tl-bar-wrap-v" :class="{ 'is-filtered': !isMatched(m) }" :style="{ gridColumn: (mi + 2) + '', gridRow: '2 / span ' + timeline.days.length }">
               <div class="tl-bar-v" :style="barStyleV(m)" @click="openDetail(m)" :title="m.title + '（计划工期 ' + (m.duration || 1) + ' 天）'">
                 <span class="tl-bar-v-text">{{ m.title }}</span>
                 <el-tag v-if="isOverdue(m)" type="danger" size="small" class="tl-overdue">逾期</el-tag>
@@ -389,4 +390,8 @@ onMounted(async () => {
 .tl-bar-v-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tl-deadline-v { position: absolute; left: 4px; right: 4px; height: 2px; background: #303133; opacity: .85; pointer-events: none; }
 .tl-today-line-v { border-top: 2px dashed #f56c6c; z-index: 3; pointer-events: none; }
+/* 筛选只隐藏内容，坐标轴保持不变 */
+.tl-name.is-filtered, .tl-colhead.is-filtered { opacity: .35; }
+.tl-cell.is-filtered { background: #fafafa; }
+.tl-bar-wrap.is-filtered, .tl-bar-wrap-v.is-filtered { visibility: hidden; }
 </style>
