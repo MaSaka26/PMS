@@ -8,8 +8,8 @@ import { useProjectStore } from '@/stores/projectStore'
 import { useMemberStore } from '@/stores/memberStore'
 import { useUserStore } from '@/stores/userStore'
 import { TASK_STATUS_LABEL, PRIORITY_ORDER } from '@/constants/status'
-import { getDueLevel } from '@/utils/due'
-import { canReviewTask, isAdmin as isAdminUser, canManageProject } from '@/utils/permissions'
+import { isTaskOverdue, buildMyTaskBuckets } from '@/utils/my-tasks'
+import { isAdmin as isAdminUser, canManageProject } from '@/utils/permissions'
 import DueBadge from '@/components/DueBadge.vue'
 import TaskDrawer from '@/views/task/components/TaskDrawer.vue'
 
@@ -23,10 +23,10 @@ const loading = ref(false)
 const drawerVisible = ref(false)
 const drawerTaskId = ref('')
 
-// 归属维度：我的任务分四种「事务」，用分段控件切换
-// 默认「全部」放在第一位；「逾期」是三类事务里过截止日的子集，不是全局逾期
+// 归属维度：全部 + 本人该做的三类事务（我负责/待我验收/我建的待认领）
+// 「逾期」是这三类里过截止日的子集，不是全局逾期；管理员管别人的任务不进收件箱
 const SCOPES = [
-    { value: 'all', label: '全部', hint: '下面三类事务合起来看' },
+    { value: 'all', label: '全部', hint: '本人该做的三类事务合起来看' },
     { value: 'mine', label: '我负责的', hint: '指派给我、还没验收完的任务' },
     { value: 'review', label: '待我验收', hint: '别人提交了、等我点头的' },
     { value: 'created', label: '我建的待认领', hint: '我创建但还没人接的' },
@@ -67,35 +67,19 @@ const allTasks = computed(() => {
     return out
 })
 
-const isOverdue = (t) => getDueLevel(t.dueDate, t.status)?.level === 'overdue'
+const isOverdue = isTaskOverdue
 
-// 三类归属事务，同一任务可能同时命中（自己建又自己做的），按 scope 各自独立统计
-const buckets = computed(() => {
-    const myId = me.value.id
-    const mine = []
-    const review = []
-    const created = []
-    for (const t of allTasks.value) {
-        if (t.status === 'canceled') continue
-        const isMine = t.assignee === myId && t.status !== 'accepted'
-        // 验收权限统一走 canReviewTask，和看板、接口三处用同一份判断
-        // （自己做的任务不进「待我验收」，这一页是个人收件箱，不是盖章台）
-        const isReview = t.status === 'done' && t.assignee !== myId
-            && canReviewTask(me.value, projectMap.value.get(t.projectId))
-        const isCreated = !t.assignee && t.status === 'todo' && t.createdBy === myId
-        if (isMine) mine.push(t)
-        if (isReview) review.push(t)
-        if (isCreated) created.push(t)
-    }
-    const all = [...mine, ...review, ...created]
-    // 逾期只从三类事务里筛，跟统计卡口径一致（不把别人负责的逾期任务混进来）
-    return { mine, review, created, overdue: all.filter(isOverdue), all }
-})
+// 本人该做的三类事务走共享口径（侧栏徽标用的是同一份逻辑）
+const buckets = computed(() => buildMyTaskBuckets(
+    allTasks.value.map((t) => ({ task: t, projectId: t.projectId })),
+    { me: me.value, getProject: (id) => projectMap.value.get(id) }
+))
 
 // 统计卡绑定的是全量 buckets，不受当前筛选影响，否则数字会跟着筛选乱跳
 const summary = computed(() => {
     const { mine, review, created } = buckets.value
     return {
+        all: buckets.value.all.length,
         mine: mine.length,
         doing: mine.filter((t) => t.status === 'doing').length,
         review: review.length,
@@ -164,8 +148,8 @@ const locateOnBoard = (row) => {
 }
 
 const scopeHint = computed(() => SCOPES.find((s) => s.value === scope.value)?.hint || '')
-// 「全部」视图下四张卡全部高亮，表示当前展示的是它们的并集
-const cardActive = (s) => scope.value === 'all' || scope.value === s
+// 「全部」视图下五张卡全部高亮，表示当前展示的是它们的并集
+const cardActive = (key) => scope.value === 'all' || scope.value === key
 
 onMounted(async () => {
     loading.value = true
@@ -201,8 +185,14 @@ onMounted(async () => {
             </div>
         </header>
 
-        <!-- 四张事务卡：点一下切到对应归属 -->
+        <!-- 五张事务卡：全部放第一位，点一下切到对应归属 -->
         <section class="scope-cards">
+            <button type="button" class="scope-card tone-all" :class="{ active: cardActive('all') }"
+                @click="scope = 'all'">
+                <span class="sc-label">全部</span>
+                <span class="sc-value">{{ summary.all }}</span>
+                <span class="sc-foot">本人该做的三类合起来</span>
+            </button>
             <button type="button" class="scope-card" :class="{ active: cardActive('mine') }"
                 @click="scope = 'mine'">
                 <span class="sc-label">我负责的</span>
@@ -399,7 +389,7 @@ onMounted(async () => {
 
 .scope-cards {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 12px;
     margin-bottom: 16px;
 
@@ -450,6 +440,7 @@ onMounted(async () => {
         &.tone-created .sc-value { color: #6366f1; }
         &.tone-overdue .sc-value { color: #b45309; }
         &.tone-overdue.active { border-color: #fca5a5; }
+        &.tone-all .sc-value { color: #409eff; }
     }
 }
 

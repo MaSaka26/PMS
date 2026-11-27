@@ -17,8 +17,7 @@ import {
 import { useMemberStore } from '@/stores/memberStore'
 import { useUserStore } from '@/stores/userStore'
 import { useProjectStore } from '@/stores/projectStore'
-import { canReviewTask } from '@/utils/permissions'
-import { getDueLevel } from '@/utils/due'
+import { buildMyTaskBuckets, countMyPendingTasks } from '@/utils/my-tasks'
 
 export const useTaskStore = defineStore('task', () => {
     // 用 projectId 做缓存 key（不搞全局大数组，按项目拉更省）
@@ -29,24 +28,21 @@ export const useTaskStore = defineStore('task', () => {
     const userStore = useUserStore()
     const projectStore = useProjectStore()
 
-    // 侧边栏「我的任务」徽标：我负责 / 待我验收 / 逾期三类并集（去重）
+    // 侧边栏「我的任务」徽标：与「我的任务」页面共用收件箱口径（本人该做的三类事务，去重）
     const myPendingCount = computed(() => {
         const me = userStore.userInfo
         if (!me?.id) return 0
         const archived = new Set((projectStore.projectList || []).filter((p) => p.status === 'archived').map((p) => p.id))
-        const ids = new Set()
+        const tasks = []
         for (const [pid, list] of Object.entries(taskMap.value || {})) {
             if (archived.has(pid)) continue
-            for (const t of list || []) {
-                if (t.deletedAt || t.status === 'canceled') continue
-                const isMine = t.assignee === me.id && t.status !== 'accepted'
-                const isReview = t.status === 'done' && t.assignee !== me.id
-                    && canReviewTask(me, (projectStore.projectList || []).find((p) => p.id === pid))
-                const isOverdue = getDueLevel(t.dueDate, t.status)?.level === 'overdue'
-                if (isMine || isReview || isOverdue) ids.add(t.id)
-            }
+            for (const t of list || []) tasks.push({ task: t, projectId: pid })
         }
-        return ids.size
+        const buckets = buildMyTaskBuckets(tasks, {
+            me,
+            getProject: (id) => (projectStore.projectList || []).find((p) => p.id === id)
+        })
+        return countMyPendingTasks(buckets)
     })
 
     // 按项目取任务（普通函数；看板的 grouped computed 会直接引用 taskMap 追踪响应式）
