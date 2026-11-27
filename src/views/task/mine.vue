@@ -24,13 +24,15 @@ const drawerVisible = ref(false)
 const drawerTaskId = ref('')
 
 // 归属维度：我的任务分四种「事务」，用分段控件切换
+// 默认「全部」放在第一位；「逾期」是三类事务里过截止日的子集，不是全局逾期
 const SCOPES = [
+    { value: 'all', label: '全部', hint: '下面三类事务合起来看' },
     { value: 'mine', label: '我负责的', hint: '指派给我、还没验收完的任务' },
     { value: 'review', label: '待我验收', hint: '别人提交了、等我点头的' },
     { value: 'created', label: '我建的待认领', hint: '我创建但还没人接的' },
-    { value: 'all', label: '全部', hint: '上面三类合起来看' }
+    { value: 'overdue', label: '逾期', hint: '三类事务里已过截止日的任务' }
 ]
-const scope = ref('mine')
+const scope = ref('all')
 const keyword = ref('')
 const priorityFilter = ref('all')
 const statusFilter = ref('all')
@@ -85,7 +87,9 @@ const buckets = computed(() => {
         if (isReview) review.push(t)
         if (isCreated) created.push(t)
     }
-    return { mine, review, created, all: [...mine, ...review, ...created] }
+    const all = [...mine, ...review, ...created]
+    // 逾期只从三类事务里筛，跟统计卡口径一致（不把别人负责的逾期任务混进来）
+    return { mine, review, created, overdue: all.filter(isOverdue), all }
 })
 
 // 统计卡绑定的是全量 buckets，不受当前筛选影响，否则数字会跟着筛选乱跳
@@ -96,7 +100,7 @@ const summary = computed(() => {
         doing: mine.filter((t) => t.status === 'doing').length,
         review: review.length,
         created: created.length,
-        overdue: buckets.value.all.filter(isOverdue).length
+        overdue: buckets.value.overdue.length
     }
 })
 
@@ -160,6 +164,8 @@ const locateOnBoard = (row) => {
 }
 
 const scopeHint = computed(() => SCOPES.find((s) => s.value === scope.value)?.hint || '')
+// 「全部」视图下四张卡全部高亮，表示当前展示的是它们的并集
+const cardActive = (s) => scope.value === 'all' || scope.value === s
 
 onMounted(async () => {
     loading.value = true
@@ -197,26 +203,26 @@ onMounted(async () => {
 
         <!-- 四张事务卡：点一下切到对应归属 -->
         <section class="scope-cards">
-            <button type="button" class="scope-card" :class="{ active: scope === 'mine' }"
+            <button type="button" class="scope-card" :class="{ active: cardActive('mine') }"
                 @click="scope = 'mine'">
                 <span class="sc-label">我负责的</span>
                 <span class="sc-value">{{ summary.mine }}</span>
                 <span class="sc-foot">其中进行中 {{ summary.doing }} 条</span>
             </button>
-            <button type="button" class="scope-card tone-review" :class="{ active: scope === 'review' }"
+            <button type="button" class="scope-card tone-review" :class="{ active: cardActive('review') }"
                 @click="scope = 'review'">
                 <span class="sc-label">待我验收</span>
                 <span class="sc-value">{{ summary.review }}</span>
                 <span class="sc-foot">别人提交、等我点头</span>
             </button>
-            <button type="button" class="scope-card tone-created" :class="{ active: scope === 'created' }"
+            <button type="button" class="scope-card tone-created" :class="{ active: cardActive('created') }"
                 @click="scope = 'created'">
                 <span class="sc-label">我建的待认领</span>
                 <span class="sc-value">{{ summary.created }}</span>
                 <span class="sc-foot">派下去了但没人接</span>
             </button>
-            <button type="button" class="scope-card tone-overdue" :class="{ active: scope === 'all' }"
-                @click="scope = 'all'">
+            <button type="button" class="scope-card tone-overdue" :class="{ active: cardActive('overdue') }"
+                @click="scope = 'overdue'">
                 <span class="sc-label">
                     <el-icon><WarningFilled /></el-icon>逾期
                 </span>
