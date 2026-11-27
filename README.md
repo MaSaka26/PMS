@@ -124,7 +124,7 @@ npm run preview
 
 用 `pm/pm` 登录可以直接看到「我的任务」的分类效果：他是「双十一大促」「官网改版」的负责人，名下有 2 条自己的进行中任务（其中 1 条已逾期）、2 条待他验收的提交、4 条他创建但还没人认领的待办。
 
-项目看板里的「PMS 开发记录」是一份写死的演示种子：`src/mock/db/seed/tasks.js` 里直接放 6 个里程碑实体（M0 项目骨架 → M1 MVP 可运行 → M2 Pages 上线 / M3 自举数据 / M4 组件化重构 → M5 交互打磨），每条保留交付说明、判据与 commitHashes，可追溯到具体 hash；`src/mock/db/seed/projects.js` 里写死项目起止日期与成员（u5 开发者 + u2 项目经理）。里程碑放在「里程碑管理 → 里程碑看板」展示；任务通过 `milestoneId` 挂到里程碑下，状态由子任务汇总。原来的 `npm run seed:git` 生成器与 `gitSeed.js` 已移除，种子不再随仓库 commit 变动。
+项目看板里的「PMS 开发记录」是一份写死的演示种子：`src/mock/db/seed/tasks.js` 里直接放 6 个里程碑实体（M0 项目骨架 → M1 MVP 可运行 → M2 Pages 上线 / M3 自举数据 / M4 组件化重构 → M5 交互打磨），每条保留交付说明、判据与 commitHashes，可追溯到具体 hash；`src/mock/db/seed/projects.js` 里写死项目起止日期与成员（u5 开发者 + u2 项目经理）。里程碑放在「里程碑管理 → 里程碑看板」展示，项目详情的「里程碑」tab 也能按项目查看；任务通过 `milestoneId` 挂到里程碑下，状态由子任务汇总。其余四个种子项目（双十一大促 / 官网改版 / 会员体系升级 / 618 复盘）也补齐了各自的里程碑，所有项目任务都挂到同项目的里程碑下，项目详情页右上角「打开里程碑看板」带 `projectId` 跳过去只看当前项目。原来的 `npm run seed:git` 生成器与 `gitSeed.js` 已移除，种子不再随仓库 commit 变动。
 
 里程碑额外记录独立的「计划工期 duration（天）」和「承诺截止 commitment.dueDate」：工期决定时间线上横条的长度，承诺截止用竖线标出，实际提交日只作为对照——「计划给几天」和「git 实际在哪天提交」是两个字段，不再混为一谈。已验收里程碑只有在「实际结束晚于承诺截止」时才算逾期，不会因为今天更晚就一律标红。
 
@@ -271,7 +271,7 @@ npm run preview
 
 #### 3. 项目详情 `/project/board/:id`
 
-**页面职责**：单个项目的完整视图，包括指标、图表、任务、成员、动态和项目操作。
+**页面职责**：单个项目的完整视图，包括指标、图表、任务、里程碑、成员、动态和项目操作。
 
 **主要功能**
 
@@ -279,7 +279,8 @@ npm run preview
 - 卡片可点：状态类卡片跳到「任务」tab 并带上对应筛选；阻塞/逾期卡片勾上「仅看阻塞 / 仅看逾期」；成员数卡片跳到「成员」tab；完成率是纯展示，不响应点击
 - 任务分布下钻饼图：状态 → 负责人
 - 负责人分布下钻饼图：负责人 → 状态
-- 最近动态、任务列表、成员列表；动态里包含 `pm_changed`（负责人交接，带原负责人 → 新负责人与原因）
+- 最近动态、任务列表、里程碑列表、成员列表；动态里包含 `pm_changed`（负责人交接，带原负责人 → 新负责人与原因）
+- 里程碑列表按交付阶段展示每个里程碑的状态、承诺截止与子任务验收进度；右上角「打开里程碑看板」跳到 `/milestone/board?projectId=...`，只看当前项目
 - 逾期任务在列表里整行标红，与指标卡「逾期」口径一致（无截止日期或已验收/已取消不计）
 - 点击任务打开任务详情抽屉
 - 关闭并归档、撤销归档、另存为模板
@@ -296,6 +297,8 @@ npm run preview
 | [stores/taskStore.js](src/stores/taskStore.js) | 项目任务列表与任务详情缓存 |
 | [stores/fieldStore.js](src/stores/fieldStore.js) | 项目字段定义与展示 |
 | [project/components/DetailActivity.vue](src/views/project/components/DetailActivity.vue) | 动态时间线，含负责人交接记录的文案拼装 |
+| [project/components/DetailMilestoneList.vue](src/views/project/components/DetailMilestoneList.vue) | 项目里程碑列表，状态由子任务汇总、逾期单独标记 |
+| [stores/milestoneStore.js](src/stores/milestoneStore.js) | 里程碑列表与详情缓存，按项目筛选 |
 | [mock/api/project.js](src/mock/api/project.js) | 详情、动态、归档与撤销归档接口；改负责人时写 `pm_changed` 事件 |
 
 **与其他页面的关系**：数据来自任务看板的任务、成员管理的成员、字段配置的项目字段；任务状态变化会反映在图表和动态中；关闭后进入归档；另存为模板会跳到项目模板体系。

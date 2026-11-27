@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Flag, Sort, WarningFilled } from '@element-plus/icons-vue'
 import { useMilestoneStore } from '@/stores/milestoneStore'
@@ -19,6 +19,7 @@ const taskStore = useTaskStore()
 const memberStore = useMemberStore()
 const userStore = useUserStore()
 const router = useRouter()
+const route = useRoute()
 
 const loading = ref(false)
 const projectId = ref('')
@@ -188,6 +189,14 @@ const removeMilestone = async (m) => {
 }
 
 watch(projectId, () => { closeDetail() })
+
+// 从项目详情的「打开里程碑看板」跳进来时，直接锁定到该项目
+const applyRouteProject = () => {
+  const fromQuery = String(route.query.projectId || '')
+  if (fromQuery) projectId.value = fromQuery
+}
+applyRouteProject()
+watch(() => route.query.projectId, applyRouteProject)
 
 onMounted(async () => {
   loading.value = true

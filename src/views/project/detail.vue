@@ -28,6 +28,7 @@ import DetailOverview from './components/DetailOverview.vue'
 import DetailActivity from './components/DetailActivity.vue'
 import DetailTaskTable from './components/DetailTaskTable.vue'
 import DetailMemberList from './components/DetailMemberList.vue'
+import DetailMilestoneList from './components/DetailMilestoneList.vue'
 import { buildTemplateDraft } from './composables/buildTemplateDraft'
 
 const route = useRoute()
@@ -110,6 +111,8 @@ const stats = computed(() => {
 })
 
 // 成员 + 各自任务数
+const milestones = computed(() => milestoneStore.ofProject(projectId.value))
+
 const memberRows = computed(() => {
     if (!project.value) return []
     const counts = new Map()
@@ -197,6 +200,7 @@ const parentLabel = computed(() => (isArchiveDetail.value ? '项目归档' : '�
 const goBack = () => router.push(parentPath.value)
 
 const openBoard = () => router.push({ path: '/task/board', query: { projectId: projectId.value } })
+const openMilestoneBoard = () => router.push({ path: '/milestone/board', query: { projectId: projectId.value } })
 
 // ——— 编辑项目 ———
 // 项目经理只能把负责人锁定为自己，避免改完失去管理权
@@ -367,7 +371,7 @@ const reopenHandler = async () => {
                 <DetailHero v-if="project" :project="project" :is-archived="isArchived" :can-manage="canManage"
                     :status-text="statusText" :project-icon="projectIcon" :priority-class="priorityClass"
                     :pm-name="memberName(project.PM)" :back-label="`返回${parentLabel}`" @back="goBack"
-                    @edit="openEditProject" @board="openBoard" @save-template="openSaveAsTemplate"
+                    @edit="openEditProject" @board="openBoard" @milestones="openMilestoneBoard" @save-template="openSaveAsTemplate"
                     @close="closeHandler" @reopen="reopenHandler" />
 
                 <!-- 归档横幅 -->
@@ -402,6 +406,12 @@ const reopenHandler = async () => {
                         <DetailTaskTable v-model:status="statusFilter" v-model:assignee="assigneeFilter"
                             v-model:only-blocked="onlyBlocked" v-model:only-overdue="onlyOverdue" :tasks="tasks"
                             :members="memberRows" :member-name="memberName" @open-task="openTask" />
+                    </el-tab-pane>
+
+                    <!-- 里程碑 -->
+                    <el-tab-pane :label="`里程碑 (${milestones.length})`" name="milestones">
+                        <DetailMilestoneList :milestones="milestones" :tasks="tasks" :member-name="memberName"
+                            :today="todayStr" @open-board="openMilestoneBoard" />
                     </el-tab-pane>
 
                     <!-- 动态 -->
