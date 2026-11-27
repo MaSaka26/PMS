@@ -39,14 +39,16 @@ const STATUS_COLOR = {
   accepted: '#67c23a', canceled: '#c0c4cc'
 }
 
-const projects = computed(() => projectStore.projectList || [])
+const projects = computed(() => (projectStore.projectList || []).filter((p) => p.status !== 'archived'))
 const canManage = computed(() => canManageProject(userStore.userInfo, projectStore.getById(projectId.value)))
 
+// 归档项目不参与里程碑看板：数据源在 JS 侧先按非归档项目过滤
+const activeProjectIds = computed(() => new Set((projectStore.projectList || []).filter((p) => p.status !== 'archived').map((p) => p.id)))
 const all = computed(() => {
   const list = projectId.value
     ? milestoneStore.ofProject(projectId.value)
     : Object.values(milestoneStore.milestoneMap || {})
-  return list.filter((m) => !m.deletedAt)
+  return list.filter((m) => !m.deletedAt && activeProjectIds.value.has(m.projectId))
 })
 
 // 坐标轴固定用全量数据：筛选只控制内容显示，不改变行数/列数/日期范围
@@ -208,7 +210,7 @@ onMounted(async () => {
   await Promise.all([
     userStore.restoreUserInfo(),
     memberStore.initMembers(),
-    projectStore.initProjects('all'),
+    projectStore.initProjects(),
     taskStore.initAll(),
     milestoneStore.milestoneList()
   ])
