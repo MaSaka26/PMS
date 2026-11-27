@@ -86,10 +86,10 @@ const menus = [
                     <component :is="item.icon" />
                 </el-icon>
                 <template #title>
-                    <el-badge v-if="item.path === '/mine'" :value="mineCount" :hidden="!mineCount" class="mine-menu-badge">
+                    <span class="mine-menu-title">
                         <span>{{ item.title }}</span>
-                    </el-badge>
-                    <span v-else>{{ item.title }}</span>
+                        <span v-if="item.path === '/mine' && mineCount" class="mine-menu-count">{{ mineCount > 99 ? '99+' : mineCount }}</span>
+                    </span>
                 </template>
             </el-menu-item>
         </template>
@@ -100,6 +100,25 @@ const menus = [
 .aside-menu {
     height: 100%;
     border-right: none;
+}
+
+.mine-menu-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.mine-menu-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    font-size: 12px;
+    line-height: 1;
+    color: #fff;
+    background: #f56c6c;
+    border-radius: 9px;
 }
 
 .llline {
