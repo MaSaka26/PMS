@@ -32,6 +32,8 @@ const swapped = computed(() => axis.value === 'ms-x')
 
 // 横轴是时间（列），纵轴是里程碑（行）
 const COL_W = 96
+// 纵轴为时间（横轴里程碑）时每个里程碑列的宽度
+const MS_COL_W = 110
 const ROW_H = 40
 const HEAD_H = 34
 const STATUS_COLOR = {
@@ -285,7 +287,7 @@ onMounted(async () => {
         </div>
       </div>
       <div v-else class="timeline-scroll">
-        <div class="timeline-grid" :style="{ gridTemplateColumns: '96px repeat(' + lanes.length + ', 220px)' }">
+        <div class="timeline-grid" :style="{ gridTemplateColumns: '96px repeat(' + lanes.length + ', ' + MS_COL_W + 'px)' }">
           <div class="tl-corner" style="grid-column:1;grid-row:1">时间 / 里程碑</div>
           <div v-for="(m, mi) in lanes" :key="'h' + m.id" class="tl-colhead" :class="{ 'is-filtered': !isMatched(m) }" :style="{ gridColumn: (mi + 2) + '', gridRow: '1' }" @click="openDetail(m)">
             <div class="tl-colhead-title"><el-icon><Flag /></el-icon>{{ m.code || m.title }}</div>
