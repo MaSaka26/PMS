@@ -2,9 +2,10 @@ import { seedProjects } from './projects.js'
 import { seedMilestones, seedTasks } from './tasks.js'
 import { members, users } from './members.js'
 
+// 版本 18：移除 git 种子生成器，开发者 u5 与「PMS 开发记录」项目日期写死；
 // 版本 17：里程碑增加独立的「计划工期 duration」，时间线按工期画横条；
 // 版本 16 起里程碑已是从任务表拆出的独立 milestones 实体，每条提交的信息保留在里程碑上。
-export const SEED_VERSION = 17
+export const SEED_VERSION = 18
 
 // 比对键：只有「种子内容」参与，不含 seedVersion 本身。
 // 用户自己改的数据（新建任务、改状态）不在这里，所以不会因为用户操作触发重置。

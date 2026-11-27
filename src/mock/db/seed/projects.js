@@ -1,40 +1,29 @@
-import { authors as gitAuthors, commits as gitCommits } from './gitSeed.js'
-
-// Github 记录生成的项目与任务：一条提交 = 一个任务
+// PMS 开发记录：里程碑与提交清单已写死在 tasks.js，不再从 git log 生成
 export const GIT_PROJECT_ID = 'project_seed_5'
 // 由项目经理统一验收，避免「提交人验收自己」
 export const GIT_PM_ID = 'u2'
 // 里程碑任务的执行人：这 6 个阶段都出自同一个提交作者
-export const GIT_AUTHOR_ID = gitAuthors[0]?.id || 'u5'
+export const GIT_AUTHOR_ID = 'u5'
 
-const dayOf = (iso) => iso.slice(0, 10)
-
-// 手工补充的待办/取消任务最晚截止到 12-31，项目结束日至少要覆盖到这一天，
-// 否则这些任务会违反「截止日期不能晚于项目结束日期」的校验
-const PLAN_HORIZON = '2026-12-31'
-
-const gitProject = gitCommits.length
-    ? (() => {
-          const lastCommitDay = dayOf(gitCommits[gitCommits.length - 1].date)
-          return {
-              id: GIT_PROJECT_ID,
-              title: 'PMS 开发记录',
-              type: '内部系统',
-              icon: 'Monitor',
-              desc: '任务按交付物归并为里程碑，每个阶段可追溯到具体提交；待办与已取消为手工补充的真实事项',
-              priority: '高',
-              PM: GIT_PM_ID,
-              members: [...gitAuthors.map((a) => a.id), GIT_PM_ID],
-              createdAt: dayOf(gitCommits[0].date),
-              startDate: dayOf(gitCommits[0].date),
-              endDate: lastCommitDay > PLAN_HORIZON ? lastCommitDay : PLAN_HORIZON,
-              status: 'iterating',
-              closedAt: null,
-              closedBy: null,
-              events: [],
-          }
-      })()
-    : null
+const gitProject = {
+    id: GIT_PROJECT_ID,
+    title: 'PMS 开发记录',
+    type: '内部系统',
+    icon: 'Monitor',
+    desc: '任务按交付物归并为里程碑，每个阶段可追溯到具体提交；待办与已取消为手工补充的真实事项',
+    priority: '高',
+    PM: GIT_PM_ID,
+    members: [GIT_AUTHOR_ID, GIT_PM_ID],
+    createdAt: '2026-11-18',
+    startDate: '2026-11-18',
+    // 手工补充的待办最晚截止到 12-31，项目结束日至少要覆盖到这一天，
+    // 否则会违反「截止日期不能晚于项目结束日期」的校验
+    endDate: '2026-12-31',
+    status: 'iterating',
+    closedAt: null,
+    closedBy: null,
+    events: [],
+}
 
 // 首次运行时写入的示例项目，避免页面一片空白
 export const seedProjects = [
@@ -116,6 +105,5 @@ export const seedProjects = [
             },
         ],
     },
-    // 由 git log 生成：一条提交 = 一个任务
-    ...(gitProject ? [gitProject] : []),
+    gitProject,
 ]
