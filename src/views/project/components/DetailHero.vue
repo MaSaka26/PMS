@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { ArrowLeft, Collection, Edit, Pointer, RefreshLeft, SwitchButton } from '@element-plus/icons-vue'
+import { ArrowLeft, Collection, Edit, Flag, Pointer, RefreshLeft, SwitchButton } from '@element-plus/icons-vue'
 
 const props = defineProps({
     project: { type: Object, required: true },
@@ -12,7 +12,7 @@ const props = defineProps({
     pmName: { type: String, default: '' },
     backLabel: { type: String, default: '返回' }
 })
-defineEmits(['back', 'edit', 'board', 'save-template', 'close', 'reopen'])
+defineEmits(['back', 'edit', 'board', 'milestones', 'save-template', 'close', 'reopen'])
 
 // 与项目看板卡片的状态配色保持一致（card.vue 的 is-* 变量）
 const STATUS_THEMES = {
@@ -64,6 +64,7 @@ const statusTheme = computed(
                 编辑项目
             </el-button>
             <el-button v-if="!isArchived" :icon="Pointer" @click="$emit('board')">打开任务看板</el-button>
+            <el-button :icon="Flag" @click="$emit('milestones')">打开里程碑看板</el-button>
             <el-button v-if="canManage" :icon="Collection" @click="$emit('save-template')">
                 另存为模板
             </el-button>

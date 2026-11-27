@@ -68,3 +68,14 @@ test('普通成员不能开通账号（403）', () => {
     const res = call('/api/members/u4', 'put', { active: true }, asUser('u3'))
     assert.equal(res.code, 403)
 })
+
+test('任务 PUT 拒绝跨项目 milestoneId', () => {
+    const res = call(
+        '/api/tasks/task_seed_1',
+        'put',
+        { milestoneId: 'ms_p2_1' },
+        asUser('u1')
+    )
+    assert.equal(res.code, 400)
+    assert.match(res.msg, /里程碑不存在或不属于该项目/)
+})

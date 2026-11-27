@@ -1,22 +1,26 @@
 <!-- 侧边栏 -->
 <script setup>
 import { computed } from 'vue'
+import { useTaskStore } from '@/stores/taskStore'
+
 import { useRoute } from 'vue-router'
 import {
     Folder, Tickets, Operation, Document, User,
-    MessageBox, Odometer, FolderOpened, Share, Grid, Guide
+    MessageBox, Location,Odometer, FolderOpened, Share, Grid, Guide, Flag
 } from '@element-plus/icons-vue'
 
 import { useSystemStore } from '@/stores/system'
 
 const systemStore = useSystemStore()
+const taskStore = useTaskStore()
+const mineCount = computed(() => taskStore.myPendingCount)
 const route = useRoute()
 const isCollapse = computed(() => systemStore.isCollapse)
 
 // 详情页（/project/board/:id、/project/archive/:id）激活时，高亮所属的二级菜单
 const activeMenu = computed(() => {
     const parts = route.path.split('/').filter(Boolean)
-    if ((parts[0] === 'project' || parts[0] === 'task') && parts.length >= 2) {
+    if (['project', 'task', 'milestone'].includes(parts[0]) && parts.length >= 2) {
         return `/${parts[0]}/${parts[1]}`
     }
     return route.path
@@ -36,11 +40,19 @@ const menus = [
         ],
     },
     {
+        path: '/milestone',
+        title: '里程碑管理',
+        icon: Location,
+        children: [
+            { path: '/milestone/board', title: '里程碑看板', icon: Odometer },
+        ],
+    },
+    {
         path: '/task',
-        title: '任务规划',
+        title: '任务管理',
         icon: Tickets,
         children: [
-            { path: '/task/board', title: '任务看板', icon: Grid },
+            { path: '/task/board', title: '任务看板', icon: Odometer },
             { path: '/task/flow', title: '任务流程', icon: Guide },
         ],
     },
@@ -73,7 +85,12 @@ const menus = [
                 <el-icon>
                     <component :is="item.icon" />
                 </el-icon>
-                <template #title>{{ item.title }}</template>
+                <template #title>
+                    <span class="mine-menu-title">
+                        <span>{{ item.title }}</span>
+                        <span v-if="item.path === '/mine' && mineCount" class="mine-menu-count">{{ mineCount > 99 ? '99+' : mineCount }}</span>
+                    </span>
+                </template>
             </el-menu-item>
         </template>
     </el-menu>
@@ -83,6 +100,25 @@ const menus = [
 .aside-menu {
     height: 100%;
     border-right: none;
+}
+
+.mine-menu-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.mine-menu-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    font-size: 12px;
+    line-height: 1;
+    color: #fff;
+    background: #f56c6c;
+    border-radius: 9px;
 }
 
 .llline {

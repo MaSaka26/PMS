@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { createIdempotentLoader } from '@/utils/async'
 import {
     getTasksByProject,
@@ -15,6 +15,9 @@ import {
     restoreTask as restoreTaskApi
 } from '@/api/task'
 import { useMemberStore } from '@/stores/memberStore'
+import { useUserStore } from '@/stores/userStore'
+import { useProjectStore } from '@/stores/projectStore'
+import { buildMyTaskBuckets, countMyPendingTasks } from '@/utils/my-tasks'
 
 export const useTaskStore = defineStore('task', () => {
     // 用 projectId 做缓存 key（不搞全局大数组，按项目拉更省）
@@ -22,6 +25,25 @@ export const useTaskStore = defineStore('task', () => {
     // 任务详情（含事件日志），只在打开抽屉时拉
     const taskDetail = ref(null)
     const memberStore = useMemberStore()
+    const userStore = useUserStore()
+    const projectStore = useProjectStore()
+
+    // 侧边栏「我的任务」徽标：与「我的任务」页面共用收件箱口径（本人该做的三类事务，去重）
+    const myPendingCount = computed(() => {
+        const me = userStore.userInfo
+        if (!me?.id) return 0
+        const archived = new Set((projectStore.projectList || []).filter((p) => p.status === 'archived').map((p) => p.id))
+        const tasks = []
+        for (const [pid, list] of Object.entries(taskMap.value || {})) {
+            if (archived.has(pid)) continue
+            for (const t of list || []) tasks.push({ task: t, projectId: pid })
+        }
+        const buckets = buildMyTaskBuckets(tasks, {
+            me,
+            getProject: (id) => (projectStore.projectList || []).find((p) => p.id === id)
+        })
+        return countMyPendingTasks(buckets)
+    })
 
     // 按项目取任务（普通函数；看板的 grouped computed 会直接引用 taskMap 追踪响应式）
     const tasksOfProject = (projectId) => taskMap.value[projectId] || []
@@ -131,6 +153,7 @@ export const useTaskStore = defineStore('task', () => {
     return {
         taskMap,
         taskDetail,
+        myPendingCount,
         tasksOfProject,
         groupedByStatus,
         initAll,

@@ -11,7 +11,9 @@ const props = defineProps({
     // 当前项目成员
     members: { type: Array, default: () => [] },
     // 当前项目任务，用于「前置任务」下拉
-    tasks: { type: Array, default: () => [] }
+    tasks: { type: Array, default: () => [] },
+    // 当前项目里程碑（方案 A：独立实体）
+    milestones: { type: Array, default: () => [] }
 })
 const emit = defineEmits(['update:modelValue', 'submit'])
 
@@ -45,6 +47,7 @@ const emptyForm = () => ({
     dueDate: '',
     // 前置任务 id 数组（同项目、无环）
     dependsOn: [],
+    milestoneId: '',
     // 自定义字段值：{ [fieldId]: value }
     extra: {}
 })
@@ -65,6 +68,7 @@ const fillForm = (task) => {
         plannedStart: task.plannedStart || task.createdAt || todayStr(),
         dueDate: task.dueDate || '',
         dependsOn: [...(task.dependsOn || [])],
+        milestoneId: task.milestoneId || '',
         extra: { ...(task.extra || {}) }
     }
 }
@@ -206,6 +210,11 @@ const handleConfirm = async () => {
             <el-form-item label="截止日期" prop="dueDate">
                 <el-date-picker v-model="form.dueDate" type="date" value-format="YYYY-MM-DD"
                     placeholder="不早于创建时间 / 计划开始" :disabled-date="disableDueDate" style="width: 100%" />
+            </el-form-item>
+            <el-form-item label="所属里程碑">
+                <el-select v-model="form.milestoneId" clearable placeholder="选填，可挂到某个里程碑下" style="width: 100%">
+                    <el-option v-for="m in milestones" :key="m.id" :label="m.title" :value="m.id" />
+                </el-select>
             </el-form-item>
             <el-form-item label="前置任务">
                 <el-select v-model="form.dependsOn" multiple filterable clearable
