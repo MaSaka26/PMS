@@ -1,15 +1,19 @@
 <!-- 侧边栏 -->
 <script setup>
 import { computed } from 'vue'
+import { useTaskStore } from '@/stores/taskStore'
+
 import { useRoute } from 'vue-router'
 import {
     Folder, Tickets, Operation, Document, User,
-    MessageBox, Odometer, FolderOpened, Share, Grid, Guide, Flag
+    MessageBox, Location,Odometer, FolderOpened, Share, Grid, Guide, Flag
 } from '@element-plus/icons-vue'
 
 import { useSystemStore } from '@/stores/system'
 
 const systemStore = useSystemStore()
+const taskStore = useTaskStore()
+const mineCount = computed(() => taskStore.myPendingCount)
 const route = useRoute()
 const isCollapse = computed(() => systemStore.isCollapse)
 
@@ -38,7 +42,7 @@ const menus = [
     {
         path: '/milestone',
         title: '里程碑管理',
-        icon: Flag,
+        icon: Location,
         children: [
             { path: '/milestone/board', title: '里程碑看板', icon: Odometer },
         ],
@@ -48,7 +52,7 @@ const menus = [
         title: '任务管理',
         icon: Tickets,
         children: [
-            { path: '/task/board', title: '任务看板', icon: Grid },
+            { path: '/task/board', title: '任务看板', icon: Odometer },
             { path: '/task/flow', title: '任务流程', icon: Guide },
         ],
     },
@@ -81,7 +85,12 @@ const menus = [
                 <el-icon>
                     <component :is="item.icon" />
                 </el-icon>
-                <template #title>{{ item.title }}</template>
+                <template #title>
+                    <el-badge v-if="item.path === '/mine'" :value="mineCount" :hidden="!mineCount" class="mine-menu-badge">
+                        <span>{{ item.title }}</span>
+                    </el-badge>
+                    <span v-else>{{ item.title }}</span>
+                </template>
             </el-menu-item>
         </template>
     </el-menu>

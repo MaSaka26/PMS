@@ -253,7 +253,6 @@ onMounted(async () => {
         <el-option v-for="p in projects" :key="p.id" :label="p.title" :value="p.id" />
       </el-select>
       <el-input v-model="keyword" clearable placeholder="搜索里程碑" style="width: 220px" />
-      <el-switch v-model="showArchived" inline-prompt active-text="含归档" inactive-text="不含归档" />
       <el-radio-group v-model="statusFilter">
         <el-radio-button value="all">全部</el-radio-button>
         <el-radio-button value="todo">规划中</el-radio-button>
@@ -261,6 +260,7 @@ onMounted(async () => {
         <el-radio-button value="done">待验收</el-radio-button>
         <el-radio-button value="accepted">已验收</el-radio-button>
       </el-radio-group>
+      <el-switch v-model="showArchived" inline-prompt active-text="含归档" inactive-text="不含归档" />
       <span class="ms-count">显示 {{ matchedCount }} / {{ lanes.length }} 条里程碑（筛选只隐藏内容，不改变坐标轴）</span>
     </div>
 

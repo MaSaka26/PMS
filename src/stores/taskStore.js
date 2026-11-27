@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { createIdempotentLoader } from '@/utils/async'
 import {
     getTasksByProject,
@@ -15,6 +15,10 @@ import {
     restoreTask as restoreTaskApi
 } from '@/api/task'
 import { useMemberStore } from '@/stores/memberStore'
+import { useUserStore } from '@/stores/userStore'
+import { useProjectStore } from '@/stores/projectStore'
+import { canReviewTask } from '@/utils/permissions'
+import { getDueLevel } from '@/utils/due'
 
 export const useTaskStore = defineStore('task', () => {
     // 用 projectId 做缓存 key（不搞全局大数组，按项目拉更省）
@@ -22,6 +26,28 @@ export const useTaskStore = defineStore('task', () => {
     // 任务详情（含事件日志），只在打开抽屉时拉
     const taskDetail = ref(null)
     const memberStore = useMemberStore()
+    const userStore = useUserStore()
+    const projectStore = useProjectStore()
+
+    // 侧边栏「我的任务」徽标：我负责 / 待我验收 / 逾期三类并集（去重）
+    const myPendingCount = computed(() => {
+        const me = userStore.userInfo
+        if (!me?.id) return 0
+        const archived = new Set((projectStore.projectList || []).filter((p) => p.status === 'archived').map((p) => p.id))
+        const ids = new Set()
+        for (const [pid, list] of Object.entries(taskMap.value || {})) {
+            if (archived.has(pid)) continue
+            for (const t of list || []) {
+                if (t.deletedAt || t.status === 'canceled') continue
+                const isMine = t.assignee === me.id && t.status !== 'accepted'
+                const isReview = t.status === 'done' && t.assignee !== me.id
+                    && canReviewTask(me, (projectStore.projectList || []).find((p) => p.id === pid))
+                const isOverdue = getDueLevel(t.dueDate, t.status)?.level === 'overdue'
+                if (isMine || isReview || isOverdue) ids.add(t.id)
+            }
+        }
+        return ids.size
+    })
 
     // 按项目取任务（普通函数；看板的 grouped computed 会直接引用 taskMap 追踪响应式）
     const tasksOfProject = (projectId) => taskMap.value[projectId] || []
@@ -131,6 +157,7 @@ export const useTaskStore = defineStore('task', () => {
     return {
         taskMap,
         taskDetail,
+        myPendingCount,
         tasksOfProject,
         groupedByStatus,
         initAll,

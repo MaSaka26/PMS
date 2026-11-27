@@ -54,6 +54,7 @@ import {
   ElAside,
   ElConfigProvider,
   ElLoading,
+  ElBadge,
 } from 'element-plus'
 
 // 组件名 → 组件定义。注册时统一从这张表推导，避免"引入了却忘了注册"。
@@ -65,7 +66,7 @@ const EL_COMPONENTS = {
   ElDropdownItem, ElContainer, ElSubMenu, ElScrollbar, ElProgress,
   ElPopconfirm, ElMenu, ElMain, ElHeader, ElDropdownMenu, ElDropdown,
   ElDrawer, ElCheckboxGroup, ElBreadcrumbItem, ElBreadcrumb, ElAvatar,
-  ElAside, ElConfigProvider,
+  ElAside, ElConfigProvider, ElBadge,
 }
 import 'element-plus/es/components/icon/style/css'
 import 'element-plus/es/components/button/style/css'
@@ -111,6 +112,7 @@ import 'element-plus/es/components/breadcrumb/style/css'
 import 'element-plus/es/components/avatar/style/css'
 import 'element-plus/es/components/aside/style/css'
 import 'element-plus/es/components/config-provider/style/css'
+import 'element-plus/es/components/badge/style/css'
 // 下面几个不是 <el-*> 标签，按标签清单补 CSS 时会漏掉：
 // - ElLoading 是 v-loading 指令，样式不在任何组件的 css 依赖里；
 // - ElMessage / ElMessageBox / ElNotification 是服务式调用，自己弹 DOM。
