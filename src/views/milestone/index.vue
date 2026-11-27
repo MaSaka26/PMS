@@ -223,9 +223,9 @@ onMounted(async () => {
   await Promise.all([
     userStore.restoreUserInfo(),
     memberStore.initMembers(),
+    // scope=all 已含归档项目；不可再调 initProjects('archived')，
+    // 两次调用写同一个 projectList，后者会把列表覆盖成只剩归档项目
     projectStore.initProjects('all'),
-    // 归档开关打开时需要项目列表包含归档项，单独补一次（按 scope 幂等）
-    projectStore.initProjects('archived'),
     taskStore.initAll(),
     milestoneStore.milestoneList()
   ])
