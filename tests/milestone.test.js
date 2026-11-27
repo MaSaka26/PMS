@@ -32,3 +32,31 @@ test('里程碑逾期下钻列出拖慢子任务，已验收但迟交也算', ()
   assert.deepEqual(late.map(x=>x.id), ['c3','c2','c1','c4'])
   assert.equal(milestoneDelayDetails(ms('m2','accepted','2026-12-01'), tasks, new Date(2026,10,26)).length, 0)
 })
+test('里程碑 PUT 接口忽略 body.status，状态只能由子任务推导', async () => {
+  const store = new Map()
+  const prevLS = globalThis.localStorage
+  globalThis.localStorage = {
+    getItem: (k) => (store.has(k) ? store.get(k) : null),
+    setItem: (k, v) => store.set(k, String(v)),
+    removeItem: (k) => store.delete(k),
+    clear: () => store.clear()
+  }
+  try {
+    store.set('pm_token', 'token_u1_1')
+    const { db } = await import('../src/mock/db/index.js')
+    await import('../src/mock/api/milestone.js')
+    const Mock = (await import('mockjs')).default
+    const key = Object.keys(Mock._mocked).find((k) => {
+      const e = Mock._mocked[k]
+      return e.rurl instanceof RegExp && e.rurl.test('/api/milestones/ms_p1_1') && e.rtype === 'put'
+    })
+    if (!key) throw new Error('未找到里程碑 PUT handler')
+    const m = db.milestones.find((x) => x.id === 'ms_p1_1')
+    const before = m.status
+    const res = Mock._mocked[key].template({ url: '/api/milestones/ms_p1_1', body: JSON.stringify({ status: 'accepted' }) })
+    assert.equal(res.code, 200)
+    assert.equal(m.status, before, 'PUT 不得改写里程碑状态')
+  } finally {
+    globalThis.localStorage = prevLS
+  }
+})

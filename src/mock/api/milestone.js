@@ -76,7 +76,9 @@ Mock.mock(/\/api\/milestones\/[\w-]+$/, 'put', (options) => {
     if (!title) return fail(400, '里程碑标题不能为空')
     m.title = title
   }
-  for (const key of ['desc', 'code', 'status', 'startDate', 'dueDate', 'commitment']) {
+  // status 不在此列：里程碑状态只能由子任务汇总推导（deriveMilestoneStatus），
+  // 不允许通过接口手改，否则会出现「子任务没验收但里程碑已验收」的假状态。
+  for (const key of ['desc', 'code', 'startDate', 'dueDate', 'commitment']) {
     if (body[key] !== undefined) m[key] = body[key]
   }
   if (body.duration !== undefined) {

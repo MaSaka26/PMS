@@ -164,6 +164,16 @@ Mock.mock(/\/api\/tasks\/[\w-]+$/, 'put', (options) => {
     return fail(400, '被指派人不是该项目的成员')
   }
 
+  // 里程碑必须属于任务所在项目，防止编辑时把任务挂到别的项目里程碑下
+  if (body.milestoneId !== undefined && body.milestoneId) {
+    const ms = (db.milestones || []).find(
+      (m) => m.id === body.milestoneId && !m.deletedAt
+    )
+    if (!ms || ms.projectId !== oldTask.projectId) {
+      return fail(400, '里程碑不存在或不属于该项目')
+    }
+  }
+
   // 日期区间校验：创建时间可改（回溯），但截止日期不能早于它
   const nextCreatedAt = body.createdAt !== undefined ? body.createdAt : oldTask.createdAt
   const nextDueDate = body.dueDate !== undefined ? body.dueDate : oldTask.dueDate
