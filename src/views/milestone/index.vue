@@ -135,7 +135,7 @@ const deadlineTop = (m) => {
 const statusColor = (m) => STATUS_COLOR[m.status] || STATUS_COLOR.todo
 const taskCount = (m) => (taskStore.taskMap?.[m.projectId] || []).filter((t) => t.milestoneId === m.id && !t.deletedAt).length
 const doneCount = (m) => (taskStore.taskMap?.[m.projectId] || []).filter((t) => t.milestoneId === m.id && !t.deletedAt && t.status === 'accepted').length
-const projectName = (id) => projectStore.getById(id)?.name || id
+const projectName = (id) => projectStore.getById(id)?.title || id
 const ownerName = (id) => memberStore.memberName(id)
 const isOverdue = (m) => {
   if (!m || m.status === 'canceled') return false
@@ -197,13 +197,18 @@ const applyRouteProject = () => {
 }
 applyRouteProject()
 watch(() => route.query.projectId, applyRouteProject)
+watch(projectId, (id) => {
+  const current = String(route.query.projectId || '')
+  if (id === current) return
+  router.replace({ query: { ...route.query, projectId: id || undefined } })
+})
 
 onMounted(async () => {
   loading.value = true
   await Promise.all([
     userStore.restoreUserInfo(),
     memberStore.initMembers(),
-    projectStore.initProjects(),
+    projectStore.initProjects('all'),
     taskStore.initAll(),
     milestoneStore.milestoneList()
   ])
@@ -227,7 +232,7 @@ onMounted(async () => {
 
     <div class="ms-toolbar">
       <el-select v-model="projectId" clearable placeholder="全部项目" style="width: 220px">
-        <el-option v-for="p in projects" :key="p.id" :label="p.name" :value="p.id" />
+        <el-option v-for="p in projects" :key="p.id" :label="p.title" :value="p.id" />
       </el-select>
       <el-input v-model="keyword" clearable placeholder="搜索里程碑" style="width: 220px" />
       <el-radio-group v-model="statusFilter">
