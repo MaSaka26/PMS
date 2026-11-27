@@ -27,6 +27,7 @@ const keyword = ref('')
 const statusFilter = ref('all')
 const selected = ref(null)
 const childrenVisible = ref(false)
+const showArchived = ref(false) // 默认只看进行中项目，开关打开后归档项目也进入里程碑看板
 const axis = ref('time-x') // time-x: 横轴时间；ms-x: 横轴里程碑
 const swapped = computed(() => axis.value === 'ms-x')
 
@@ -41,16 +42,16 @@ const STATUS_COLOR = {
   accepted: '#67c23a', canceled: '#c0c4cc'
 }
 
-const projects = computed(() => (projectStore.projectList || []).filter((p) => p.status !== 'archived'))
+const projects = computed(() => (projectStore.projectList || []).filter((p) => showArchived.value || p.status !== 'archived'))
 const canManage = computed(() => canManageProject(userStore.userInfo, projectStore.getById(projectId.value)))
 
-// 归档项目不参与里程碑看板：数据源在 JS 侧先按非归档项目过滤
-const activeProjectIds = computed(() => new Set((projectStore.projectList || []).filter((p) => p.status !== 'archived').map((p) => p.id)))
+// 归档项目默认不参与里程碑看板：由开关决定数据源是否包含归档项目
+const visibleProjectIds = computed(() => new Set((projectStore.projectList || []).filter((p) => showArchived.value || p.status !== 'archived').map((p) => p.id)))
 const all = computed(() => {
   const list = projectId.value
     ? milestoneStore.ofProject(projectId.value)
     : Object.values(milestoneStore.milestoneMap || {})
-  return list.filter((m) => !m.deletedAt && activeProjectIds.value.has(m.projectId))
+  return list.filter((m) => !m.deletedAt && visibleProjectIds.value.has(m.projectId))
 })
 
 // 坐标轴固定用全量数据：筛选只控制内容显示，不改变行数/列数/日期范围
@@ -193,11 +194,21 @@ const removeMilestone = async (m) => {
 }
 
 watch(projectId, () => { closeDetail() })
+watch(showArchived, (on) => {
+  closeDetail()
+  if (!on && projectId.value && !visibleProjectIds.value.has(projectId.value)) {
+    projectId.value = ''
+  }
+})
 
 // 从项目详情的「打开里程碑看板」跳进来时，直接锁定到该项目
 const applyRouteProject = () => {
   const fromQuery = String(route.query.projectId || '')
-  if (fromQuery) projectId.value = fromQuery
+  if (fromQuery) {
+    projectId.value = fromQuery
+    // 从归档项目详情跳进来时自动打开归档开关，否则会被默认过滤掉
+    if ((projectStore.projectList || []).some((p) => p.id === fromQuery && p.status === 'archived')) showArchived.value = true
+  }
 }
 applyRouteProject()
 watch(() => route.query.projectId, applyRouteProject)
@@ -212,10 +223,13 @@ onMounted(async () => {
   await Promise.all([
     userStore.restoreUserInfo(),
     memberStore.initMembers(),
-    projectStore.initProjects(),
+    projectStore.initProjects('all'),
+    // 归档开关打开时需要项目列表包含归档项，单独补一次（按 scope 幂等）
+    projectStore.initProjects('archived'),
     taskStore.initAll(),
     milestoneStore.milestoneList()
   ])
+  if (projectId.value && !visibleProjectIds.value.has(projectId.value)) showArchived.value = true
   loading.value = false
 })
 </script>
@@ -239,6 +253,7 @@ onMounted(async () => {
         <el-option v-for="p in projects" :key="p.id" :label="p.title" :value="p.id" />
       </el-select>
       <el-input v-model="keyword" clearable placeholder="搜索里程碑" style="width: 220px" />
+      <el-switch v-model="showArchived" inline-prompt active-text="含归档" inactive-text="不含归档" />
       <el-radio-group v-model="statusFilter">
         <el-radio-button value="all">全部</el-radio-button>
         <el-radio-button value="todo">规划中</el-radio-button>
