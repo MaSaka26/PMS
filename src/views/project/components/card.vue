@@ -1,7 +1,7 @@
 <script setup>
 //   <Card title="项目1" type="类型1" createdAt="2026-11-11" owner="张经理" desc="项目1的描述" priority="高" status="active" />
 import { computed } from 'vue'
-import { ArrowLeft, ArrowRight, Calendar, Delete, Edit, Star, StarFilled, SwitchButton } from '@element-plus/icons-vue'
+import { ArrowLeft, ArrowRight, Calendar, Delete, Edit, RefreshLeft, Star, StarFilled, SwitchButton } from '@element-plus/icons-vue'
 import { PROJECT_STATUS_LABEL } from '@/constants/status'
 import DemoViewers from '@/components/DemoViewers.vue'
 
@@ -16,6 +16,7 @@ const props = defineProps({
     status: { type: String, default: '' },
     // 是否有权关闭项目（PM / admin）
     canClose: { type: Boolean, default: false },
+    canReopen: { type: Boolean, default: false },
     canEdit: { type: Boolean, default: true },
     canDelete: { type: Boolean, default: true },
     // 置顶与泳道内排序（PM / admin）
@@ -28,7 +29,7 @@ const props = defineProps({
     taskIds: { type: Array, default: () => [] }
 })
 
-const emit = defineEmits(['edit', 'delete', 'close', 'open', 'pin', 'move-up', 'move-down'])
+const emit = defineEmits(['edit', 'delete', 'close', 'reopen', 'open', 'pin', 'move-up', 'move-down'])
 
 const statusText = computed(() => PROJECT_STATUS_LABEL[props.status] || props.status)
 
@@ -55,6 +56,12 @@ const ownerInitial = computed(() => (props.owner || '').trim().charAt(0) || '?')
                 @click.stop="emit('close')">
                 <el-icon>
                     <SwitchButton />
+                </el-icon>
+            </button>
+            <button v-if="canReopen" type="button" class="action" title="撤销归档"
+                @click.stop="emit('reopen')">
+                <el-icon>
+                    <RefreshLeft />
                 </el-icon>
             </button>
             <button v-if="canDelete" type="button" class="action action-danger" title="删除"

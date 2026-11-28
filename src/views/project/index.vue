@@ -5,8 +5,8 @@ import TemplatePickerDialog from '@/views/template/components/TemplatePickerDial
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { createProject, deleteProject, getProjectList, updateProject, closeProject, pinProject, moveProject } from '@/api/project'
-import { StarFilled } from '@element-plus/icons-vue'
+import { createProject, deleteProject, getProjectList, updateProject, closeProject, reopenProject, pinProject, moveProject } from '@/api/project'
+import { StarFilled, Grid, FolderOpened } from '@element-plus/icons-vue'
 import { useMemberStore } from '@/stores/memberStore'
 import { useTaskStore } from '@/stores/taskStore'
 import { useUserStore } from '@/stores/userStore'
@@ -19,13 +19,13 @@ const userStore = useUserStore()
 const router = useRouter()
 const route = useRoute()
 
-// 看板既承担列表页，也是「项目详情」的父路由：
-// 当前若是子路由（详情），本组件只渲染 RouterView，避免看板内容叠加在详情页上
+// 详情已是独立路由（/project/:id），这个组件只用于看板
+// 保留 computed 纯粹为了模板结构清晰
 const isBoard = computed(() => route.name === 'ProjectBoard')
 
-// 点击卡片进入项目详情页（挂在看板路由下，面包屑可显示完整层级）
+// 点击卡片进入项目详情页（归档项目复用同一路由，由项目状态决定只读）
 const openDetail = (project) => {
-    router.push(`/project/board/${project.id}`)
+    router.push(`/project/${project.id}`)
 }
 
 // 只有项目负责人或管理员能编辑 / 关闭 / 删除项目
@@ -42,6 +42,8 @@ const dialogVisible = ref(false)
 const projectList = ref([])
 // 置顶泳道单独加载，不参与普通泳道分页
 const pinnedProjects = ref([])
+// 归档泳道：自己持有本地 ref，绝不共用 projectStore.projectList（两个 scope 会互相覆盖）
+const archivedProjects = ref([])
 const loading = ref(false)
 const keyword = ref('')
 const page = ref(1)
@@ -61,7 +63,7 @@ const taskIdsOf = (projectId) => (taskStore.taskMap[projectId] || []).map((t) =>
 const loadProjects = async () => {
     loading.value = true
     try {
-        const [res, pinnedRes] = await Promise.all([
+        const [res, pinnedRes, archivedRes] = await Promise.all([
             getProjectList({
                 keyword: keyword.value,
                 page: page.value,
@@ -75,11 +77,18 @@ const loadProjects = async () => {
                 size: 100,
                 scope: 'active',
                 pinned: 'only'
+            }),
+            getProjectList({
+                keyword: keyword.value,
+                page: 1,
+                size: 100,
+                scope: 'archived'
             })
         ])
         projectList.value = res.list
         total.value = res.total
         pinnedProjects.value = pinnedRes.list || []
+        archivedProjects.value = archivedRes.list || []
         // 置顶 / 删除后当前页可能变空，回到上一页
         if (!projectList.value.length && page.value > 1) {
             page.value -= 1
@@ -150,7 +159,7 @@ const handleCreateCommand = (command) => {
 // 模板创建成功后直接进入新项目详情
 const handleTemplateApplied = (project) => {
     templatePickerVisible.value = false
-    if (project?.id) router.push(`/project/board/${project.id}`)
+    if (project?.id) router.push(`/project/${project.id}`)
 }
 
 const openEdit = (project) => {
@@ -203,7 +212,7 @@ const removeProject = async (project) => {
     }
 }
 
-// 关闭项目 → 自动归档到「项目归档」页，数据只读但完整保留
+// 关闭项目 → 进入项目看板的归档泳道，数据只读但完整保留
 const closeProjectHandler = async (project) => {
     if (!canManage(project)) {
         ElMessage.warning('只有项目负责人或管理员可以关闭项目')
@@ -211,7 +220,7 @@ const closeProjectHandler = async (project) => {
     }
     try {
         await ElMessageBox.confirm(
-            `关闭项目「${project.title}」后，项目会进入「项目归档」，所有任务变为只读，历史与时间线完整保留。\n\n如需继续推进，可在归档页撤销归档。`,
+            `关闭项目「${project.title}」后，项目会进入项目看板的「归档」泳道，所有任务变为只读，历史与时间线完整保留。\n\n如需继续推进，可在归档泳道撤销归档。`,
             '关闭项目',
             { type: 'warning', confirmButtonText: '关闭并归档', cancelButtonText: '取消' }
         )
@@ -227,6 +236,30 @@ const closeProjectHandler = async (project) => {
         loadProjects()
     } catch (error) {
         ElMessage.error(error.message || '关闭项目失败')
+    }
+}
+
+// 撤销归档：归档泳道上的按钮，只有项目负责人或管理员可用
+const reopenHandler = async (project) => {
+    if (!canManage(project)) {
+        ElMessage.warning('只有项目负责人或管理员可以撤销归档')
+        return
+    }
+    try {
+        await ElMessageBox.confirm(
+            `确定撤销项目「${project.title}」的归档吗？项目会重新出现在普通泳道，任务恢复可编辑。`,
+            '撤销归档',
+            { type: 'warning', confirmButtonText: '撤销归档', cancelButtonText: '取消' }
+        )
+    } catch {
+        return
+    }
+    try {
+        await reopenProject(project.id)
+        ElMessage.success('撤销归档成功')
+        loadProjects()
+    } catch (error) {
+        ElMessage.error(error.message || '撤销归档失败')
     }
 }
 
@@ -313,6 +346,25 @@ onMounted(() => {
             <el-pagination background layout="prev, pager, next" :total="total" :page-size="pageSize"
                 :current-page="page" @current-change="handlePageChange" />
         </div>
+        <!-- 归档泳道：已关闭项目只读，负责人/管理员可撤销归档 -->
+        <section class="archived-lane">
+            <div class="lane-head">
+                <span class="lane-title archived-title">
+                    <el-icon><FolderOpened /></el-icon>归档项目
+                    <span class="lane-count archived-count">{{ archivedProjects.length }}</span>
+                </span>
+                <span class="lane-hint">只读保留历史，可撤销归档恢复编辑</span>
+            </div>
+            <div class="card-container archived-container">
+                <Card v-for="item in archivedProjects" :key="item.id" :title="item.title" :type="item.type"
+                    :icon="item.icon" :created-at="item.createdAt" :owner="memberName(item.PM)" :desc="item.desc"
+                    :priority="item.priority" :status="item.status" :pinned="false" :can-close="false"
+                    :can-edit="false" :can-delete="false" :can-pin="false" :can-move-up="false" :can-move-down="false"
+                    :can-reopen="canManage(item)" :project-id="item.id" :task-ids="taskIdsOf(item.id)"
+                    @open="openDetail(item)" @reopen="reopenHandler(item)" />
+                <el-empty v-if="!archivedProjects.length" description="暂无归档项目" class="empty" />
+            </div>
+        </section>
         <ProjectFormDialog v-model="dialogVisible" :project="editingProject" :pm-locked-to="pmLockedTo"
             @submit="submitProject" />
         <TemplatePickerDialog v-model="templatePickerVisible" @applied="handleTemplateApplied" />
@@ -333,7 +385,8 @@ onMounted(() => {
 }
 
 .pinned-lane,
-.normal-lane {
+.normal-lane,
+.archived-lane {
     padding: 0 20px;
 }
 
@@ -388,6 +441,23 @@ onMounted(() => {
 .lane-count-normal {
     color: #6b7280;
     background: #f1f5f9;
+}
+
+.archived-title {
+    color: #6b7280;
+
+    .el-icon {
+        color: #9ca3af;
+    }
+}
+
+.archived-count {
+    color: #6b7280;
+    background: #f1f5f9;
+}
+
+.archived-container {
+    min-height: 140px;
 }
 
 .pinned-scroll {

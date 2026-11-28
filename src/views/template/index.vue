@@ -96,7 +96,7 @@ const submitApply = async (payload) => {
         ElMessage.success('项目已创建')
         applyVisible.value = false
         applyTarget.value = null
-        router.push(`/project/board/${project.id}`)
+        router.push(`/project/${project.id}`)
     } catch (error) {
         ElMessage.error(error.message || '创建项目失败')
     }

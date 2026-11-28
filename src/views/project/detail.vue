@@ -192,12 +192,12 @@ onMounted(async () => {
 })
 
 // ——— 操作 ———
-// 详情挂在两个父路由下：从看板进回看板，从归档进回归档
-const isArchiveDetail = computed(() => route.name === 'ProjectArchiveDetail')
-const parentPath = computed(() => (isArchiveDetail.value ? '/project/archive' : '/project/board'))
-const parentLabel = computed(() => (isArchiveDetail.value ? '项目归档' : '项目看板'))
+// 详情统一为 /project/:id：普通项目与归档项目共用同一路由，按项目状态决定是否只读。
+// 返回始终回项目看板，归档卡和普通卡都在那里。
+const parentPath = '/project/board'
+const parentLabel = '项目看板'
 
-const goBack = () => router.push(parentPath.value)
+const goBack = () => router.push(parentPath)
 
 const openBoard = () => router.push({ path: '/task/board', query: { projectId: projectId.value } })
 const openMilestoneBoard = () => router.push({ path: '/milestone/board', query: { projectId: projectId.value } })
@@ -301,7 +301,7 @@ const switchTab = (name) => {
 }
 
 // 地址栏里的 :id 变了要重新拉数据。
-// /project/board/:id 只有一个路由记录，Vue 会复用同一个组件实例，
+// /project/:id 只有一个路由记录，Vue 会复用同一个组件实例，
 // 于是 onMounted 不会再跑一次 —— 从看板点卡片进来时中间经过了列表页，
 // 组件是全新挂载的所以没问题；直接手改地址栏或从历史/收藏跳转就会残留上一个项目的
 // 标题、动态列表和成员数，只有任务数因为 taskStore 里没有这个 key 而变成 0。

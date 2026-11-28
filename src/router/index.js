@@ -27,7 +27,7 @@ const router = createRouter({
           meta: { title: "我的任务" },
         },
         {
-          // 项目管理：下拉包含「项目看板」和「项目归档」
+          // 项目管理：一级直达项目看板，详情统一 /project/:id
           path: "project",
           name: "ProjectPlanning",
           redirect: "/project/board",
@@ -38,46 +38,22 @@ const router = createRouter({
               name: "ProjectBoard",
               component: () => import("@/views/project/index.vue"),
               meta: { title: "项目看板" },
-              children: [
-                {
-                  // 项目详情挂在看板下：面包屑 项目管理 > 项目看板 > 项目详情
-                  path: ":id",
-                  name: "ProjectBoardDetail",
-                  component: () => import("@/views/project/detail.vue"),
-                  meta: { title: "项目详情" },
-                },
-              ],
-            },
-            {
-              path: "archive",
-              name: "ProjectArchive",
-              component: () => import("@/views/project/archive.vue"),
-              meta: { title: "项目归档" },
-              children: [
-                {
-                  // 归档项目详情挂在归档下，面包屑 项目管理 > 项目归档 > 项目详情
-                  path: ":id",
-                  name: "ProjectArchiveDetail",
-                  component: () => import("@/views/project/detail.vue"),
-                  meta: { title: "项目详情" },
-                },
-              ],
-            },
-            {
-              path: "flow",
-              name: "ProjectFlow",
-              component: () => import("@/views/project/flow.vue"),
-              meta: { title: "项目流程" },
-            },
-            {
-              // 兼容旧地址 /project/:id → /project/board/:id
-              path: ":id",
-              redirect: (to) => `/project/board/${to.params.id}`,
             },
           ],
         },
+        // 已删除的旧页面：/project/:id 会误匹配 /project/flow 与 /project/archive，须先重定向
+        { path: "project/flow", redirect: "/project/board" },
+        { path: "project/archive", redirect: "/project/board" },
+        { path: "task/flow", redirect: "/task/board" },
         {
-          // 任务管理：下拉包含「任务看板」和「任务流程」
+          // 项目详情：归档项目与普通项目共用同一路由，按项目状态判断只读
+          path: "project/:id",
+          name: "ProjectDetail",
+          component: () => import("@/views/project/detail.vue"),
+          meta: { title: "项目详情" },
+        },
+        {
+          // 任务管理：一级直达任务看板
           path: "task",
           name: "TaskPlanning",
           redirect: "/task/board",
@@ -89,21 +65,10 @@ const router = createRouter({
               component: () => import("@/views/task/index.vue"),
               meta: { title: "任务看板" },
             },
-            {
-              // 兼容旧地址 /task/mine → /mine
-              path: "mine",
-              redirect: "/mine",
-            },
-            {
-              path: "flow",
-              name: "TaskFlow",
-              component: () => import("@/views/task/flow.vue"),
-              meta: { title: "任务流程" },
-            },
           ],
         },
         {
-          // 里程碑管理：独立一级菜单，二级为里程碑看板
+          // 里程碑管理：一级直达里程碑看板
           path: "milestone",
           name: "MilestoneManagement",
           redirect: "/milestone/board",
