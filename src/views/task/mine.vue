@@ -119,13 +119,6 @@ const projectTitle = (id) => projectMap.value.get(id)?.title || '未知项目'
 const memberName = (id) => memberStore.memberName(id)
 const isPMOf = (t) => canManageProject(me.value, projectMap.value.get(t.projectId))
 
-// admin 兜底：项目 PM 不是我，我却能看到并处理这条验收 —— 界面上要能看出来
-const isProxyReview = (t) =>
-    t.status === 'done' &&
-    t.assignee !== me.value.id &&
-    !isPMOf(t) &&
-    canReviewTask(me.value, projectMap.value.get(t.projectId))
-
 const rowClassName = ({ row }) => (isOverdue(row) ? 'my-row is-overdue' : 'my-row')
 
 const openTask = (row, column, event) => {
@@ -265,7 +258,6 @@ onMounted(async () => {
                             </span>
                             <span v-if="isOverdue(row)" class="mini-tag is-overdue">逾期</span>
                             <span v-if="isPMOf(row)" class="mini-tag is-pm">我负责这个项目</span>
-                            <span v-if="isProxyReview(row)" class="mini-tag is-proxy">代 PM 验收</span>
                         </div>
                     </template>
                 </el-table-column>
@@ -503,12 +495,6 @@ onMounted(async () => {
     &.is-pm {
         color: #4f46e5;
         background: #eef2ff;
-    }
-
-    // admin 代 PM 验收：不是自己的项目，却在处理它的验收
-    &.is-proxy {
-        color: #0f766e;
-        background: #ecfdf5;
     }
 }
 
