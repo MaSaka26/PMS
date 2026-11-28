@@ -21,7 +21,7 @@ const userStore = useUserStore()
 const router = useRouter()
 const route = useRoute()
 
-const loading = ref(false)
+const loading = ref(true)
 const projectId = ref('')
 const keyword = ref('')
 const statusFilter = ref('all')
@@ -235,7 +235,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="ms-page" v-loading="loading">
+  <div class="ms-page" v-loading="loading" :style="{ visibility: loading ? 'hidden' : 'visible' }">
     <div class="ms-head">
       <div>
         <h2>里程碑看板</h2>
@@ -325,7 +325,7 @@ onMounted(async () => {
         </div>
       </div>
     </div>
-    <el-empty v-else description="没有符合条件的里程碑" />
+    <el-empty v-else-if="!loading" description="没有符合条件的里程碑" />
 
     <el-drawer v-model="childrenVisible" :title="selected?.title + ' · 详情'" size="480px">
       <template v-if="selected">

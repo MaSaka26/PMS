@@ -34,7 +34,7 @@ const userStore = useUserStore()
 const fieldStore = useFieldStore()
 const route = useRoute()
 
-const loading = ref(false)
+const loading = ref(true)
 const currentProjectId = ref('')
 
 const currentProject = computed(() => projectStore.getById(currentProjectId.value))
@@ -272,7 +272,7 @@ watch(() => route.query.taskId, (id) => {
 </script>
 
 <template>
-    <div class="task-page">
+    <div class="task-page" :style="{ visibility: loading ? 'hidden' : 'visible' }">
         <!-- 顶部栏 -->
         <header class="page-header">
             <div class="project-switch">

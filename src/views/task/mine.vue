@@ -19,7 +19,7 @@ const projectStore = useProjectStore()
 const memberStore = useMemberStore()
 const userStore = useUserStore()
 
-const loading = ref(false)
+const loading = ref(true)
 const drawerVisible = ref(false)
 const drawerTaskId = ref('')
 
@@ -160,7 +160,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="mine-page">
+    <div class="mine-page" :style="{ visibility: loading ? 'hidden' : 'visible' }">
         <header class="page-head">
             <div class="head-main">
                 <h2>我的任务</h2>

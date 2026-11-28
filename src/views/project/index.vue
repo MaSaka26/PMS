@@ -44,7 +44,7 @@ const projectList = ref([])
 const pinnedProjects = ref([])
 // 归档泳道：自己持有本地 ref，绝不共用 projectStore.projectList（两个 scope 会互相覆盖）
 const archivedProjects = ref([])
-const loading = ref(false)
+const loading = ref(true)
 const keyword = ref('')
 const page = ref(1)
 const pageSize = ref(8)
@@ -277,6 +277,8 @@ onMounted(() => {
     <!-- 兼容：非看板模式下仍保留路由出口（当前详情已独立路由，不会进入） -->
     <RouterView v-if="!isBoard" />
     <template v-else>
+        <!-- 数据到达前整块隐藏，避免空态与加载态来回跳变 -->
+        <div :style="{ visibility: loading ? 'hidden' : 'visible' }">
         <div class="search">
             <div class="search-left">
                 <el-input v-model="keyword" placeholder="请输入项目名称" style="width: 240px" clearable
@@ -369,6 +371,7 @@ onMounted(() => {
         <ProjectFormDialog v-model="dialogVisible" :project="editingProject" :pm-locked-to="pmLockedTo"
             @submit="submitProject" />
         <TemplatePickerDialog v-model="templatePickerVisible" @applied="handleTemplateApplied" />
+        </div>
     </template>
   </div>
 </template>
