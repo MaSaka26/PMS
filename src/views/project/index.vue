@@ -273,7 +273,8 @@ onMounted(() => {
 </script>
 
 <template>
-    <!-- 子路由（项目详情）激活时，看板只作为路由出口 -->
+  <div class="project-page-root">
+    <!-- 兼容：非看板模式下仍保留路由出口（当前详情已独立路由，不会进入） -->
     <RouterView v-if="!isBoard" />
     <template v-else>
         <div class="search">
@@ -369,6 +370,7 @@ onMounted(() => {
             @submit="submitProject" />
         <TemplatePickerDialog v-model="templatePickerVisible" @applied="handleTemplateApplied" />
     </template>
+  </div>
 </template>
 
 <style scoped lang="scss">

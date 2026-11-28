@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import Header from './components/header.vue'
 import Aside from './components/aside.vue'
 import { useSystemStore } from '@/stores/system'
@@ -7,6 +7,10 @@ import { useSystemStore } from '@/stores/system'
 const systemStore = useSystemStore()
 // 侧边栏收起时同步收缩 el-aside，让 el-main 铺满剩余空间
 const asideWidth = computed(() => (systemStore.isCollapse ? '64px' : '200px'))
+
+// 内容区滚动条：路由切换动画结束后滚回顶部
+const scrollbarRef = ref(null)
+const onAfterEnter = () => scrollbarRef.value?.setScrollTop(0)
 </script>
 
 <template>
@@ -19,8 +23,12 @@ const asideWidth = computed(() => (systemStore.isCollapse ? '64px' : '200px'))
         <Aside />
       </el-aside>
       <el-main>
-        <el-scrollbar class="content">
-          <RouterView></RouterView>
+        <el-scrollbar ref="scrollbarRef" class="content">
+          <RouterView v-slot="{ Component }">
+            <Transition name="fade" mode="out-in" @after-enter="onAfterEnter">
+              <component :is="Component" />
+            </Transition>
+          </RouterView>
         </el-scrollbar>
       </el-main>
     </el-container>
@@ -65,5 +73,17 @@ const asideWidth = computed(() => (systemStore.isCollapse ? '64px' : '200px'))
   :deep(.el-scrollbar__view) {
     min-height: 100%;
   }
+}
+</style>
+
+<!-- fade 类由 Transition 打在子页面根元素上，不能被 scoped 编译，单独放无 scoped 块 -->
+<style>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

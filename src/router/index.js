@@ -118,4 +118,9 @@ router.beforeEach(async (to) => {
   return true;
 });
 
+// 每次路由切换后更新浏览器标题：<无空格前缀>|<页面名>
+router.afterEach((to) => {
+  document.title = to.meta.title ? `PMS项目管理系统|${to.meta.title}` : 'PMS项目管理系统'
+});
+
 export default router;

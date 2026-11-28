@@ -185,6 +185,7 @@ onMounted(async () => {
 </script>
 
 <template>
+  <div class="page-root">
     <div class="page">
         <header class="page-header">
             <div>
@@ -223,6 +224,7 @@ onMounted(async () => {
         :can-edit="!!selectedMember && canEdit(selectedMember)"
         :can-toggle-active="!!selectedMember && canToggleActive(selectedMember)"
         @edit="editFromDetail" @toggle-active="toggleFromDetail" />
+  </div>
 </template>
 
 <style scoped lang="scss">
