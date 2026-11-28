@@ -29,7 +29,6 @@
 
 <p align="center">
   <img src="docs/screenshots/project-board.png" alt="PMS 项目看板" width="760">
-  <img src="docs/screenshots/milestone-board.png" alt="PMS 里程碑看板" width="760">
 </p>
 
 | 适合谁 | 现在就能做什么 | 在线访问 | 边界在哪 |
