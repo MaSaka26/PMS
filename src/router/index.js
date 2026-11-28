@@ -51,11 +51,6 @@ const router = createRouter({
           component: () => import("@/views/task/mine.vue"),
           meta: { title: "我的任务" },
         },
-        // 旧页面别名：无老用户，但顺手把历史地址送回对应看板；必须放在动态详情路由之前
-        { path: "project/flow", redirect: "/project/board" },
-        { path: "project/archive", redirect: "/project/board" },
-        { path: "task/flow", redirect: "/task/board" },
-
         // 项目详情：归档项目与普通项目共用同一路由，按项目状态判断只读
         {
           path: "project/:id",
