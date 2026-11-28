@@ -161,7 +161,7 @@ npm run preview
 | `/template` | 项目模板 |
 | `/member` | 成员管理 |
 
-项目管理、任务管理、里程碑管理都只保留一级菜单，点进去直接是看板；「我的任务」也独立成一级。**路由层面所有看板都是一级路由**：`/project`、`/task`、`/milestone` 三条模块壳只负责重定向到对应看板，不再是带子路由的父级；页面不再渲染面包屑。项目归档不再是独立页面，而是项目看板的第三条泳道；归档项目详情与普通项目详情统一走 `/project/:id`，由项目状态决定只读模式与返回路径。流程说明页（项目流程 / 任务流程）已删除，规则备份在「核心业务规则」一节。
+项目管理、任务管理、里程碑管理都只保留一级菜单，点进去直接是看板；「我的任务」也独立成一级。**路由层面所有看板都是一级路由**，没有父级的模块壳路由，页面不再渲染面包屑。项目归档不再是独立页面，而是项目看板的第三条泳道；归档项目详情与普通项目详情统一走 `/project/:id`，由项目状态决定只读模式与返回路径。流程说明页（项目流程 / 任务流程）已删除，规则备份在「核心业务规则」一节。
 
 项目使用 Hash 路由，部署到 GitHub Pages 后地址形如 `https://用户名.github.io/PMS/#/login`。
 
@@ -483,7 +483,7 @@ npm run preview
 | [layout/index.vue](src/layout/index.vue) | 整体布局，固定头部/侧栏，内容区 `el-scrollbar` |
 | [layout/components/header.vue](src/layout/components/header.vue) | 当前用户、角色、退出登录 |
 | [layout/components/aside.vue](src/layout/components/aside.vue) | 侧边栏菜单与路由高亮；项目管理 / 任务管理 / 里程碑管理均为一级项直达看板，另有「我的任务 / 字段配置 / 项目模板 / 成员管理」 |
-| [router/index.js](src/router/index.js) | 一级路由表、模块壳重定向、登录守卫、token 校验 |
+| [router/index.js](src/router/index.js) | 一级路由表、登录守卫、token 校验 |
 | [utils/permissions.js](src/utils/permissions.js) | 全站统一的权限判断 |
 | [components/DueBadge.vue](src/components/DueBadge.vue) | 截止日期倒计时徽标 |
 | [constants/status.js](src/constants/status.js) | 状态、优先级、项目阶段文案 |

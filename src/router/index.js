@@ -16,14 +16,9 @@ const router = createRouter({
     {
       path: "/",
       component: () => import("@/layout/index.vue"),
-      redirect: "/project",
+      redirect: "/project/board",
       meta: { title: "项目管理后台" },
       children: [
-        // 模块壳只负责把裸地址转到看板；无 name / meta.title，不参与任何层级展示
-        { path: "project", redirect: "/project/board" },
-        { path: "task", redirect: "/task/board" },
-        { path: "milestone", redirect: "/milestone/board" },
-
         // 三个看板都是 layout 下的一级路由（此前是父路由的 children）
         {
           path: "project/board",
@@ -84,7 +79,7 @@ const router = createRouter({
 });
 
 // 全局守卫：未登录 → 去登录页（带 redirect 回来）
-// 已登录 但 访问 /login → 跳回 /project
+// 已登录 但 访问 /login → 跳回 /project/board
 // token 变化后调用 /info 校验，账号被停用 / 失效时立即退回登录页
 let verifiedToken = "";
 router.beforeEach(async (to) => {
@@ -93,7 +88,7 @@ router.beforeEach(async (to) => {
   // 公开路由（/login）
   if (to.meta.public) {
     if (token && to.path === "/login") {
-      return "/project";
+      return "/project/board";
     }
     return true;
   }

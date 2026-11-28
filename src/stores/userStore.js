@@ -37,7 +37,7 @@ export const useUserStore = defineStore("user", () => {
         if (current.meta?.public !== true && current.path !== "/login") {
           router.push({
             path: "/login",
-            query: { redirect: current.fullPath || "/project" },
+            query: { redirect: current.fullPath || "/project/board" },
           });
         }
         return null;
@@ -59,8 +59,8 @@ export const useUserStore = defineStore("user", () => {
     localStorage.setItem(TOKEN_KEY, res.token);
     userInfo.value = res.user;
     ElMessage.success(`欢迎回来，${res.user.name}`);
-    // 跳回原目标页，没有的话去 /project
-    const redirect = router.currentRoute.value.query.redirect || "/project";
+    // 跳回原目标页，没有的话去 /project/board
+    const redirect = router.currentRoute.value.query.redirect || "/project/board";
     router.push(redirect);
     return res.user;
   };
