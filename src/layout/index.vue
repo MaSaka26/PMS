@@ -2,7 +2,6 @@
 import { computed } from 'vue'
 import Header from './components/header.vue'
 import Aside from './components/aside.vue'
-import Breadcrumb from './components/Breadcrumb.vue'
 import { useSystemStore } from '@/stores/system'
 
 const systemStore = useSystemStore()
@@ -20,7 +19,6 @@ const asideWidth = computed(() => (systemStore.isCollapse ? '64px' : '200px'))
         <Aside />
       </el-aside>
       <el-main>
-        <Breadcrumb />
         <el-scrollbar class="content">
           <RouterView></RouterView>
         </el-scrollbar>
@@ -44,16 +42,12 @@ const asideWidth = computed(() => (systemStore.isCollapse ? '64px' : '200px'))
     overflow-y: auto;
   }
 
-  // main 变成纵向 flex：面包屑固定，content 自己滚
+  // main 变成纵向 flex：content 自己滚
   :deep(.el-main) {
     display: flex;
     flex-direction: column;
     min-height: 0;
     overflow: hidden;
-  }
-
-  :deep(.el-breadcrumb) {
-    flex-shrink: 0;
   }
 }
 
@@ -64,7 +58,6 @@ const asideWidth = computed(() => (systemStore.isCollapse ? '64px' : '200px'))
 .content {
   flex: 1 1 0;
   min-height: 0;
-  margin-top: 20px;
   border: 1px solid #e4e7ed;
   border-radius: 4px;
 

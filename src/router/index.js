@@ -19,68 +19,49 @@ const router = createRouter({
       redirect: "/project",
       meta: { title: "项目管理后台" },
       children: [
+        // 模块壳只负责把裸地址转到看板；无 name / meta.title，不参与任何层级展示
+        { path: "project", redirect: "/project/board" },
+        { path: "task", redirect: "/task/board" },
+        { path: "milestone", redirect: "/milestone/board" },
+
+        // 三个看板都是 layout 下的一级路由（此前是父路由的 children）
         {
-          // 我的任务独立成一级：它跨项目，「任务规划」讲的是看板与流程，两者不是同一层东西
+          path: "project/board",
+          name: "ProjectBoard",
+          component: () => import("@/views/project/index.vue"),
+          meta: { title: "项目看板" },
+        },
+        {
+          path: "task/board",
+          name: "TaskBoard",
+          component: () => import("@/views/task/index.vue"),
+          meta: { title: "任务看板" },
+        },
+        {
+          path: "milestone/board",
+          name: "MilestoneBoard",
+          component: () => import("@/views/milestone/index.vue"),
+          meta: { title: "里程碑看板" },
+        },
+
+        // 我的任务独立成一级：跨项目，与看板不是同一层东西
+        {
           path: "mine",
           name: "TaskMine",
           component: () => import("@/views/task/mine.vue"),
           meta: { title: "我的任务" },
         },
-        {
-          // 项目管理：一级直达项目看板，详情统一 /project/:id
-          path: "project",
-          name: "ProjectPlanning",
-          redirect: "/project/board",
-          meta: { title: "项目管理" },
-          children: [
-            {
-              path: "board",
-              name: "ProjectBoard",
-              component: () => import("@/views/project/index.vue"),
-              meta: { title: "项目看板" },
-            },
-          ],
-        },
-        // 已删除的旧页面：/project/:id 会误匹配 /project/flow 与 /project/archive，须先重定向
+        // 旧页面别名：无老用户，但顺手把历史地址送回对应看板；必须放在动态详情路由之前
         { path: "project/flow", redirect: "/project/board" },
         { path: "project/archive", redirect: "/project/board" },
         { path: "task/flow", redirect: "/task/board" },
+
+        // 项目详情：归档项目与普通项目共用同一路由，按项目状态判断只读
         {
-          // 项目详情：归档项目与普通项目共用同一路由，按项目状态判断只读
           path: "project/:id",
           name: "ProjectDetail",
           component: () => import("@/views/project/detail.vue"),
           meta: { title: "项目详情" },
-        },
-        {
-          // 任务管理：一级直达任务看板
-          path: "task",
-          name: "TaskPlanning",
-          redirect: "/task/board",
-          meta: { title: "任务管理" },
-          children: [
-            {
-              path: "board",
-              name: "TaskBoard",
-              component: () => import("@/views/task/index.vue"),
-              meta: { title: "任务看板" },
-            },
-          ],
-        },
-        {
-          // 里程碑管理：一级直达里程碑看板
-          path: "milestone",
-          name: "MilestoneManagement",
-          redirect: "/milestone/board",
-          meta: { title: "里程碑管理" },
-          children: [
-            {
-              path: "board",
-              name: "MilestoneBoard",
-              component: () => import("@/views/milestone/index.vue"),
-              meta: { title: "里程碑看板" },
-            },
-          ],
         },
         {
           path: "field",

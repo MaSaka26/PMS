@@ -145,7 +145,7 @@ npm run preview
 - **字段配置**：任务字段与项目字段两套命名空间，支持单行文本、多行文本、数字、日期、单选；支持必填、说明、选项、启停、排序、删除。
 - **项目模板**：模板配置（字段 + 任务清单 + 相对日期 + 模板内依赖）、套用模板创建项目、从已有项目另存为模板、看板内模板选择入口。
 - **数据概览**：项目详情中的任务分布与负责人分布下钻饼图、最近动态。
-- **布局**：固定头部、侧边栏、面包屑，内容区使用 `el-scrollbar` 独立滚动。
+- **布局**：固定头部、侧边栏，内容区使用 `el-scrollbar` 独立滚动。
 
 ## 页面路由
 
@@ -161,7 +161,7 @@ npm run preview
 | `/template` | 项目模板 |
 | `/member` | 成员管理 |
 
-项目管理、任务管理、里程碑管理都只保留一级菜单，点进去直接是看板；「我的任务」也独立成一级。项目归档不再是独立页面，而是项目看板的第三条泳道；归档项目详情与普通项目详情统一走 `/project/:id`，由项目状态决定只读模式与返回路径。流程说明页（项目流程 / 任务流程）已删除，规则备份在「核心业务规则」一节。
+项目管理、任务管理、里程碑管理都只保留一级菜单，点进去直接是看板；「我的任务」也独立成一级。**路由层面所有看板都是一级路由**：`/project`、`/task`、`/milestone` 三条模块壳只负责重定向到对应看板，不再是带子路由的父级；页面不再渲染面包屑。三个历史地址 `/project/flow`、`/project/archive`、`/task/flow` 作为别名重定向回对应看板。项目归档不再是独立页面，而是项目看板的第三条泳道；归档项目详情与普通项目详情统一走 `/project/:id`，由项目状态决定只读模式与返回路径。流程说明页（项目流程 / 任务流程）已删除，规则备份在「核心业务规则」一节。
 
 项目使用 Hash 路由，部署到 GitHub Pages 后地址形如 `https://用户名.github.io/PMS/#/login`。
 
@@ -474,17 +474,16 @@ npm run preview
 
 #### 9. 全局布局与公共能力
 
-**页面职责**：提供固定头部、侧边栏、面包屑和内容区滚动。
+**页面职责**：提供固定头部、侧边栏和内容区滚动。
 
 **核心代码**
 
 | 文件 | 作用 |
 |---|---|
-| [layout/index.vue](src/layout/index.vue) | 整体布局，固定头部/侧栏/面包屑，内容区 `el-scrollbar` |
+| [layout/index.vue](src/layout/index.vue) | 整体布局，固定头部/侧栏，内容区 `el-scrollbar` |
 | [layout/components/header.vue](src/layout/components/header.vue) | 当前用户、角色、退出登录 |
 | [layout/components/aside.vue](src/layout/components/aside.vue) | 侧边栏菜单与路由高亮；项目管理 / 任务管理 / 里程碑管理均为一级项直达看板，另有「我的任务 / 字段配置 / 项目模板 / 成员管理」 |
-| [layout/components/Breadcrumb.vue](src/layout/components/Breadcrumb.vue) | 基于 `route.matched` 的三级面包屑 |
-| [router/index.js](src/router/index.js) | 路由表、嵌套路由、登录守卫、token 校验 |
+| [router/index.js](src/router/index.js) | 一级路由表、模块壳重定向、登录守卫、token 校验 |
 | [utils/permissions.js](src/utils/permissions.js) | 全站统一的权限判断 |
 | [components/DueBadge.vue](src/components/DueBadge.vue) | 截止日期倒计时徽标 |
 | [constants/status.js](src/constants/status.js) | 状态、优先级、项目阶段文案 |
@@ -503,7 +502,7 @@ npm run preview
 | 字段配置 | 无 | 任务/项目表单、模板字段 |
 | 项目模板 | 项目字段 | 生成项目和任务 |
 | 成员管理 | 无 | 全站角色权限、负责人、登录 |
-| 全局布局 | 用户状态 | 导航、面包屑、退出登录 |
+| 全局布局 | 用户状态 | 导航、退出登录 |
 
 ---
 
@@ -721,7 +720,7 @@ PMS/
 │  ├─ composables/         # 组合式函数（useDemoViewers：本地随机模拟的「正在查看」）
 │  ├─ constants/           # 状态、事件元信息
 │  ├─ domain/              # 业务规则（项目阶段、任务状态机 / 日期 / 依赖校验）
-│  ├─ layout/              # 头部、侧边栏、面包屑、整体布局
+│  ├─ layout/              # 头部、侧边栏、整体布局
 │  ├─ mock/                # Mock.js 接口与 localStorage 数据
 │  ├─ router/              # 路由与登录守卫
 │  ├─ stores/              # Pinia stores

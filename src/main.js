@@ -48,8 +48,6 @@ import {
   ElDropdown,
   ElDrawer,
   ElCheckboxGroup,
-  ElBreadcrumbItem,
-  ElBreadcrumb,
   ElAvatar,
   ElAside,
   ElConfigProvider,
@@ -64,7 +62,7 @@ const EL_COMPONENTS = {
   ElTooltip, ElTag, ElPagination, ElTabs, ElPopover, ElMenuItem,
   ElDropdownItem, ElContainer, ElSubMenu, ElScrollbar, ElProgress,
   ElPopconfirm, ElMenu, ElMain, ElHeader, ElDropdownMenu, ElDropdown,
-  ElDrawer, ElCheckboxGroup, ElBreadcrumbItem, ElBreadcrumb, ElAvatar,
+  ElDrawer, ElCheckboxGroup, ElAvatar,
   ElAside, ElConfigProvider,
 }
 import 'element-plus/es/components/icon/style/css'
@@ -106,8 +104,6 @@ import 'element-plus/es/components/dropdown-menu/style/css'
 import 'element-plus/es/components/dropdown/style/css'
 import 'element-plus/es/components/drawer/style/css'
 import 'element-plus/es/components/checkbox-group/style/css'
-import 'element-plus/es/components/breadcrumb-item/style/css'
-import 'element-plus/es/components/breadcrumb/style/css'
 import 'element-plus/es/components/avatar/style/css'
 import 'element-plus/es/components/aside/style/css'
 import 'element-plus/es/components/config-provider/style/css'
