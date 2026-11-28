@@ -156,7 +156,6 @@ npm run preview
 | `/project/board` | 项目看板（置顶 / 全部 / 归档三条泳道） |
 | `/project/:id` | 项目详情（归档项目复用同一路由，只读） |
 | `/task/board` | 任务看板 |
-| `/mine` | 我的任务 |
 | `/milestone/board` | 里程碑看板（可切换横轴时间 / 横轴里程碑；筛选只隐藏内容不改坐标轴，逾期下钻到子任务） |
 | `/field` | 字段配置 |
 | `/template` | 项目模板 |
@@ -356,7 +355,7 @@ npm run preview
 
 侧栏徽章与页面统计都走 `src/utils/my-tasks.js` 的 `buildMyTaskBuckets()` 与 `countMyPendingTasks()`，避免两处口径再次漂移。
 
-**为什么项目经理也必须有内容**：「我负责的」只是他事务的一部分，`done` 状态下他还要验收别人的提交。所以种子数据（`SEED_VERSION = 15`）补了 4 条任务把这条链路走通：`task_seed_7` 大促上线验收清单确认（u2 doing，已逾期）、`task_seed_8` 官网改版需求终稿评审（u2 doing）、`task_seed_9` 优惠券弹窗文案与券面额核对（u3 done，待 u2 验收）、`task_seed_10` 移动端导航栏改版稿（u3 done，待 u2 验收）。除此之外还有 `task_seed_5`（u1 负责，双十一大促项目，u2 作为 PM 可验收），所以 pm/pm 登录后「待我验收」实际是 3 条。
+**为什么项目经理也必须有内容**：「我负责的」只是他事务的一部分，`done` 状态下他还要验收别人的提交。所以种子数据（`SEED_VERSION = 19`）补了 4 条任务把这条链路走通：`task_seed_7` 大促上线验收清单确认（u2 doing，已逾期）、`task_seed_8` 官网改版需求终稿评审（u2 doing）、`task_seed_9` 优惠券弹窗文案与券面额核对（u3 done，待 u2 验收）、`task_seed_10` 移动端导航栏改版稿（u3 done，待 u2 验收）。除此之外还有 `task_seed_5`（u1 负责，双十一大促项目，u2 作为 PM 可验收），所以 pm/pm 登录后「待我验收」实际是 3 条。
 
 **主要功能**
 
@@ -701,7 +700,8 @@ export const canReviewTask = (user, project) => canManageProject(user, project)
 | 实体 | 关键字段 |
 |---|---|
 | project | `id, title, type, icon, desc, priority, PM, members, status, startDate, endDate, fieldIds, extra, events, closedAt` |
-| task | `id, projectId, title, desc, priority, assignee, status, dueDate, createdAt, plannedStart, dependsOn, blocked, canceledReason, reopenReason, extra, events, deletedAt` |
+| milestone | `id, projectId, code, title, desc, status, owner, startDate, duration, dueDate, commitment.dueDate, commitHashes[]`；独立实体，状态由子任务汇总；种子共 13 条 |
+| task | `id, projectId, milestoneId, title, desc, priority, assignee, status, dueDate, createdAt, plannedStart, dependsOn, blocked, canceledReason, reopenReason, extra, events, deletedAt` |
 | member | `id, name, role, position, email, active`；登录用户名来自账号表，接口以 `username` 返回 |
 | field | `id, label, type, targetType, required, options, description, enabled, order` |
 | template | `id, name, projectType, priority, description, fieldIds, tasks[], enabled` |
