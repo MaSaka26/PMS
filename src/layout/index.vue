@@ -25,7 +25,7 @@ const onAfterEnter = () => scrollbarRef.value?.setScrollTop(0)
       <el-main>
         <el-scrollbar ref="scrollbarRef" class="content">
           <RouterView v-slot="{ Component }">
-            <Transition name="fade-in" @after-enter="onAfterEnter">
+            <Transition name="fade" mode="out-in" @after-enter="onAfterEnter">
               <component :is="Component" />
             </Transition>
           </RouterView>
@@ -76,12 +76,14 @@ const onAfterEnter = () => scrollbarRef.value?.setScrollTop(0)
 }
 </style>
 
-<!-- 只淡入不淡出：切页时旧页立即离开，新页 0.3s 淡入；class 打在子页面根元素上，不能 scoped -->
+<!-- 淡出 + 淡入各 0.3s（out-in：旧页先淡出，新页再淡入）；class 打在子页面根元素上，不能 scoped -->
 <style>
-.fade-in-enter-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: opacity 0.3s ease;
 }
-.fade-in-enter-from {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
 }
 </style>
