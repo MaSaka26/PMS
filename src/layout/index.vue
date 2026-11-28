@@ -76,10 +76,10 @@ const onAfterEnter = () => scrollbarRef.value?.setScrollTop(0)
 }
 </style>
 
-<!-- 只淡入不淡出：切页时旧页立即离开，新页 0.15s 淡入；class 打在子页面根元素上，不能 scoped -->
+<!-- 只淡入不淡出：切页时旧页立即离开，新页 0.3s 淡入；class 打在子页面根元素上，不能 scoped -->
 <style>
 .fade-in-enter-active {
-  transition: opacity 0.15s ease;
+  transition: opacity 0.3s ease;
 }
 .fade-in-enter-from {
   opacity: 0;
