@@ -37,7 +37,11 @@
 
 
 
+<div align="center">
+
 ## 目录
+
+</div>
 
 **先看这些**：[技术栈](#技术栈) · [快速开始](#快速开始) · [测试账号](#测试账号) · [功能模块](#功能模块) · [页面路由](#页面路由) · [常见问题](#常见问题faq)
 
@@ -63,7 +67,11 @@
 
 </details>
 
+<div align="center">
+
 ## 与市面项目管理工具的对比
+
+</div>
 
 > 这里的对比是「功能形态」对比，不是产品能力等价。PMS 是前端演示项目，数据只在本机浏览器；表中「有」指页面与交互已实现，不代表多人协作能力。
 
@@ -83,20 +91,32 @@
 | 多人实时协作 / 服务端权限 / 数据库 | 有 | 有 | ❌ 架构边界 | Mock + localStorage，不能多人使用 |
 | 附件 / 评论 @ / 通知 | 有 | 有 | ❌ 无 | 演示范围外 |
 
+<div align="center">
+
 ### 一眼看懂能力形状
+
+</div>
 
 ![能力形状雷达图：PMS 与轻量工具、专业工具对比](docs/diagrams/capability-radar.svg)
 
 绿色是本 PMS：在「配置化 / 模板」「里程碑汇总」上比专业工具更靠外，在「甘特 / CPM」「协作 / 后端」「迭代管理」上刻意收进来。
 
+<div align="center">
+
 ### 我们有的部分（已实现的功能闭环）
+
+</div>
 
 - **任务闭环**：待办 - 认领/指派 - 进行中 - 提交验收 - 验收/驳回 - 已验收；另含阻塞、取消、恢复、重开，抽屉时间线记录全过程。
 - **项目闭环**：建项目 - 配成员/字段/模板 - 推进任务 - 阶段自动推导 - 归档/撤销归档。
 - **跨项目视图**：我的任务把「我负责 / 待我验收 / 我建的待认领 / 逾期」聚合成五类视图，按截止日期升序，打开就能看到今天该干什么。
 - **配置化能力**：任务与项目各有独立字段配置；项目模板可沉淀字段 + 任务清单 + 相对日期 + 依赖，新建项目时一键套用。
 
+<div align="center">
+
 ### 差异化部分（和主流工具不一样的做法）
+
+</div>
 
 | 差异化点 | 市面常见做法 | 本 PMS 做法 | 为什么有意思 |
 |---|---|---|---|
@@ -106,7 +126,11 @@
 | **排期能力有意砍掉** | 堆甘特图 + 关键路径，越做越复杂 | 记录决策：演示频率低、维护成本高，砍掉；保留字段不删 | 知道「不做什么」比堆功能更成熟，见决策记录章节 |
 | **零后端可演示** | 需要部署服务端才有数据 | 打开 GitHub Pages 即用，mock 数据 + localStorage | 作品展示、课程设计场景友好，不需要数据库 |
 
+<div align="center">
+
 ## 技术栈
+
+</div>
 
 | 类别 | 技术 |
 |---|---|
@@ -121,7 +145,11 @@
 
 Node 版本要求：`^22.18.0 || >=24.12.0`。
 
+<div align="center">
+
 ## 快速开始
+
+</div>
 
 > [!NOTE]
 > 前置条件：Node `^22.18.0 || >=24.12.0`，npm。仓库根目录是 `PMS/`，以下命令都在该目录执行。
@@ -149,7 +177,11 @@ npm run build
 npm run preview
 ```
 
+<div align="center">
+
 ## 测试与 CI
+
+</div>
 
 - `tests/*.test.js` 覆盖权限判断、截止日期分级、登录与停用校验、种子数据日期合法性、种子指纹重置策略、domain 纯函数（不加载 mock）、接口级 403 兜底，使用 Node 内置 `node:test`，无需额外测试依赖。其中权限测试同时锁住「验收权限只认管理员和项目负责人」与「自己验收自己只标记不拦截」两条约定，避免以后有人把职责分离写成硬拦截，把项目阶段卡死在「任务验收」。
 - `tests/on-demand.test.js` 守 Element Plus 按需引入的四个静默失效点：扫 `src/` 下所有 `<el-xxx>` 标签与 `from 'element-plus'` 的具名导入，逐个核对（1）样式目录存在（2）`main.js` 里 import 了样式（3）标签注册成了全局组件；另外单独检查 `ElMessage` / `ElMessageBox` / `v-loading` 这三个不在模板里的样式。解析 `main.js` 前会先剥注释，注释掉的 import 不会被当成还在。
@@ -157,7 +189,11 @@ npm run preview
 - `.github/workflows/ci.yml` 在 pull request 与非 `master` 分支的 push 时执行：安装依赖 → 单元测试 → 生产构建；`master` 的推送由部署工作流负责。
 - 页面与 Mock 流程仍以手工冒烟验证为主。
 
+<div align="center">
+
 ## 测试账号
+
+</div>
 
 | 用户名 | 密码 | 角色 | 姓名 |
 |---|---|---|---|
@@ -179,7 +215,11 @@ npm run preview
 
 登录后会写入 `pm_token`，未登录访问业务页面会被路由守卫重定向到登录页。
 
+<div align="center">
+
 ## 功能模块
+
+</div>
 
 - **项目管理**：项目增删改查、优先级、负责人、成员、计划周期、关闭并归档、撤销归档、项目详情、动态时间线。
 - **任务看板**：四泳道（待办 / 进行中 / 待验收 / 已验收）、认领、显式指派、提交验收、验收、驳回、重开、阻塞、取消、恢复、任务详情抽屉与事件时间线；支持按标题关键字、负责人、阻塞状态筛选。
@@ -190,7 +230,11 @@ npm run preview
 - **数据概览**：项目详情中的任务分布与负责人分布下钻饼图、最近动态。
 - **布局**：固定头部、侧边栏，内容区使用 `el-scrollbar` 独立滚动。
 
+<div align="center">
+
 ## 页面路由
+
+</div>
 
 | 路径 | 说明 |
 |---|---|
@@ -211,9 +255,17 @@ npm run preview
 <details>
 <summary>页面详解与代码地图（9 个页面逐页说明 + 依赖速查）</summary>
 
+<div align="center">
+
 ## 页面详解与代码地图
 
+</div>
+
+<div align="center">
+
 #### 页面关联总览
+
+</div>
 
 ```
 字段配置 ──→ 任务表单 / 项目表单
@@ -227,7 +279,11 @@ npm run preview
 项目阶段 / 任务流转规则 ──→ 核心业务规则（原流程页内容已并入）
 ```
 
+<div align="center">
+
 #### 代码分层约定
+
+</div>
 
 | 层 | 位置 | 职责 |
 |---|---|---|
@@ -255,7 +311,11 @@ npm run preview
 
 ---
 
+<div align="center">
+
 #### 1. 登录页 `/login`
+
+</div>
 
 **页面职责**：账号密码登录、三个种子账号快捷填充、错误提示、登录后跳回原目标页。
 
@@ -280,7 +340,11 @@ npm run preview
 
 ---
 
+<div align="center">
+
 #### 2. 项目看板 `/project/board`
+
+</div>
 
 **页面职责**：项目列表、搜索、分页、新建（空白 / 从模板）、编辑、关闭归档、撤销归档、删除、进入详情。
 
@@ -312,7 +376,11 @@ npm run preview
 
 ---
 
+<div align="center">
+
 #### 3. 项目详情 `/project/:id`
+
+</div>
 
 **页面职责**：单个项目的完整视图，包括指标、图表、任务、里程碑、成员、动态和项目操作。
 
@@ -348,7 +416,11 @@ npm run preview
 
 ---
 
+<div align="center">
+
 #### 4. 任务看板 `/task/board`
+
+</div>
 
 **页面职责**：按项目查看任务泳道，执行认领、指派、验收、阻塞、取消等全部任务操作。
 
@@ -380,7 +452,11 @@ npm run preview
 
 ---
 
+<div align="center">
+
 #### 5. 我的任务 `/mine`
+
+</div>
 
 **页面职责**：看板回答「这个项目走到哪了」，这一页回答「我今天该干什么」。按当前登录人聚合他名下的事务，跨项目、跨状态，默认按截止日期升序。
 
@@ -427,7 +503,11 @@ npm run preview
 
 ---
 
+<div align="center">
+
 #### 6. 字段配置 `/field`
+
+</div>
 
 **页面职责**：维护任务字段和项目字段，控制表单上还能填哪些扩展信息。
 
@@ -452,7 +532,11 @@ npm run preview
 
 ---
 
+<div align="center">
+
 #### 7. 项目模板 `/template`
+
+</div>
 
 **页面职责**：维护项目模板，支持从模板创建项目，也支持把已有项目另存为模板。
 
@@ -481,7 +565,11 @@ npm run preview
 
 ---
 
+<div align="center">
+
 #### 8. 成员管理 `/member`
+
+</div>
 
 **页面职责**：按角色管理成员、岗位、登录账号和启用状态。
 
@@ -515,7 +603,11 @@ npm run preview
 
 ---
 
+<div align="center">
+
 #### 9. 全局布局与公共能力
+
+</div>
 
 **页面职责**：提供固定头部、侧边栏和内容区滚动。
 
@@ -533,7 +625,11 @@ npm run preview
 
 **与其他页面的关系**：所有业务页面都挂载在布局下；路由守卫控制访问；权限工具和状态常量被各页面复用。
 
+<div align="center">
+
 #### 页面依赖速查
+
+</div>
 
 | 页面 | 主要依赖 | 主要影响 |
 |---|---|---|
@@ -555,9 +651,17 @@ npm run preview
 <details>
 <summary>角色与权限（管理员 / 项目经理 / 成员能做什么）</summary>
 
+<div align="center">
+
 ## 角色与权限
 
+</div>
+
+<div align="center">
+
 #### 全局角色
+
+</div>
 
 | 操作 | 管理员 | 项目经理 | 成员 |
 |---|---|---|---|
@@ -570,14 +674,22 @@ npm run preview
 | 字段配置 | 增删改 | 只读 | 只读 |
 | 项目模板 | 增删改、套用 | 增删改、套用 | 只读 |
 
+<div align="center">
+
 #### 项目
+
+</div>
 
 - 创建项目：管理员、项目经理；项目经理创建时负责人固定为自己。
 - 编辑 / 删除 / 关闭归档：项目负责人或管理员。
 - 项目负责人变更：仅管理员。变更会写一条 `pm_changed` 事件（含原负责人、新负责人、原因），显示在项目详情「动态」里，用来回答「这个项目什么时候换的人、为什么换」。项目经理编辑项目时负责人字段锁死为自己，所以交接只能由管理员发起。
 - 查看项目：项目成员或管理员。
 
+<div align="center">
+
 #### 任务
+
+</div>
 
 - 创建任务：项目成员或管理员。
 - 编辑任务基本信息：管理员、项目负责人、任务创建人、任务负责人。
@@ -597,9 +709,17 @@ npm run preview
 <details>
 <summary>核心业务规则（状态机 / 阶段推导 / 字段 / 模板 / 验收）</summary>
 
+<div align="center">
+
 ## 核心业务规则
 
+</div>
+
+<div align="center">
+
 #### 1. 待办 = 无人负责
+
+</div>
 
 - 新建任务时负责人留空 → 任务进入「待办」，由成员认领。
 - 新建或编辑时选择负责人 → 直接进入「进行中」，选择负责人即视为开工。
@@ -609,7 +729,11 @@ npm run preview
 - 管理员如果不是项目成员，不能认领该项目的任务，但可以指派；要亲自执行需先加入项目成员。
 - 认领人必须是项目成员；认领即开工。前置任务未完成时界面会提示，但允许强制认领。
 
+<div align="center">
+
 #### 2. 任务生命周期（原「任务流程」页内容）
+
+</div>
 
 五个任务状态：
 
@@ -656,7 +780,11 @@ npm run preview
 
 所有状态变化都会写入任务事件日志，任务详情抽屉按天展示时间线。
 
+<div align="center">
+
 #### 3. 项目阶段自动推导（原「项目流程」页内容）
+
+</div>
 
 项目阶段由任务状态自动汇总，**只进不退**：
 
@@ -684,7 +812,11 @@ npm run preview
 
 > 规则变更时以源码为准：阶段推导见 `src/domain/project-status.js`，任务状态机见 `src/domain/task-rules.js`，权限见 `src/utils/permissions.js`。原流程说明页（`src/views/{task,project}/flow.vue`）与静态常量 `src/constants/{taskFlow,projectFlow}.js` 已删除，备份在本节。
 
+<div align="center">
+
 #### 4. 自定义字段
+
+</div>
 
 - 分为「任务字段」和「项目字段」，两个命名空间允许同名。
 - 字段值分别存入 `task.extra` 和 `project.extra`，键为字段 id。
@@ -692,7 +824,11 @@ npm run preview
 - 模板生成的项目会携带 `fieldIds`，项目表单只展示模板勾选的字段。
 - 必填校验目前在前端表单层完成。
 
+<div align="center">
+
 #### 5. 项目模板
+
+</div>
 
 - 模板包含：名称、默认类型、默认优先级、说明、项目字段、任务清单。
 - 模板任务的日期使用相对项目开始日的 `T+N` 和工期天数。
@@ -700,7 +836,11 @@ npm run preview
 - 生成的任务全部进入「待办」，不复制负责人、状态、事件和自定义字段值。
 - 本功能使用快照语义：修改模板不影响已生成项目，修改项目也不会反写模板。
 
+<div align="center">
+
 #### 6. 成员与岗位
+
+</div>
 
 - 角色 `role` 决定权限：`admin` / `pm` / `member`。
 - 岗位 `position` 仅用于展示和详情预览，不参与权限判断，手动填写。
@@ -713,7 +853,11 @@ npm run preview
 - 停用保护：不能停用自己或最后一个启用管理员；成员仍是进行中项目负责人、或还有未完成任务时，必须先移交 / 转派。
 - 删除成员的统计口径与停用一致，只算「启用中的管理员」，避免「先停用另一个 admin，再删掉当前唯一启用的 admin」绕过保护。
 
+<div align="center">
+
 #### 7. 验收权限
+
+</div>
 
 验收权限只有一种判定：
 
@@ -737,7 +881,11 @@ export const canReviewTask = (user, project) => canManageProject(user, project)
 <details>
 <summary>数据模型与目录结构</summary>
 
+<div align="center">
+
 ## 数据模型（概要）
+
+</div>
 
 | 实体 | 关键字段 |
 |---|---|
@@ -753,7 +901,11 @@ export const canReviewTask = (user, project) => canManageProject(user, project)
 
 </details>
 
+<div align="center">
+
 ## 目录结构
+
+</div>
 
 ```
 PMS/
@@ -785,7 +937,11 @@ PMS/
 <details>
 <summary>数据存储与重置（含种子版本 / 指纹判定）</summary>
 
+<div align="center">
+
 ## 数据存储与重置
+
+</div>
 
 - 数据保存在浏览器 localStorage，键为 `pm_mock_db`。
 - 种子数据的版本判定在 `src/mock/db/seed/index.js` 的 `shouldResetSeed()`，由**版本号 + 内容指纹**共同决定：
@@ -825,7 +981,11 @@ location.reload()
 <details>
 <summary>卡片上的「正在查看」为什么只能是演示效果</summary>
 
+<div align="center">
+
 ## 卡片上的「正在查看」是演示效果
+
+</div>
 
 项目卡片和任务卡片右下角的头像堆叠（例如「李 / M +1」，hover 显示「张经理、Agent 正在查看（演示数据，非真实在线状态）」）**不是真实的在线状态**。
 
@@ -842,7 +1002,11 @@ location.reload()
 <details>
 <summary>部署到 GitHub Pages</summary>
 
+<div align="center">
+
 ## 部署到 GitHub Pages
+
+</div>
 
 项目已内置 GitHub Pages 部署配置：
 
@@ -850,7 +1014,11 @@ location.reload()
 - [vite.config.js](vite.config.js) 在 GitHub Actions 中自动使用 `/<仓库名>/` 作为 base，本地开发仍为 `/`
 - [deploy-pages.yml](.github/workflows/deploy-pages.yml) 在 push 到 `master` / `main` 时执行测试、构建并发布
 
+<div align="center">
+
 #### 操作步骤
+
+</div>
 
 1. 推送代码到 GitHub：
 
@@ -869,7 +1037,11 @@ git push -u origin master
 https://masaka26.github.io/PMS/
 ```
 
+<div align="center">
+
 #### 说明
+
+</div>
 
 - 如果仓库名不是 `PMS`，base 会自动跟随仓库名，不需要改代码
 - 如果仓库是 `用户名.github.io` 形式，会自动部署在根路径
@@ -882,11 +1054,19 @@ https://masaka26.github.io/PMS/
 <details>
 <summary>构建体积与加载策略（首屏从 520 KB gzip 降到约 300 KB）</summary>
 
+<div align="center">
+
 ## 构建体积与加载策略
+
+</div>
 
 首屏下载量从 2.0 MB（gzip 520 KB）降到约 1.05 MB（gzip 约 300 KB；以当前产物实测 1,078,430 B / 304,564 B 为准），做法分三步，每一步都能单独回退。
 
+<div align="center">
+
 #### 1. 第三方依赖按变更频率分块
+
+</div>
 
 [vite.config.js](vite.config.js) 里的 `VENDOR_RULES` 把 `element-plus`、`vue`/`pinia`、`axios`、`highcharts`、`mockjs` 各分一个 chunk。
 
@@ -894,7 +1074,11 @@ https://masaka26.github.io/PMS/
 
 注意 Vite 8 底层换成了 rolldown，`manualChunks` **只接受函数形式**，写对象形式会直接报 `TypeError: manualChunks is not a function`。
 
+<div align="center">
+
 #### 2. Mock 数据层改成异步加载
+
+</div>
 
 原来 `src/main.js` 第一行就是 `import './mock'`，mockjs 与全部种子数据必须在任何应用代码执行前下载并解析完。
 
@@ -908,7 +1092,11 @@ https://masaka26.github.io/PMS/
 
 接真实后端时把 `.env.production` 改成 `VITE_USE_MOCK=false`，业务代码一行不用动；此时 `ensureMock()` 直接 resolve，mock chunk 也不会被下载。
 
+<div align="center">
+
 #### 3. Element Plus 按需注册
+
+</div>
 
 `src/main.js` 里用一张 `EL_COMPONENTS` 表具名引入实际用到的 44 个组件（含 locale 用的 `ElConfigProvider`），逐组件 import 样式，再循环 `app.component` 注册。
 
@@ -935,7 +1123,11 @@ import 'element-plus/es/components/message-box/style/css'
 
 图标仍是全量注册：项目表单里的图标选择器会遍历整份图标表，无论如何都要全进包，白名单省不下体积（实测只省 81 字节）。
 
+<div align="center">
+
 #### 怎么复查体积
+
+</div>
 
 ```bash
 npm run build
@@ -949,11 +1141,19 @@ node scripts/measure-any.mjs dist.old  # 测任意目录，用来和旧产物对
 <details>
 <summary>决策记录：为什么删掉排期与关键路径</summary>
 
+<div align="center">
+
 ## 决策记录：为什么删掉排期与关键路径
+
+</div>
 
 排期与关键路径在这个项目里**存在过两次，又被删除过两次**。这一节不是变更日志，是留给以后的判据：什么人、在什么条件下，才值得把它再做一次。
 
+<div align="center">
+
 #### 删除了什么
+
+</div>
 
 | 版本 | 内容 | 代码量 |
 |---|---|---|
@@ -974,7 +1174,11 @@ node scripts/measure-any.mjs dist.old  # 测任意目录，用来和旧产物对
 - **测试**：`tests/schedule.test.js`
 - **种子**：git 任务改回由提交日期生成（不再标 `historical`、不再清空计划日期与截止日期），`SEED_VERSION` 回退
 
+<div align="center">
+
 #### 为什么删除
+
+</div>
 
 **1. 根本原因是一个语义错误，不是算法问题。**
 `git log` 记录的是已经发生的事（actuals），不是计划（plan）。把它当成 `plannedStart / dueDate` 灌进 CPM，算出来的不是「打算怎么走」，而是「实际怎么走」。最直接的证据：种子项目「PMS 开发记录」的峰值日出现 **17 条任务在同一天并行，且全部压在同一个人身上** —— 因为 24 条提交都出自同一作者、同一段时间，被当成了 24 条计划任务。
@@ -991,7 +1195,11 @@ node scripts/measure-any.mjs dist.old  # 测任意目录，用来和旧产物对
 **5. 粒度上自相矛盾。**
 如果按「任务即里程碑」的思路，立项承诺应该是 5–10 条；而种子项目里有 26 条任务参与排期。26 条不是里程碑，是 WBS —— 那又回到了「排期生成器」，与敏捷「时间固定、范围可变」的前提冲突。
 
+<div align="center">
+
 #### 现在还保留什么
+
+</div>
 
 排期页面删掉了，但底层字段与校验一直在，并仍在服务任务表单、任务详情和时间线：
 
@@ -1002,13 +1210,21 @@ node scripts/measure-any.mjs dist.old  # 测任意目录，用来和旧产物对
 
 也就是说：**任务仍然可以写计划日期、可以连依赖、系统仍然会拦住明显矛盾的日期**，只是不再提供「把整张网算一遍、画出关键路径」的页面。
 
+<div align="center">
+
 #### 粒度问题后来怎么处理的
+
+</div>
 
 上面第 5 条指出的「26 条不是里程碑，是 WBS」，没有靠重新做排期页解决，而是改种子数据解决的：把「PMS 开发记录」的 24 条 git 提交按交付物归并成 6 个独立里程碑实体（M0–M5），判据是「去掉这一步，后面哪一步会做不了」。归并后每个里程碑的说明里保留了它包含哪些提交，可追溯到具体 hash；依赖只画真实存在的约束，M2 / M3 / M4 都接在 M1 后面并行推进，不串成一条假的关键路径。
 
 结果是不需要 CPM 也能回答「现在到哪一步了、下一步卡在谁身上」——因为 6 条里程碑加上 2 条待办的依赖关系，本身就构成了一条一屏能读完的链路。**粒度对了，图就不需要了。**
 
+<div align="center">
+
 #### 什么情况下才值得重新做
+
+</div>
 
 三条同时满足，才重新考虑：
 
@@ -1021,7 +1237,11 @@ node scripts/measure-any.mjs dist.old  # 测任意目录，用来和旧产物对
 
 </details>
 
+<div align="center">
+
 ## 常见问题（FAQ）
+
+</div>
 
 | 问题 | 答案 |
 |---|---|
@@ -1031,7 +1251,11 @@ node scripts/measure-any.mjs dist.old  # 测任意目录，用来和旧产物对
 | 为什么排期 / 关键路径被删了？ | 做过两次又删了两次，根因是「拿 git log 当计划」。完整判据在 [决策记录](#决策记录为什么删掉排期与关键路径)。 |
 | 构建后入口 chunk 只有 11 KB，是不是漏打包了？ | 没有。Element Plus 被拆到独立 chunk，仍在首屏；详见 [构建体积与加载策略](#构建体积与加载策略)。 |
 
+<div align="center">
+
 ## 已知限制
+
+</div>
 
 - 数据层为 Mock.js + localStorage，不是真实后端。
 - 权限已在页面和 mock 接口两层校验，但个别细粒度规则（如负责人能否修改任务描述）仍可按业务继续细化。
@@ -1047,7 +1271,11 @@ node scripts/measure-any.mjs dist.old  # 测任意目录，用来和旧产物对
 - 自动化测试覆盖 45 条：权限判断、截止日期分级、登录与停用校验、种子版本与指纹、domain 纯函数、里程碑、我的任务共享口径、接口级 403 兜底；页面流程仍以手工冒烟为主。
 - 生产构建的主入口 chunk 已从 1.2 MB 降到约 11 KB，但 Element Plus 仍在首屏（约 771 KB raw / 239 KB gzip），这是按需引入后剩下的真实开销，再压需要换组件库而不是继续调配置。
 
+<div align="center">
+
 ## 后续规划
+
+</div>
 
 1. 视数据量补充任务分页或虚拟滚动。
 2. 为字段增加使用情况统计和删除影响预览。
